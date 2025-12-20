@@ -1,406 +1,202 @@
+<!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <title>fiT - Onboarding</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <script src="https://cdn.jsdelivr.net/npm/purecounterjs/dist/purecounter.js"></script>
-      <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
-      <script>
-         tailwind.config = {
-           theme: {
-             extend: {
-               colors: {
-                 accent: {"50":"#fff5f0","100":"#ffd6c2","200":"#feb795","300":"#fe9868","400":"#fd783c","500":"#fb580f","600":"#db4603","700":"#b03802","800":"#862b01","900":"#5a1d00","950":"#2f0f00"}
-               }
-             }
-           }
-         }
-        function showSection(sectionId) {
-          // Hide both sections first
-          document.getElementById('onboarding-body-composition').style.display = 'none';
-          document.getElementById('onboarding-nutrition').style.display = 'none';
-          document.getElementById('onboarding-goals').style.display = 'none';
-          document.getElementById('onboarding-submit').style.display = 'none';
-
-          // Show the clicked section
-          document.getElementById(sectionId).style.display = 'block';
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fiT - Start Your Journey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        accent: {"50":"#fff5f0","100":"#ffd6c2","200":"#feb795","300":"#fe9868","400":"#fd783c","500":"#fb580f","600":"#db4603","700":"#b03802","800":"#862b01","900":"#5a1d00","950":"#2f0f00"}
+                    }
+                }
+            }
         }
-        window.onload = function() {
-            // Hide the About, Plans, and Mission sections by default
-            document.getElementById('about').style.display = 'none';
-}
 
-      </script>
-       <style>
-    /* Hide the spinners for Chrome, Safari, Edge, Opera */
-    input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* Hide the spinners for Firefox */
-    input[type="number"] {
-        -moz-appearance: textfield;
-    }
-   html {
-    scroll-behavior: smooth;
-}
-</style>
+        function showSection(sectionId) {
+            const sections = ['onboarding-welcome', 'onboarding-body', 'onboarding-nutrition', 'onboarding-goals', 'onboarding-submit'];
+            sections.forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('flex');
+            });
+            const target = document.getElementById(sectionId);
+            target.classList.remove('hidden');
+            target.classList.add('flex');
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
 </head>
-<body class="bg-black">
-<section id="header">
-<header class="w-dvw absolute top-0 left-1/2 -translate-x-1/2 z-20 py-4">
-            <div class="max-w-[120rem] text-gray-50 px-6 md:px-8 lg:px-10">
-            <nav class="bg-black dark:bg-black fixed w-full z-20 top-0 start-0 ">
-              <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                <!-- Logo and brand -->
-                <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-                  <svg class="h-8 w-8" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
-                    <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
-                    <circle cx="199" cy="131" r="50" fill="currentColor"></circle>
-                    <circle cx="199" cy="246" r="50" fill="currentColor"></circle>
-                    <circle cx="369" cy="131" r="50" fill="currentColor"></circle>
-                    <circle cx="369" cy="246" r="50" fill="currentColor"></circle>
-                  </svg>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 text-2xl font-extrabold">fiT</span>
-                </a>
+<body class="bg-black text-white font-sans selection:bg-green-400 selection:text-black">
 
-                <div class="flex md:order-2 space-x-3 rtl:space-x-reverse">
+<form action="/onboarding" method="POST" class="h-screen w-full relative overflow-hidden">
 
-            <img id="avatarButton" type="button" data-dropdown-toggle="userDropdown" data-dropdown-placement="bottom-start" class="w-10 h-10 rounded-full cursor-pointer" src="https://bookmybus.up.railway.app/static/images/rohit.jpeg    " alt="User dropdown">
+    <div class="absolute inset-0 z-0">
+        <img src="https://images.pexels.com/photos/4162489/pexels-photo-4162489.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+             class="w-full h-full object-cover" alt="Background">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90"></div>
+    </div>
 
-            <!-- Dropdown menu -->
-            <div id="userDropdown" class="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700 dark:divide-gray-600">
-                <div class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                  <div>{{ current_user.name.title() }}</div>
-                  <div class="font-medium truncate">{{ current_user.email}}</div>
+    <section id="onboarding-welcome" class="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
+        <div class="max-w-2xl">
+            <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-4">
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-100 to-green-400">READY?</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl mb-8">Before we build your AI-powered plan, we need to know your starting line.</p>
+            <button type="button" onclick="showSection('onboarding-body')" class="px-10 py-4 bg-white text-black font-bold rounded-full hover:bg-green-400 transition-all transform hover:scale-105">
+                Let's Go
+            </button>
+        </div>
+    </section>
+
+    <section id="onboarding-body" class="hidden relative z-10 h-full flex flex-col items-center justify-center px-4">
+        <div class="glass-card p-8 md:p-12 rounded-3xl w-full max-w-lg shadow-2xl">
+            <div class="mb-8">
+                <div class="w-full bg-gray-800 rounded-full h-1.5 mb-6">
+                    <div class="bg-gradient-to-r from-yellow-200 to-green-400 h-1.5 rounded-full" style="width: 33%"></div>
                 </div>
-                <ul class="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="avatarButton">
-                  <li>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">My Profile</a>
-                  </li>
-                  <li>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a>
-                  </li>
-                  <li>
-                    <a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Achievements</a>
-                  </li>
-                </ul>
-                <div class="py-1">
-                  <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Sign out</a>
-                </div>
+                <h2 class="text-3xl font-bold mb-2">The Basics</h2>
+                <p class="text-gray-400">Tell us about your physical profile.</p>
             </div>
 
-    </div>
-          </div>
-            </nav>
-            </div>
-         </header>
-</section>
-<section id="onboarding-cover" class="bg-black dark:bg-black w-full pt-10" >
-    <div class="grid w-full max-w-screen-xl px-4 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12">
-        <div class="mr-auto place-self-center lg:col-span-7">
-            <h1 class="max-w-2xl mb-4 text-4xl font-extrabold tracking-tight leading-none md:text-5xl xl:text-6xl dark:text-white"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100">fiT</span> helps you in achieving your goals</h1>
-            <p class="max-w-2xl mb-6 font-light text-gray-500 lg:mb-8 md:text-lg lg:text-xl dark:text-gray-400">fiT helps you conquer your fitness journey, from cultivating endurance to building strength and improving overall fitness.</p>
-            <a href="#onboarding-body-composition" class="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-gray-900 border border-red-700 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-red-800 dark:hover:bg-red-900/40 dark:focus:ring-red-800">
-                Get Started
-                <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m14 0-4 4m4-4-4-4"/>
-                </svg>
-            </a>
-        </div>
-        <div class="hidden lg:mt-0 lg:col-span-5 lg:flex">
-            <img src="https://images.pexels.com/photos/15561868/pexels-photo-15561868/free-photo-of-black-and-white-photo-of-a-shirtless-muscular-man-standing-in-sunlight.jpeg" alt="mockup">
-        </div>
-    </div>
-</section>
-<form class="space-y-6 md:space-y-6" action="/onboarding" method="POST">
-<div class="relative inset-0 z-[1] h-screen">
-    <img class="h-full w-full object-cover object-center" src="https://images.pexels.com/photos/4761598/pexels-photo-4761598.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="">
-    <!-- Section on top of the image -->
-<section id="onboarding-body-composition" class="absolute inset-0 flex items-center justify-center z-[2] bg-gradient-to-br from-gray-900 via-black to-gray-800">
-    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-        <div class="w-full bg-white rounded-2xl shadow-xl dark:border sm:max-w-md xl:max-w-lg lg:max-w-md xl:p-6 dark:bg-black/90 dark:border-gray-700">
-            <div class="p-8 space-y-6 md:space-y-8">
-                <div class="w-full bg-gray-300 rounded-full h-3 dark:bg-gray-700">
-                    <div class="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full" style="width: 25%"></div>
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-4">
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="gender" value="male" class="hidden peer">
+                        <div class="p-4 text-center border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all">
+                            Male
+                        </div>
+                    </label>
+                    <label class="cursor-pointer group">
+                        <input type="radio" name="gender" value="female" class="hidden peer">
+                        <div class="p-4 text-center border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all">
+                            Female
+                        </div>
+                    </label>
                 </div>
-                <h1 class="text-2xl font-extrabold leading-tight tracking-tight text-gray-900 md:text-3xl dark:text-white text-center">
-                    Step 1: <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-green-400">Fill In Your Details</span>
-                </h1>
-                <div class="flex space-x-4">
-                    <div class="relative w-1/2 flex items-center space-x-3">
-                        <input id="male" type="radio" name="gender" class="hidden" />
-                        <label for="male" class="cursor-pointer bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Male</label>
-                        <input id="female" type="radio" name="gender" class="hidden" />
-                        <label for="female" class="cursor-pointer bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-pink-600">Female</label>
-                    </div>
-                    <div class="relative w-1/2">
-                        <input type="number" name="age" id="age" class="w-full text-lg bg-transparent border border-gray-500 text-white rounded-lg p-3 focus:ring-orange-400 focus:border-orange-400" placeholder="Age" />
-                    </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" name="age" placeholder="Age" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400">
+                    <input type="number" name="weight" placeholder="Weight (kg)" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400">
                 </div>
-                <div class="relative w-full">
-                    <input type="number" name="weight" id="weight" class="w-full text-lg bg-transparent border border-gray-500 text-white rounded-lg p-3 focus:ring-orange-400 focus:border-orange-400" placeholder="Weight" />
-                    <select name="unit-weight" id="unit-weight" class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-lg">
-                        <option value="kg">kg</option>
-                        <option value="lbs">lbs</option>
-                    </select>
-                </div>
-                <div class="relative w-full">
-                    <input type="number" name="height" id="height" class="w-full text-lg bg-transparent border border-gray-500 text-white rounded-lg p-3 focus:ring-orange-400 focus:border-orange-400" placeholder="Height" />
-                    <select name="unit-height" id="unit-height" class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-lg">
-                        <option value="cm">cm</option>
-                        <option value="ft">ft</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="activity-level" class="block pb-2 text-white font-semibold">Activity Level</label>
-                    <select id="activity-level" class="bg-gray-800 text-white text-lg rounded-lg focus:ring-orange-400 focus:border-orange-400 w-full p-3">
-                        <option selected disabled>Choose your activity level</option>
-                        <option value="sedentary">Sedentary (little to no exercise)</option>
-                        <option value="lightly_active">Lightly active (1-3 days/week)</option>
-                        <option value="moderately_active">Moderately active (3-5 days/week)</option>
-                        <option value="very_active">Very active (6-7 days/week)</option>
-                        <option value="super_active">Super active (intense daily training)</option>
-                    </select>
-                </div>
-                <button type="submit" onclick="showSection('onboarding-nutrition')" class="w-full text-white bg-gradient-to-r from-red-500 to-orange-500 hover:from-orange-500 hover:to-red-500 focus:ring-4 focus:outline-none focus:ring-orange-300 dark:focus:ring-orange-600 rounded-lg text-lg px-5 py-3 text-center font-bold">
-                    Next
+
+                <select name="activity-level" class="w-full bg-black border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400">
+                    <option selected disabled>Activity Level</option>
+                    <option value="sedentary">Sedentary (Office job)</option>
+                    <option value="light">Lightly Active (1-2 days/wk)</option>
+                    <option value="moderate">Moderately Active (3-5 days/wk)</option>
+                    <option value="athlete">High Performance (Daily)</option>
+                </select>
+
+                <button type="button" onclick="showSection('onboarding-nutrition')" class="w-full py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black rounded-2xl hover:opacity-90 transition-all">
+                    Next Step
                 </button>
             </div>
         </div>
-    </div>
-</section>
-    <section id="onboarding-nutrition" class="hidden absolute inset-0  items-center justify-center z-[2]">
-        <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-            <div class="w-full bg-white rounded-lg shadow dark:border sm:max-w-lg xl:max-w-2xl lg:max-w-xl xl:p-0 dark:bg-black/90 dark:border-white">
-                <div class="p-8 space-y-6 md:space-y-8">
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div class="bg-blue-600 h-2.5 rounded-full" style="width: 50%"></div>
-                </div>
-                    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
-                       Step 2: <span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100">Choose Nutrition & Diet</span>
-                    </h1>
-                    <ul class="grid w-full gap-6 md:grid-cols-3">
-                        <li>
-                            <input type="radio" id="everything-option" name="diet" value="" class="hidden peer" required="">
-                            <label for="everything-option" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="text-lg font-semibold">Everything</div>
-                                        <img class="w-7 h-7" src="https://www.eatthismuch.com/_app/immutable/assets/eating-style.DmTW8uG5.webp" alt="Everything Icon">
-                                    </div>
-                                    <div class="text-sm mt-2">No dietary restrictions, includes all foods (meat, fish, poultry, dairy, eggs, and plant-based)</div>
-                                </div>
-                            </label>
-                        </li>
-
-                        <li>
-                            <input type="radio" name="diet" id="vegetarian-option" value="" class="hidden peer" required="">
-                            <label for="vegetarian-option" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="text-lg font-semibold">Vegetarian</div>
-                                        <img class="w-7 h-7" src="https://www.eatthismuch.com/_app/immutable/assets/vegetarian.HoAa4RVv.png" alt="Vegetarian Icon">
-                                    </div>
-                                    <div class="text-sm mt-2">People avoiding meat but still consuming some animal products like dairy or eggs</div>
-                                </div>
-                            </label>
-                        </li>
-
-                        <li>
-                            <input type="radio" name="diet" id="vegan-option" value="" class="hidden peer" required="">
-                            <label for="vegan-option" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="text-lg font-semibold">Vegan</div>
-                                        <img class="w-7 h-7" src="https://www.eatthismuch.com/_app/immutable/assets/vegan.kPR8ZVyA.png" alt="Vegan Icon">
-                                    </div>
-                                    <div class="text-sm mt-2">People avoiding all animal products, including meat, dairy, eggs, and sometimes honey</div>
-                                </div>
-                            </label>
-                        </li>
-
-                        <li>
-                            <input type="radio" name="diet" id="non-veg-option" value="" class="hidden peer" required="">
-                            <label for="non-veg-option" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="text-lg font-semibold">Non-Vegetarian</div>
-                                        <img class="w-7 h-7" src="https://www.svgrepo.com/show/397426/meat-on-bone.svg" alt="Non-Vegetarian Icon">
-                                    </div>
-                                    <div class="text-sm mt-2">People consuming meat, fish, poultry, dairy, and eggs</div>
-                                </div>
-                            </label>
-                        </li>
-
-                        <li>
-                            <input type="radio" name="diet" id="eggetarian-option" value="" class="hidden peer" required="">
-                            <label for="eggetarian-option" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="text-lg font-semibold">Eggetarian</div>
-                                        <img class="w-7 h-7" src="https://www.svgrepo.com/show/505209/egg.svg" alt="Eggetarian Icon">
-                                    </div>
-                                    <div class="text-sm mt-2">Vegetarians who include eggs in their diet, but no meat or fish</div>
-                                </div>
-                            </label>
-                        </li>
-
-                        <li>
-                            <input type="radio" id="pescatarian-option" value="" class="hidden peer" required="">
-                            <label for="pescatarian-option" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border-2 border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 peer-checked:border-blue-600 hover:text-gray-600 dark:peer-checked:text-gray-300 peer-checked:text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="text-lg font-semibold">Pescatarian</div>
-                                        <img class="w-7 h-7" src="https://www.svgrepo.com/show/503897/fish.svg" alt="Pescatarian Icon">
-                                    </div>
-                                    <div class="text-sm mt-2">People who follow a vegetarian diet but also consume fish and seafood</div>
-                                </div>
-                            </label>
-                        </li>
-                    </ul>
-
-
-                        <!-- Submit button -->
-                        <div class="flex space-x-4">
-                            <button type="button" onclick="showSection('onboarding-body-composition')" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 rounded-lg text-sm px-5 py-3 text-center font-bold">
-                                Previous
-                            </button>
-                            <button type="button" onclick="showSection('onboarding-goals')" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 rounded-lg text-sm px-5 py-3 text-center font-bold">
-                                Next
-                            </button>
-                        </div>
-
-                </div>
-            </div>
-        </div>
     </section>
-    <section id="onboarding-goals" class=" hidden absolute inset-0  items-center justify-center z-[2]">
-        <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-            <div class="w-full bg-white rounded-lg shadow dark:border sm:max-w-lg xl:max-w-2xl lg:max-w-xl xl:p-0 dark:bg-black/90 dark:border-white">
-                <div class="p-8 space-y-6 md:space-y-8">
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div class="bg-blue-600 h-2.5 rounded-full" style="width: 75%"></div>
+
+    <section id="onboarding-nutrition" class="hidden relative z-10 h-full flex flex-col items-center justify-center px-4">
+        <div class="glass-card p-8 md:p-12 rounded-3xl w-full max-w-4xl shadow-2xl">
+            <div class="mb-8 text-center">
+                <div class="w-full bg-gray-800 rounded-full h-1.5 mb-6">
+                    <div class="bg-gradient-to-r from-yellow-200 to-green-400 h-1.5 rounded-full" style="width: 66%"></div>
                 </div>
-                    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
-                        Step 3: <span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100">Set Your Goals & Target</span>
-                    </h1>
-                    <ul class="grid w-full gap-6 md:grid-cols-2">
-                        <li>
-                            <input type="radio" id="hosting-small" name="hosting" value="hosting-small" class="hidden peer" required />
-                            <label for="hosting-small" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="w-full text-lg font-semibold">Lose weight</div>
-                                    <div class="w-full">Reduce fat and retain muscles</div>
-                                </div>
-                            </label>
-                        </li>
-                        <li>
-                            <input type="radio" id="hosting-big" name="hosting" value="hosting-big" class="hidden peer">
-                            <label for="hosting-big" class="inline-flex items-center justify-between w-full p-5 text-gray-500 bg-white border border-gray-200 rounded-lg cursor-pointer dark:hover:text-gray-300 dark:border-gray-700 dark:peer-checked:text-blue-500 peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:bg-gray-800 dark:hover:bg-gray-700">
-                                <div class="block">
-                                    <div class="w-full text-lg font-semibold">Gain Weight</div>
-                                    <div class="w-full">Build muscles mass & fat</div>
-                                </div>
-                            </label>
-                        </li>
-                    </ul>
-                        <div class="flex space-x-4">
-                            <div class="relative  w-1/2">
-                                <div class="relative">
-                                    <input id="target-weeks" datepicker datepicker-format="dd-mm-yyyy" datepicker-autohide datepicker-min-date="20-10-2024" type="text" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Target Date">
-                                </div>
-                            </div>
-                            <div class="relative  w-1/2">
-                                <div class="relative">
-                                    <input type="number" id="target-weight" class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer" placeholder=" " />
-                                    <label for="target-weight" class="absolute text-sm text-gray-500 dark:text-gray-400 duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-white dark:bg-black px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Target Weight</label>
-                                </div>
-                                <select name="unit-weight" id="unit-target-weight" class="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black border-none text-white dark:text-white dark:bg-black focus:outline-none text-sm">
-                                    <option value="kg">in kg</option>
-                                    <option value="lbs">in lbs</option>
-                                </select>
-                            </div>
-                        </div>
-
-
-                        <!-- Submit button -->
-                        <div class="flex space-x-4">
-                            <button type="button" onclick="showSection('onboarding-nutrition')" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 rounded-lg text-sm px-5 py-3 text-center font-bold">
-                                Previous
-                            </button>
-                            <button type="button" onclick="showSection('onboarding-submit')" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 rounded-lg text-sm px-5 py-3 text-center font-bold">
-                                Next
-                            </button>
-                        </div>
-
-                </div>
+                <h2 class="text-3xl font-bold mb-2">Fuel Your Body</h2>
+                <p class="text-gray-400">What's your dietary preference?</p>
             </div>
-        </div>
-    </section>
-    <section id="onboarding-submit" class="hidden absolute inset-0  items-center justify-center z-[2]">
-        <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-            <div class="w-full bg-white rounded-lg shadow dark:border sm:max-w-lg xl:max-w-2xl lg:max-w-xl xl:p-0 dark:bg-black/90 dark:border-white">
-                <div class="p-8 space-y-6 md:space-y-8">
-                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                  <div class="bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
-                </div>
-                    <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white text-center">
-                        <span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100">Thank You {{current_user.name.title()}}</span>
-                    </h1>
-                    <blockquote class="text-xl italic font-semibold text-gray-900 dark:text-white">
-                        <svg class="w-8 h-8 text-gray-400 dark:text-gray-600 mb-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 14">
-                            <path d="M6 0H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4v1a3 3 0 0 1-3 3H2a1 1 0 0 0 0 2h1a5.006 5.006 0 0 0 5-5V2a2 2 0 0 0-2-2Zm10 0h-4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4v1a3 3 0 0 1-3 3h-1a1 1 0 0 0 0 2h1a5.006 5.006 0 0 0 5-5V2a2 2 0 0 0-2-2Z"/>
-                        </svg>
-                        <p>"The only bad workout is the one that didn’t happen. Start today, and every step gets you closer to your goal."</p>
-                    </blockquote>
 
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <label class="cursor-pointer">
+                    <input type="radio" name="diet" value="everything" class="hidden peer">
+                    <div class="h-full p-6 border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all text-center">
+                        <span class="block text-xl font-bold mb-1">Everything</span>
+                        <span class="text-xs text-gray-500">No restrictions</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="diet" value="vegetarian" class="hidden peer">
+                    <div class="h-full p-6 border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all text-center">
+                        <span class="block text-xl font-bold mb-1">Vegetarian</span>
+                        <span class="text-xs text-gray-500">Plant-based + Dairy</span>
+                    </div>
+                </label>
+                <label class="cursor-pointer">
+                    <input type="radio" name="diet" value="vegan" class="hidden peer">
+                    <div class="h-full p-6 border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all text-center">
+                        <span class="block text-xl font-bold mb-1">Vegan</span>
+                        <span class="text-xs text-gray-500">100% Plant-powered</span>
+                    </div>
+                </label>
 
+            </div>
 
-                        <!-- Submit button -->
-                        <button type="submit" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 rounded-lg text-sm px-5 py-3 text-center font-bold">
-                            Submit
-                        </button>
-                </div>
+            <div class="flex gap-4">
+                <button type="button" onclick="showSection('onboarding-body')" class="w-1/3 py-4 border border-gray-700 rounded-2xl hover:bg-gray-800 transition-all">Back</button>
+                <button type="button" onclick="showSection('onboarding-goals')" class="w-2/3 py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black rounded-2xl transition-all">Continue</button>
             </div>
         </div>
     </section>
 
-</div>
+    <section id="onboarding-goals" class="hidden relative z-10 h-full flex flex-col items-center justify-center px-4">
+        <div class="glass-card p-8 md:p-12 rounded-3xl w-full max-w-lg shadow-2xl text-center">
+            <div class="w-full bg-gray-800 rounded-full h-1.5 mb-10">
+                <div class="bg-gradient-to-r from-yellow-200 to-green-400 h-1.5 rounded-full" style="width: 90%"></div>
+            </div>
+
+            <h2 class="text-4xl font-black mb-8 italic">CHOOSE YOUR FOCUS</h2>
+
+            <div class="space-y-4 mb-8">
+                <label class="block cursor-pointer">
+                    <input type="radio" name="goal" value="lose" class="hidden peer">
+                    <div class="p-6 border-2 border-gray-700 rounded-3xl peer-checked:border-green-400 peer-checked:bg-green-400 text-left transition-all group">
+                        <h3 class="text-2xl font-bold group-peer-checked:text-black">Cut & Shred</h3>
+                        <p class="text-gray-500 group-peer-checked:text-black/70">Focus on fat loss and definition.</p>
+                    </div>
+                </label>
+                <label class="block cursor-pointer">
+                    <input type="radio" name="goal" value="gain" class="hidden peer">
+                    <div class="p-6 border-2 border-gray-700 rounded-3xl peer-checked:border-green-400 peer-checked:bg-green-400 text-left transition-all group">
+                        <h3 class="text-2xl font-bold group-peer-checked:text-black">Bulk & Build</h3>
+                        <p class="text-gray-500 group-peer-checked:text-black/70">Focus on muscle mass and strength.</p>
+                    </div>
+                </label>
+            </div>
+
+            <button type="button" onclick="showSection('onboarding-submit')" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-green-400 transition-all">
+                Almost There
+            </button>
+        </div>
+    </section>
+
+    <section id="onboarding-submit" class="hidden relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
+        <div class="max-w-xl">
+            <h2 class="text-5xl font-black mb-6">
+                "The only bad workout is the one that <span class="text-green-400">didn't happen</span>."
+            </h2>
+            <p class="text-gray-400 mb-10 italic">— Start today, not tomorrow.</p>
+
+            <button type="submit" class="px-16 py-6 bg-gradient-to-r from-yellow-200 to-green-400 text-black text-2xl font-black rounded-full shadow-[0_0_50px_rgba(74,222,128,0.3)] hover:scale-110 transition-all animate-pulse">
+                FINISH SETUP
+            </button>
+        </div>
+    </section>
 
 </form>
-<script>
-// JavaScript to handle section navigation
-let currentSection = 0;
-const sections = [
-    'onboarding-basic-info',
-    'onboarding-fitness-profile',
-    'onboarding-nutrition-goals',
-    'onboarding-advanced-metrics',
-    'onboarding-goals',
-    'onboarding-submit'
-];
 
-function showNextSection() {
-    if (currentSection < sections.length - 1) {
-        document.getElementById(sections[currentSection]).classList.add('hidden');
-        currentSection++;
-        document.getElementById(sections[currentSection]).classList.remove('hidden');
-    }
-}
-
-function showPreviousSection() {
-    if (currentSection > 0) {
-        document.getElementById(sections[currentSection]).classList.add('hidden');
-        currentSection--;
-        document.getElementById(sections[currentSection]).classList.remove('hidden');
-    }
-}
-</script>
 <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 </body>
 </html>

@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 import requests, ast, gunicorn
 import psycopg2
+import os
 
 
 # Initialize the Flask app
@@ -11,7 +12,7 @@ app = Flask(__name__)
 app.secret_key = 'Secret_Key'
 
 # SQLite configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:mnNKMFXEHyKxnxHLcqcnfqLSHrRgevVA@switchyard.proxy.rlwy.net:18502/railway'  # Database file
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///userdata.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize the database
@@ -28,16 +29,22 @@ class User(UserMixin, db.Model):
     name = db.Column(db.String(80), nullable=False, unique=True)
     email = db.Column(db.String(120), nullable=False, unique=True)
     password = db.Column(db.String(255), nullable=False)
-    onboarding = db.Column(db.Boolean, default=False)  # Onboarding status
+    onboarding = db.Column(db.Boolean, default=False)
 
+    # New Onboarding Fields
+    gender = db.Column(db.String(20))
+    age = db.Column(db.Integer)
+    weight = db.Column(db.Float)
+    activity_level = db.Column(db.String(50))
+    diet = db.Column(db.String(50))
+    goal = db.Column(db.String(50))
 
     def set_password(self, password):
-        """Hashes the password and stores it."""
         self.password = generate_password_hash(password)
 
     def check_password(self, password):
-        """Checks the hashed password against the input password."""
         return check_password_hash(self.password, password)
+
 
     def __repr__(self):
         return f"<User {self.name}>"
@@ -107,9 +114,27 @@ def dashboard(user):
     data = [20, 5, 3, 3, 2, 1]
     return render_template('dashboard.html', user=current_user, data=data)
 
-@app.route('/onboarding',methods=['GET', 'POST'])
+
+@app.route('/onboarding', methods=['GET', 'POST'])
 @login_required
 def onboarding():
+    if request.method == 'POST':
+        # Extract data from the form
+        current_user.gender = request.form.get('gender')
+        current_user.age = request.form.get('age')
+        current_user.weight = request.form.get('weight')
+        current_user.activity_level = request.form.get('activity-level')
+        current_user.diet = request.form.get('diet')
+        current_user.goal = request.form.get('goal')
+
+        # Mark onboarding as complete
+        current_user.onboarding = True
+
+        db.session.commit()
+
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('dashboard', user=current_user.name))
+
     return render_template('onboarding.html')
 
 
