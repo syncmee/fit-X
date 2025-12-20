@@ -108,11 +108,39 @@ def login():
 
     # If the request method is GET, just show the login/sign-up page
     return render_template('login.html')
-@app.route('/dashboard/<user>', methods=['GET', 'POST'])
-@login_required  # Protect this route
+
+
+@app.route('/dashboard/<user>')
+@login_required
 def dashboard(user):
-    data = [20, 5, 3, 3, 2, 1]
-    return render_template('dashboard.html', user=current_user, data=data)
+    # 1. Basic TDEE (Total Daily Energy Expenditure) Calculation
+    # Formula: BMR * Activity Multiplier
+    bmr = (10 * current_user.weight) + (6.25 * 175) - (5 * current_user.age) + 5  # Simplified for Male
+
+    multipliers = {
+        'sedentary': 1.2,
+        'light': 1.375,
+        'moderate': 1.55,
+        'athlete': 1.725
+    }
+
+    activity_factor = multipliers.get(current_user.activity_level, 1.2)
+    daily_calories = int(bmr * activity_factor)
+
+    # 2. Adjust calories based on Goal
+    if current_user.goal == 'lose':
+        daily_calories -= 500  # Caloric deficit
+    elif current_user.goal == 'gain':
+        daily_calories += 500  # Caloric surplus
+
+    # 3. Sample Progress Data (Weight over the last 7 days)
+    # In a real app, this would come from a 'Progress' table
+    weight_trends = [82.5, 82.2, 82.0, 81.8, 81.9, 81.5, 81.4]
+
+    return render_template('dashboard.html',
+                           user=current_user,
+                           calories=daily_calories,
+                           trends=weight_trends)
 
 
 @app.route('/onboarding', methods=['GET', 'POST'])
