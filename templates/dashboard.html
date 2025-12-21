@@ -92,13 +92,6 @@
                 <h2 class="text-2xl font-black tracking-tight">Dashboard Overview</h2>
 
                 <div class="flex items-center gap-6">
-                    <div class="relative hidden md:block">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </span>
-                        <input type="text" class="bg-white/5 border border-white/10 text-sm rounded-full block w-64 pl-10 p-2.5 focus:ring-fitGreen focus:border-fitGreen placeholder-gray-500" placeholder="Search activity...">
-                    </div>
-
                     <button class="relative text-gray-400 hover:text-white transition">
                         <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-darkBg bg-fitGreen"></span>
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
@@ -146,10 +139,10 @@
                         <div class="mt-6">
                             <div class="flex justify-between text-xs font-bold text-gray-500 mb-1">
                                 <span>Goal Progress</span>
-                                <span>75%</span>
+                                <span>{{ progress }}%</span>
                             </div>
                             <div class="w-full bg-black/50 rounded-full h-3 p-0.5 border border-white/5">
-                                <div class="bg-gradient-to-r from-fitYellow to-fitGreen h-full rounded-full relative" style="width: 75%">
+                                <div class="bg-gradient-to-r from-fitYellow to-fitGreen h-full rounded-full relative" style="width: {{ progress }}%">
                                     <span class="absolute right-0 -top-1 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>
                                 </div>
                             </div>
@@ -212,7 +205,7 @@
                             <a href="#" class="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-fitGreen/10 border border-white/5 hover:border-fitGreen/30 group transition-all">
                                 <div class="flex items-center">
                                     <div class="w-2 h-2 rounded-full bg-fitYellow mr-4 group-hover:shadow-[0_0_10px_#fef08a]"></div>
-                                    <span class="text-sm font-bold text-white">Log today's lunch</span>
+                                    <span class="text-sm font-bold text-white">Log today's {{ meal }}</span>
                                 </div>
                                 <svg class="w-5 h-5 text-gray-500 group-hover:text-fitGreen -rotate-45 group-hover:rotate-0 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                             </a>

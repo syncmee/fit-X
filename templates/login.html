@@ -1,180 +1,162 @@
+<!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <title>fiT - Login</title>
-      <script src="https://cdn.tailwindcss.com"></script>
-      <script src="https://cdn.jsdelivr.net/npm/purecounterjs/dist/purecounter.js"></script>
-      <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
-      <script>
-         tailwind.config = {
-           theme: {
-             extend: {
-               colors: {
-                 accent: {"50":"#fff5f0","100":"#ffd6c2","200":"#feb795","300":"#fe9868","400":"#fd783c","500":"#fb580f","600":"#db4603","700":"#b03802","800":"#862b01","900":"#5a1d00","950":"#2f0f00"}
-               }
-             }
-           }
-         }
-          function showSection(sectionId) {
-          // Hide both sections first
-          document.getElementById('sign-in').style.display = 'none';
-          document.getElementById('sign-up').style.display = 'none';
-
-          // Show the clicked section
-          document.getElementById(sectionId).style.display = 'block';
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fiT - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fitYellow: '#fef08a', // yellow-200
+                        fitGreen: '#4ade80',  // green-400
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
         }
-        window.onload = function() {
-            // Hide the About, Plans, and Mission sections by default
-            document.getElementById('about').style.display = 'none';
-}
 
-      </script>
-   </head>
-<body>
-<header class="w-dvw absolute top-0 left-1/2 -translate-x-1/2 z-[1000] py-4">
-            <div class="max-w-[120rem] text-gray-50 px-6 md:px-8 lg:px-10">
-            <nav class="bg-transparent dark:bg-transparent fixed w-full z-20 top-0 start-0 ">
-              <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
-                <!-- Logo and brand -->
-                <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-                  <svg class="h-8 w-8" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
-                    <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
-                    <circle cx="199" cy="131" r="50" fill="currentColor"></circle>
-                    <circle cx="199" cy="246" r="50" fill="currentColor"></circle>
-                    <circle cx="369" cy="131" r="50" fill="currentColor"></circle>
-                    <circle cx="369" cy="246" r="50" fill="currentColor"></circle>
-                  </svg>
-                  <span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">fiT</span>
-                </a>
-              </div>
-            </nav>
-            </div>
-         </header>
-<div class="absolute inset-0 z-[1]">
-   <img class="h-full w-full object-cover object-center" src="https://images.pexels.com/photos/163403/box-sport-men-training-163403.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="">
-</div>
-<section id="sign-in" class="bg-transparent dark:bg-transparent relative z-[2]">
-  <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 h-full">
-        {% with messages = get_flashed_messages(with_categories=True) %}
-          {% if messages %}
-            <div class="flex flex-col items-center relative z-[2]">
-              {% for category, message in messages %}
-                <div class="flex items-center p-4 mb-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800" role="alert">
-                  <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                  </svg>
-                  <div>
-                    <span class="font-medium">{{ category | title }}!</span> {{ message }}
+        function showSection(sectionId) {
+            // Hide both sections first
+            document.getElementById('sign-in').style.display = 'none';
+            document.getElementById('sign-up').style.display = 'none';
+
+            // Show the clicked section
+            document.getElementById(sectionId).style.display = 'block';
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        /* Autofill styling hack for dark mode */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px #000 inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+</head>
+<body class="bg-black text-white font-sans selection:bg-green-400 selection:text-black h-screen overflow-hidden relative">
+
+    <div class="absolute inset-0 z-0">
+        <img class="h-full w-full object-cover object-center" src="https://images.pexels.com/photos/163403/box-sport-men-training-163403.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" alt="Background">
+        <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/90"></div>
+    </div>
+
+    <header class="absolute top-0 w-full z-50 p-6 flex justify-between items-center max-w-7xl mx-auto left-0 right-0">
+        <a href="/" class="flex items-center space-x-2 group">
+            <svg class="h-8 w-8 text-white group-hover:text-green-400 transition-colors" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
+                <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
+                <circle cx="199" cy="131" r="50" fill="currentColor"></circle>
+                <circle cx="199" cy="246" r="50" fill="currentColor"></circle>
+                <circle cx="369" cy="131" r="50" fill="currentColor"></circle>
+                <circle cx="369" cy="246" r="50" fill="currentColor"></circle>
+            </svg>
+            <span class="text-2xl font-black tracking-tighter">fiT</span>
+        </a>
+    </header>
+
+    <main class="relative z-10 h-full flex items-center justify-center px-4">
+
+        <div class="absolute top-24 left-1/2 -translate-x-1/2 w-full max-w-md z-50">
+            {% with messages = get_flashed_messages(with_categories=True) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="flex items-center p-4 mb-4 text-sm text-black rounded-lg bg-gradient-to-r from-yellow-200 to-green-400 shadow-[0_0_20px_rgba(74,222,128,0.3)]" role="alert">
+                    <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                    <div><span class="font-black uppercase">{{ category }}!</span> {{ message }}</div>
                   </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+        </div>
+
+        <section id="sign-in" class="w-full max-w-md">
+            <div class="glass-card p-8 md:p-10 rounded-3xl shadow-2xl">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-black mb-2">Welcome Back</h1>
+                    <p class="text-gray-400">Sign in to your <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-green-400 font-bold">fiT</span> account</p>
                 </div>
-              {% endfor %}
+
+                <form class="space-y-6" action="/login" method="POST">
+                    <div>
+                        <label for="email" class="block mb-2 text-sm font-bold text-gray-400">Your Email</label>
+                        <input type="email" name="email" id="email" class="w-full bg-black/50 border border-gray-700 text-white rounded-xl p-4 focus:ring-green-400 focus:border-green-400 placeholder-gray-600 transition-all" placeholder="name@company.com" required>
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="password" class="block text-sm font-bold text-gray-400">Password</label>
+                            <a href="#" class="text-sm font-medium text-green-400 hover:text-green-300 transition-colors">Forgot?</a>
+                        </div>
+                        <input type="password" name="password" id="password" class="w-full bg-black/50 border border-gray-700 text-white rounded-xl p-4 focus:ring-green-400 focus:border-green-400 placeholder-gray-600 transition-all" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="flex items-center">
+                        <div class="flex items-center h-5">
+                            <input id="remember" type="checkbox" class="w-4 h-4 border border-gray-600 rounded bg-gray-700 focus:ring-3 focus:ring-green-400 ring-offset-gray-800">
+                        </div>
+                        <label for="remember" class="ml-2 text-sm font-medium text-gray-300">Remember me</label>
+                    </div>
+
+                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black text-lg rounded-xl hover:opacity-90 hover:scale-[1.02] transition-all shadow-[0_0_20px_rgba(74,222,128,0.2)]">
+                        SIGN IN
+                    </button>
+
+                    <p class="text-sm font-light text-center text-gray-400">
+                        New here? <a href="#" onclick="showSection('sign-up')" class="font-bold text-white hover:text-green-400 transition-colors">Create an account</a>
+                    </p>
+                </form>
             </div>
-          {% endif %}
-        {% endwith %}
+        </section>
 
-      <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-black dark:border-white">
-          <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-              <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-                  Sign in to your <span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100"> fiT</span> account
-              </h1>
-            <div class="items-center justify-center flex">
-              <button type="button" class="text-white bg-[#3b5998] hover:bg-[#3b5998]/80 focus:ring-4 focus:outline-none focus:ring-[#3b5998]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#3b5998]/55 me-2 mb-2">
-                <svg class="w-4 h-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 8 19">
-                <path fill-rule="evenodd" d="M6.135 3H8V0H6.135a4.147 4.147 0 0 0-4.142 4.142V6H0v3h2v9.938h3V9h2.021l.592-3H5V3.591A.6.6 0 0 1 5.592 3h.543Z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              <button type="button" class="text-white bg-[#24292F] hover:bg-[#24292F]/80 focus:ring-4 focus:outline-none focus:ring-[#24292F]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-500 dark:hover:bg-[#050708]/30 me-2 mb-2">
-                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 .333A9.911 9.911 0 0 0 6.866 19.65c.5.092.678-.215.678-.477 0-.237-.01-1.017-.014-1.845-2.757.6-3.338-1.169-3.338-1.169a2.627 2.627 0 0 0-1.1-1.451c-.9-.615.07-.6.07-.6a2.084 2.084 0 0 1 1.518 1.021 2.11 2.11 0 0 0 2.884.823c.044-.503.268-.973.63-1.325-2.2-.25-4.516-1.1-4.516-4.9A3.832 3.832 0 0 1 4.7 7.068a3.56 3.56 0 0 1 .095-2.623s.832-.266 2.726 1.016a9.409 9.409 0 0 1 4.962 0c1.89-1.282 2.717-1.016 2.717-1.016.366.83.402 1.768.1 2.623a3.827 3.827 0 0 1 1.02 2.659c0 3.807-2.319 4.644-4.525 4.889a2.366 2.366 0 0 1 .673 1.834c0 1.326-.012 2.394-.012 2.72 0 .263.18.572.681.475A9.911 9.911 0 0 0 10 .333Z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              <button type="button" class="text-white bg-[#f0340a] hover:bg-[#f0340a]/50 focus:ring-4 focus:outline-none focus:ring-[#f0340a]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#f0340a]/55 me-2 mb-2">
-                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 19">
-                <path fill-rule="evenodd" d="M8.842 18.083a8.8 8.8 0 0 1-8.65-8.948 8.841 8.841 0 0 1 8.8-8.652h.153a8.464 8.464 0 0 1 5.7 2.257l-2.193 2.038A5.27 5.27 0 0 0 9.09 3.4a5.882 5.882 0 0 0-.2 11.76h.124a5.091 5.091 0 0 0 5.248-4.057L14.3 11H9V8h8.34c.066.543.095 1.09.088 1.636-.086 5.053-3.463 8.449-8.4 8.449l-.186-.002Z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              </div>
-              <form class="space-y-4 md:space-y-6" action="/login" method="POST">
-                <div class="relative">
-                    <input type="email" name="email" id="email" class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-orange peer" placeholder=" " />
-                    <label for="email" class="absolute text-md font-medium text-white dark:text-white duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-transparent dark:bg-black px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Email</label>
+        <section id="sign-up" class="hidden w-full max-w-md">
+            <div class="glass-card p-8 md:p-10 rounded-3xl shadow-2xl">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-black mb-2">Join the Movement</h1>
+                    <p class="text-gray-400">Start your journey with <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 to-green-400 font-bold">fiT</span></p>
                 </div>
-                <div class="relative">
-                    <input type="password" name="password" id="password" class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-orange peer" placeholder=" " />
-                    <label for="password" class="absolute text-md font-medium text-white dark:text-white duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-transparent dark:bg-black px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Password</label>
-                </div>
-                  <div class="flex items-center justify-between">
-                      <div class="flex items-start">
-                          <div class="flex items-center h-5">
-                            <input id="remember" aria-describedby="remember" type="checkbox" class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-primary-600 dark:ring-offset-gray-800">
-                          </div>
-                          <div class="ml-3 text-sm">
-                            <label for="remember" class="text-gray-500 dark:text-gray-300" >Remember me</label>
-                          </div>
-                      </div>
-                      <a href="#" class="text-sm font-medium text-white hover:underline dark:text-white">Forgot password?</a>
-                  </div>
-                     <button type="submit" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 px-3 font-bold">Sign in</button>
-                  <p class="text-sm font-light text-gray-500 dark:text-gray-400">
-                      Don’t have an account yet? <a href="#" onclick="showSection('sign-up')" class="font-medium text-primary-600 hover:underline dark:text-primary-500">Sign up</a>
-                  </p>
-              </form>
-          </div>
-      </div>
-  </div>
-</section>
-<section id="sign-up" class="hidden bg-transparent dark:bg-transparent relative z-[2]  ">
-  <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0 h-full">
-      <div class="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-black dark:border-white">
-          <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
-              <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-                  Sign up for your <span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100"> fiT</span> account
-              </h1>
-            <div class="items-center justify-center flex">
-              <button type="button" class="text-white bg-[#3b5998] hover:bg-[#3b5998]/80 focus:ring-4 focus:outline-none focus:ring-[#3b5998]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#3b5998]/55 me-2 mb-2">
-                <svg class="w-4 h-4 " aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 8 19">
-                <path fill-rule="evenodd" d="M6.135 3H8V0H6.135a4.147 4.147 0 0 0-4.142 4.142V6H0v3h2v9.938h3V9h2.021l.592-3H5V3.591A.6.6 0 0 1 5.592 3h.543Z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              <button type="button" class="text-white bg-[#24292F] hover:bg-[#24292F]/80 focus:ring-4 focus:outline-none focus:ring-[#24292F]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-gray-500 dark:hover:bg-[#050708]/30 me-2 mb-2">
-                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 .333A9.911 9.911 0 0 0 6.866 19.65c.5.092.678-.215.678-.477 0-.237-.01-1.017-.014-1.845-2.757.6-3.338-1.169-3.338-1.169a2.627 2.627 0 0 0-1.1-1.451c-.9-.615.07-.6.07-.6a2.084 2.084 0 0 1 1.518 1.021 2.11 2.11 0 0 0 2.884.823c.044-.503.268-.973.63-1.325-2.2-.25-4.516-1.1-4.516-4.9A3.832 3.832 0 0 1 4.7 7.068a3.56 3.56 0 0 1 .095-2.623s.832-.266 2.726 1.016a9.409 9.409 0 0 1 4.962 0c1.89-1.282 2.717-1.016 2.717-1.016.366.83.402 1.768.1 2.623a3.827 3.827 0 0 1 1.02 2.659c0 3.807-2.319 4.644-4.525 4.889a2.366 2.366 0 0 1 .673 1.834c0 1.326-.012 2.394-.012 2.72 0 .263.18.572.681.475A9.911 9.911 0 0 0 10 .333Z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              <button type="button" class="text-white bg-[#f0340a] hover:bg-[#f0340a]/50 focus:ring-4 focus:outline-none focus:ring-[#f0340a]/50 font-medium rounded-lg text-sm px-2.5 py-2.5 text-center inline-flex items-center dark:focus:ring-[#f0340a]/55 me-2 mb-2">
-                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 19">
-                <path fill-rule="evenodd" d="M8.842 18.083a8.8 8.8 0 0 1-8.65-8.948 8.841 8.841 0 0 1 8.8-8.652h.153a8.464 8.464 0 0 1 5.7 2.257l-2.193 2.038A5.27 5.27 0 0 0 9.09 3.4a5.882 5.882 0 0 0-.2 11.76h.124a5.091 5.091 0 0 0 5.248-4.057L14.3 11H9V8h8.34c.066.543.095 1.09.088 1.636-.086 5.053-3.463 8.449-8.4 8.449l-.186-.002Z" clip-rule="evenodd"/>
-                </svg>
-              </button>
-              </div>
-              <form class="space-y-4 md:space-y-6" action="/login" method="POST">
-                <div class="relative">
-                    <input type="text" name="name-signup" id="name-signup"  class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-orange peer" placeholder=" " />
-                    <label for="name-signup" class="absolute text-md font-medium text-white dark:text-white duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-transparent dark:bg-black px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Name</label>
-                </div>
-                <div class="relative">
-                    <input type="email" name="email-signup" id="email-signup" class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-orange peer" placeholder=" " />
-                    <label for="email-signup" class="absolute text-md font-medium text-white dark:text-white duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-transparent dark:bg-black px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Email</label>
-                </div>
-                <div class="relative">
-                    <input type="password" name="password-signup" id="password-signup" class="block px-2.5 pb-2.5 pt-4 w-full text-sm text-gray-900 bg-transparent rounded-lg border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-orange peer" placeholder=" " />
-                    <label for="password-signup" class="absolute text-md font-medium text-white dark:text-white duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0] bg-transparent dark:bg-black px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-focus:dark:text-blue-500 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75 peer-focus:-translate-y-4 rtl:peer-focus:translate-x-1/4 rtl:peer-focus:left-auto start-1">Password</label>
-                </div>
-                     <button type="submit" class="w-full text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 px-3 font-bold">Sign Up</button>
-                  <p class="text-sm font-light text-gray-500 dark:text-gray-400">
-                      Already have an account? <a href="#" onclick="showSection('sign-in')"  class="font-medium text-primary-600 hover:underline dark:text-primary-500">Login</a>
-                  </p>
-              </form>
-          </div>
-      </div>
-  </div>
-</section>
 
+                <form class="space-y-6" action="/login" method="POST">
+                    <div>
+                        <label for="name-signup" class="block mb-2 text-sm font-bold text-gray-400">Full Name</label>
+                        <input type="text" name="name-signup" id="name-signup" class="w-full bg-black/50 border border-gray-700 text-white rounded-xl p-4 focus:ring-green-400 focus:border-green-400 placeholder-gray-600 transition-all" placeholder="John Doe" required>
+                    </div>
+                    <div>
+                        <label for="email-signup" class="block mb-2 text-sm font-bold text-gray-400">Your Email</label>
+                        <input type="email" name="email-signup" id="email-signup" class="w-full bg-black/50 border border-gray-700 text-white rounded-xl p-4 focus:ring-green-400 focus:border-green-400 placeholder-gray-600 transition-all" placeholder="name@company.com" required>
+                    </div>
+                    <div>
+                        <label for="password-signup" class="block mb-2 text-sm font-bold text-gray-400">Password</label>
+                        <input type="password" name="password-signup" id="password-signup" class="w-full bg-black/50 border border-gray-700 text-white rounded-xl p-4 focus:ring-green-400 focus:border-green-400 placeholder-gray-600 transition-all" placeholder="••••••••" required>
+                    </div>
 
-<!-- JavaScript to toggle dropdown and close on outside click -->
-<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black text-lg rounded-xl hover:opacity-90 hover:scale-[1.02] transition-all shadow-[0_0_20px_rgba(74,222,128,0.2)]">
+                        CREATE ACCOUNT
+                    </button>
 
+                    <p class="text-sm font-light text-center text-gray-400">
+                        Already have an account? <a href="#" onclick="showSection('sign-in')" class="font-bold text-white hover:text-green-400 transition-colors">Login here</a>
+                    </p>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 </body>
 </html>
