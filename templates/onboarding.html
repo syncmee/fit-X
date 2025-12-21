@@ -89,14 +89,17 @@
                     </label>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="number" name="age" placeholder="Age" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400">
-                    <input type="number" name="weight" placeholder="Weight (kg)" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400">
+                <div class="grid grid-cols-3 gap-4">
+                    <input type="number" name="age" placeholder="Age" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400 text-white" required>
+
+                    <input type="number" name="height" placeholder="Height (cm)" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400 text-white" required>
+
+                    <input type="number" name="weight" placeholder="Weight (kg)" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400 text-white" required>
                 </div>
 
                 <select name="activity-level" class="w-full bg-black border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400">
                     <option selected disabled>Activity Level</option>
-                    <option value="sedentary">Sedentary (Office job)</option>
+                    <option value="sedentary">Sedentary (Not Active)</option>
                     <option value="light">Lightly Active (1-2 days/wk)</option>
                     <option value="moderate">Moderately Active (3-5 days/wk)</option>
                     <option value="athlete">High Performance (Daily)</option>
@@ -175,11 +178,27 @@
                     </div>
                 </label>
             </div>
-
+            <div>
+    <div class="mt-6 mb-8">
+        <div class="relative">
+    <input
+        type="number"
+        name="target_weight"
+        class="w-full bg-black border-2 border-gray-700 rounded-2xl p-4 pr-48 text-white focus:ring-green-400 focus:border-green-400 font-bold text-lg outline-none placeholder-gray-600"
+        placeholder="e.g. 75"
+        oninput="if(this.value.length > 3) this.value = this.value.slice(0, 3);"
+        required
+    >
+    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold pointer-events-none">
+        kg
+    </span>
+</div>
+    </div>
+        </div>
             <button type="button" onclick="showSection('onboarding-submit')" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-green-400 transition-all">
                 Almost There
             </button>
-        </div>
+
     </section>
 
     <section id="onboarding-submit" class="hidden relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">

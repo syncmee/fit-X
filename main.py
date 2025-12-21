@@ -31,9 +31,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(255), nullable=False)
     onboarding = db.Column(db.Boolean, default=False)
 
-    # New Onboarding Fields
+    # Onboarding Fields
     gender = db.Column(db.String(20))
     age = db.Column(db.Integer)
+    height = db.Column(db.Float)  # Added Height
     weight = db.Column(db.Float)
     activity_level = db.Column(db.String(50))
     diet = db.Column(db.String(50))
@@ -113,33 +114,55 @@ def login():
 @app.route('/dashboard/<user>')
 @login_required
 def dashboard(user):
-    # 1. Basic TDEE (Total Daily Energy Expenditure) Calculation
-    # Formula: BMR * Activity Multiplier
-    bmr = (10 * current_user.weight) + (6.25 * 175) - (5 * current_user.age) + 5  # Simplified for Male
+    # Default values to prevent errors if data is missing
+    daily_calories = 2000
+    bmi = 0
+    bmr = 0
 
-    multipliers = {
-        'sedentary': 1.2,
-        'light': 1.375,
-        'moderate': 1.55,
-        'athlete': 1.725
-    }
+    if current_user.weight and current_user.height and current_user.age:
+        # --- 1. Calculate BMI ---
+        # Formula: weight (kg) / [height (m)]^2
+        height_in_meters = current_user.height / 100
+        bmi = round(current_user.weight / (height_in_meters ** 2), 1)
 
-    activity_factor = multipliers.get(current_user.activity_level, 1.2)
-    daily_calories = int(bmr * activity_factor)
+        # --- 2. Calculate BMR (Mifflin-St Jeor Equation) ---
+        # Male: 10W + 6.25H - 5A + 5
+        # Female: 10W + 6.25H - 5A - 161
+        val_weight = 10 * current_user.weight
+        val_height = 6.25 * current_user.height
+        val_age = 5 * current_user.age
 
-    # 2. Adjust calories based on Goal
-    if current_user.goal == 'lose':
-        daily_calories -= 500  # Caloric deficit
-    elif current_user.goal == 'gain':
-        daily_calories += 500  # Caloric surplus
+        if current_user.gender == 'male':
+            bmr = val_weight + val_height - val_age + 5
+        else:
+            bmr = val_weight + val_height - val_age - 161
 
-    # 3. Sample Progress Data (Weight over the last 7 days)
-    # In a real app, this would come from a 'Progress' table
-    weight_trends = [82.5, 82.2, 82.0, 81.8, 81.9, 81.5, 81.4]
+        # --- 3. Calculate TDEE (Daily Calories) ---
+        multipliers = {
+            'sedentary': 1.2,
+            'light': 1.375,
+            'moderate': 1.55,
+            'athlete': 1.725  # mapped from 'high performance'
+        }
+        # Default to 1.2 if not found
+        activity_factor = multipliers.get(current_user.activity_level, 1.2)
+        tdee = bmr * activity_factor
+
+        # --- 4. Adjust for Goal ---
+        if current_user.goal == 'lose':
+            daily_calories = int(tdee - 500)
+        elif current_user.goal == 'gain':
+            daily_calories = int(tdee + 500)
+        else:
+            daily_calories = int(tdee)
+
+    # Sample chart data (placeholder for now)
+    weight_trends = [current_user.weight, current_user.weight, current_user.weight]
 
     return render_template('dashboard.html',
                            user=current_user,
                            calories=daily_calories,
+                           bmi=bmi,
                            trends=weight_trends)
 
 
@@ -147,20 +170,16 @@ def dashboard(user):
 @login_required
 def onboarding():
     if request.method == 'POST':
-        # Extract data from the form
         current_user.gender = request.form.get('gender')
-        current_user.age = request.form.get('age')
-        current_user.weight = request.form.get('weight')
+        current_user.age = int(request.form.get('age'))
+        current_user.height = float(request.form.get('height'))  # Save Height
+        current_user.weight = float(request.form.get('weight'))
         current_user.activity_level = request.form.get('activity-level')
         current_user.diet = request.form.get('diet')
         current_user.goal = request.form.get('goal')
 
-        # Mark onboarding as complete
         current_user.onboarding = True
-
         db.session.commit()
-
-        flash('Profile updated successfully!', 'success')
         return redirect(url_for('dashboard', user=current_user.name))
 
     return render_template('onboarding.html')
