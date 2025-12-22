@@ -42,6 +42,9 @@ class User(UserMixin, db.Model):
     diet = db.Column(db.String(50))
     goal = db.Column(db.String(50))
 
+    # Dashboard Fields
+    logs = db.relationship('WeightLog', backref='user', lazy=True)
+
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
@@ -51,6 +54,14 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f"<User {self.name}>"
 
+class WeightLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    weight = db.Column(db.Float, nullable=False)
+    date = db.Column(db.DateTime, default=datetime.now)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return f"<WeightLog {self.weight}kg on {self.date}>"
 
 @login_manager.user_loader
 def load_user(user_id):
