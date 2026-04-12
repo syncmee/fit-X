@@ -7,381 +7,239 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        // The specific fiT brand gradient colors defined for easier use
-                        fitYellow: '#fef08a', // yellow-200
-                        fitGreen: '#4ade80',  // green-400
-                        darkBg: '#0A0A0A',    // Almost pure black
-                        cardBg: '#121212'     // Slightly lighter black for cards
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { fitYellow: "#fef08a", fitGreen: "#4ade80", darkBg: "#0A0A0A" }, fontFamily: { sans: ["Inter", "sans-serif"] } } } };
+        function scrollCoachFeed() { const feed = document.getElementById("coach-feed"); if (feed) { feed.scrollTop = feed.scrollHeight; } }
+        function setCoachPrompt(text) { const input = document.getElementById("coach-input"); if (input) { input.value = text; input.focus(); input.setSelectionRange(input.value.length, input.value.length); } }
+        function openCoachModal(text = "") { const modal = document.getElementById("coach-modal"); if (!modal) { return; } modal.classList.remove("hidden"); modal.classList.add("flex"); if (text) { setCoachPrompt(text); } scrollCoachFeed(); }
+        function closeCoachModal() { const modal = document.getElementById("coach-modal"); if (!modal) { return; } modal.classList.add("hidden"); modal.classList.remove("flex"); if (window.location.hash === "#coach-chat") { history.replaceState(null, "", window.location.pathname + window.location.search); } }
+        window.addEventListener("load", () => { if (window.location.hash === "#coach-chat") { openCoachModal(); return; } scrollCoachFeed(); });
+        window.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeCoachModal(); } });
     </script>
     <style>
-        /* A modern, sexy scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0A0A0A; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
-
-        /* The "Sexy" Glass Effect applied to cards */
-        .glass-card {
-            background-color: rgba(18, 18, 18, 0.8); /* Semi-transparent dark bg */
-            backdrop-filter: blur(12px);             /* The frosting effect */
-            border: 1px solid rgba(255, 255, 255, 0.08); /* Subtle border */
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); /* Deep shadow */
-        }
-
-        /* Subtle glow for active elements */
-        .nav-active {
-            background: linear-gradient(to right, rgba(254, 240, 138, 0.1), rgba(74, 222, 128, 0.1));
-            border-left: 4px solid #4ade80;
-            color: #4ade80;
-        }
+        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #0A0A0A; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
+        .glass-card { background-color: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
+        .nav-active { background: linear-gradient(to right, rgba(254, 240, 138, 0.1), rgba(74, 222, 128, 0.1)); border-left: 4px solid #4ade80; color: #4ade80; }
     </style>
 </head>
 <body class="bg-darkBg text-gray-100 font-sans antialiased overflow-hidden">
-
     <div class="flex h-screen">
-
-        <aside class="w-64 h-full bg-black/50 backdrop-blur-xl border-r border-white/5 flex flex-col hidden md:flex">
-            <div class="h-20 flex items-center px-8">
-                 <a href="{{ url_for('homepage') }}" class="text-3xl font-black tracking-tighter">
-                    <span class="bg-clip-text text-transparent bg-gradient-to-r from-fitYellow to-fitGreen">fiT</span>.
-                </a>
-            </div>
-
+        <aside class="w-64 h-full bg-black/50 backdrop-blur-xl border-r border-white/5 flex-col hidden md:flex">
+            <div class="h-20 flex items-center px-8"><a href="{{ url_for('main.homepage') }}" class="text-3xl font-black tracking-tighter"><span class="bg-clip-text text-transparent bg-gradient-to-r from-fitYellow to-fitGreen">fiT</span>.</a></div>
             <nav class="flex-1 px-4 space-y-2 py-4">
-                <a href="#" class="nav-active flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all group">
-                    <svg class="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Command Center
-                </a>
-                <a href="#" class="flex items-center px-4 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                   <svg class="w-5 h-5 mr-4 group-hover:text-fitGreen transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Workout Log
-                </a>
-                 <a href="#" class="flex items-center px-4 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group">
-                    <svg class="w-5 h-5 mr-4 group-hover:text-fitGreen transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                     Progress
-                 </a>
+                <a href="#" class="nav-active flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all">Command Center</a>
+                <a href="#coach-chat" onclick="openCoachModal(); return false;" class="flex items-center px-4 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">Coach Console</a>
+                <a href="#schedule-board" class="flex items-center px-4 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">Upcoming Sessions</a>
             </nav>
-
             <div class="p-4">
                 <div class="glass-card p-4 rounded-2xl flex items-center">
                     <img class="w-10 h-10 rounded-full border-2 border-fitGreen p-0.5" src="https://ui-avatars.com/api/?name={{ current_user.name }}&background=0A0A0A&color=4ade80&bold=true" alt="Avatar">
-                    <div class="ml-4">
-                        <h5 class="text-sm font-bold text-white">{{ current_user.name }}</h5>
-                        <p class="text-xs text-fitGreen capitalize">{{ current_user.goal }} Focus</p>
-                    </div>
+                    <div class="ml-4"><h5 class="text-sm font-bold text-white">{{ current_user.name }}</h5><p class="text-xs text-fitGreen capitalize">{{ current_user.goal }} focus</p></div>
                 </div>
             </div>
         </aside>
         <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gradient-to-br from-darkBg to-black">
-
             <header class="h-20 flex items-center justify-between px-8 border-b border-white/5 z-10">
-                <h2 class="text-2xl font-black tracking-tight">Dashboard Overview</h2>
-
-                <div class="flex items-center gap-6">
-                    <button class="relative text-gray-400 hover:text-white transition">
-                        <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-darkBg bg-fitGreen"></span>
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </button>
-
-                     <a href="{{ url_for('logout') }}" class="text-sm font-bold text-gray-400 hover:text-red-400 transition">
-                        Logout
-                    </a>
+                <div><h2 class="text-2xl font-black tracking-tight">{{ greeting }}, {{ current_user.name }}</h2><p class="text-sm text-gray-400 mt-1">Track weight, schedule workouts, and talk to your coach naturally.</p></div>
+                <div class="flex items-center gap-4">
+                    <span class="hidden md:inline-flex items-center rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-fitGreen">{{ coach_mode_label }}</span>
+                    <a href="{{ url_for('main.logout') }}" class="text-sm font-bold text-gray-400 hover:text-red-400 transition">Logout</a>
                 </div>
             </header>
-
             <div class="flex-1 overflow-y-auto p-8">
+                {% with messages = get_flashed_messages(with_categories=True) %}
+                    {% if messages %}
+                        <div class="space-y-3 mb-6">
+                            {% for category, message in messages %}
+                                <div class="glass-card rounded-2xl px-5 py-4 text-sm font-medium border {% if category == 'error' %}border-red-400/30 text-red-200{% elif category == 'success' %}border-fitGreen/30 text-green-100{% else %}border-white/10 text-gray-100{% endif %}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
 
                 <div class="grid grid-cols-12 gap-6">
+                    <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
+                        <div class="flex justify-between items-start mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Daily Fuel Target</h5><span class="text-fitGreen text-sm font-bold">{{ current_user.activity_level }}</span></div>
+                        <h3 class="text-5xl font-black"><span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen">{{ calories }}</span><span class="text-2xl text-gray-400 font-bold"> kcal</span></h3>
+                        <p class="text-sm text-gray-400 mt-4 font-medium">Calculated from your current profile and goal.</p>
+                    </section>
 
-                    <div class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8 relative overflow-hidden group">
-                        <div class="absolute -right-20 -top-20 w-40 h-40 bg-fitGreen/20 blur-[100px] group-hover:bg-fitGreen/30 transition-all"></div>
-
-                        <div class="relative z-10">
-                            <div class="flex justify-between items-start mb-4">
-                                <h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Daily Fuel Target</h5>
-                                <svg class="w-6 h-6 text-fitGreen" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                            </div>
-                            <h3 class="text-5xl font-black">
-                                <span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen">
-                                    {{ calories }}
-                                </span>
-                                <span class="text-2xl text-gray-400 font-bold">kcal</span>
-                            </h3>
-                            <p class="text-sm text-gray-400 mt-4 font-medium">Calculated for <span class="text-white">{{ current_user.activity_level }}</span> activity.</p>
-                        </div>
-                    </div>
-
-                     <div class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
-                        <div class="flex justify-between items-start mb-4">
-                             <h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Current Weight</h5>
-                             <span class="flex items-center text-xs font-bold text-fitGreen bg-fitGreen/10 px-2 py-1 rounded-full">
-                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7-7-7 7"></path></svg>
-                                On Track
-                             </span>
-                        </div>
-                        <h3 class="text-5xl font-black text-white">
-                            {{ current_user.weight }} <span class="text-2xl text-gray-400 font-bold">kg</span>
-                        </h3>
+                    <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
+                        <div class="flex justify-between items-start mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Current Weight</h5><span class="flex items-center text-xs font-bold text-fitGreen bg-fitGreen/10 px-2 py-1 rounded-full">{{ weight_status }}</span></div>
+                        <h3 class="text-5xl font-black text-white">{% if current_user.weight is not none %}{{ "%.1f"|format(current_user.weight) }}{% else %}--{% endif %}<span class="text-2xl text-gray-400 font-bold"> kg</span></h3>
                         <div class="mt-6">
-                            <div class="flex justify-between text-xs font-bold text-gray-500 mb-1">
-                                <span>Goal Progress</span>
-                                <span>{{ progress }}%</span>
-                            </div>
-                            <div class="w-full bg-black/50 rounded-full h-3 p-0.5 border border-white/5">
-                                <div class="bg-gradient-to-r from-fitYellow to-fitGreen h-full rounded-full relative" style="width: {{ progress }}%">
-                                    <span class="absolute right-0 -top-1 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span>
-                                </div>
-                            </div>
+                            <div class="flex justify-between text-xs font-bold text-gray-500 mb-1"><span>Goal Progress</span><span>{{ progress }}%</span></div>
+                            <div class="w-full bg-black/50 rounded-full h-3 p-0.5 border border-white/5"><div class="bg-gradient-to-r from-fitYellow to-fitGreen h-full rounded-full relative" style="width: {{ progress }}%"><span class="absolute right-0 -top-1 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span></div></div>
                         </div>
-                    </div>
+                    </section>
 
-                    <div class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8 flex flex-col justify-between">
+                    <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8 flex flex-col justify-between">
                         <div>
-                            <h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Your Blueprint</h5>
-                            <div class="space-y-4">
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mr-4 text-fitGreen">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500 font-bold uppercase">Goal</p>
-                                        <p class="text-lg font-black text-white capitalize">{{ current_user.goal }}</p>
-                                    </div>
+                            <div class="flex items-center justify-between mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Next Session</h5><span class="text-xs font-bold text-fitYellow">{{ weekly_workout_count }} / next 7d</span></div>
+                            {% if next_workout %}
+                                <h3 class="text-3xl font-black text-white mb-2">{{ next_workout.title }}</h3>
+                                <p class="text-sm text-gray-300 mb-4">{{ next_workout_label }}</p>
+                                <div class="space-y-3 text-sm">
+                                    <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3"><span class="text-gray-400">Duration</span><span class="font-bold text-white">{{ next_workout.duration_minutes }} min</span></div>
+                                    <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3"><span class="text-gray-400">Weight logs</span><span class="font-bold text-white">{{ recent_log_count }}</span></div>
                                 </div>
-                                <div class="flex items-center">
-                                    <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center mr-4 text-fitYellow">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"></path></svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs text-gray-500 font-bold uppercase">Diet</p>
-                                        <p class="text-lg font-black text-white capitalize">{{ current_user.diet }}</p>
-                                    </div>
-                                </div>
-                            </div>
+                            {% else %}
+                                <h3 class="text-3xl font-black text-white mb-2">Nothing queued</h3>
+                                <p class="text-sm text-gray-400 leading-relaxed">Ask the coach to create your next session and it will appear here.</p>
+                            {% endif %}
                         </div>
-                        <button data-modal-target="plan-modal" data-modal-toggle="plan-modal" class="w-full mt-6 py-3 text-sm font-bold bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition text-white shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]">
-                            View Full Plan
-                        </button>
-                    </div>
+                        <button type="button" onclick='openCoachModal({{ "Schedule a full body workout tomorrow at 7 am for 50 min"|tojson }})' class="w-full mt-6 py-3 text-sm font-bold bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition text-white">Plan with Coach</button>
+                    </section>
 
-                    <div class="col-span-12 md:col-span-8 glass-card rounded-[2rem] p-8 min-h-[400px]">
-                        <div class="flex justify-between items-center mb-8">
-                            <div>
-                                <h4 class="text-2xl font-black text-white">Weight Trajectory</h4>
-                                <p class="text-sm text-gray-400 font-medium">Last 7 Days vs Projected</p>
-                            </div>
-                             <div class="flex bg-black/50 rounded-xl p-1 border border-white/5">
-                                <button class="px-4 py-2 text-xs font-bold rounded-lg bg-fitGreen text-black">Week</button>
-                                <button class="px-4 py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition">Month</button>
-                            </div>
+                    <section class="col-span-12 lg:col-span-7 glass-card rounded-[2rem] p-8 min-h-[420px]">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+                            <div><h4 class="text-2xl font-black text-white">Weight Trajectory</h4><p class="text-sm text-gray-400 font-medium">Every chat-based weight check-in updates this chart.</p></div>
+                            <div class="flex bg-black/50 rounded-xl p-1 border border-white/5"><button class="px-4 py-2 text-xs font-bold rounded-lg bg-fitGreen text-black">Week</button><button class="px-4 py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition">Trend</button></div>
                         </div>
                         <div id="sexy-chart" class="h-full w-full"></div>
-                    </div>
+                    </section>
 
-                    <div class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-0 overflow-hidden relative">
-                        <div class="p-8 bg-gradient-to-br from-fitGreen/20 to-transparent border-b border-white/5">
-                             <div class="flex items-center mb-4">
-                                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-fitGreen text-black mr-3">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.394a.75.75 0 010 1.422l-1.183.394c-.447.15-.799.5-.948.948l-.394 1.183a.75.75 0 01-1.422 0l-.394-1.183a1.5 1.5 0 00-.948-.948l-1.183-.394a.75.75 0 010-1.422l1.183-.394c.447-.15.799-.5.948-.948l.394-1.183A.75.75 0 0116.5 15z" clip-rule="evenodd" /></svg>
-                                </span>
-                                <h4 class="text-xl font-black text-white">AI Coach Insight</h4>
-                             </div>
-                             <p class="text-sm font-medium text-gray-300 leading-relaxed">"Based on your {{ current_user.goal }} goal, try increasing protein intake earlier in the day to improve satiety."</p>
+                    <section id="coach-console" class="col-span-12 lg:col-span-5 glass-card rounded-[2rem] p-6">
+                        <div class="flex items-start justify-between gap-4 mb-6">
+                            <div><h4 class="text-2xl font-black text-white">Coach Console</h4><p class="text-sm text-gray-400">Keep the dashboard clean, then open the chat only when you need it.</p></div>
+                            <span class="rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-fitGreen">{{ coach_mode_label }}</span>
                         </div>
-                        <div class="p-8 bg-black/40 space-y-4">
-                            <h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Suggested Actions</h5>
-                            <a href="#" class="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-fitGreen/10 border border-white/5 hover:border-fitGreen/30 group transition-all">
-                                <div class="flex items-center">
-                                    <div class="w-2 h-2 rounded-full bg-fitYellow mr-4 group-hover:shadow-[0_0_10px_#fef08a]"></div>
-                                    <span class="text-sm font-bold text-white">Log today's {{ meal }}</span>
+                        <div class="grid gap-4">
+                            <button type="button" onclick='openCoachModal({{ "Log my weight as 81.8 kg today"|tojson }})' class="rounded-[1.6rem] border border-white/10 bg-white/5 p-5 text-left transition hover:border-fitGreen/30 hover:bg-white/10">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Quick Check-In</p>
+                                        <h5 class="mt-2 text-xl font-black text-white">Log Weight</h5>
+                                        <p class="mt-2 text-sm text-gray-400">Tell the coach your latest weight and the tracker updates instantly.</p>
+                                    </div>
+                                    <span class="rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-fitGreen">Open Chat</span>
                                 </div>
-                                <svg class="w-5 h-5 text-gray-500 group-hover:text-fitGreen -rotate-45 group-hover:rotate-0 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                            </a>
-                             <a href="#" class="flex items-center justify-between p-4 rounded-2xl bg-white/5 hover:bg-fitGreen/10 border border-white/5 hover:border-fitGreen/30 group transition-all">
-                                <div class="flex items-center">
-                                    <div class="w-2 h-2 rounded-full bg-fitGreen mr-4 group-hover:shadow-[0_0_10px_#4ade80]"></div>
-                                    <span class="text-sm font-bold text-white">Schedule tomorrow's workout</span>
+                            </button>
+                            <button type="button" onclick='openCoachModal({{ "Schedule a full body workout tomorrow at 7 am for 50 min"|tojson }})' class="rounded-[1.6rem] border border-white/10 bg-white/5 p-5 text-left transition hover:border-fitYellow/30 hover:bg-white/10">
+                                <div class="flex items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Training Planner</p>
+                                        <h5 class="mt-2 text-xl font-black text-white">Schedule Workout</h5>
+                                        <p class="mt-2 text-sm text-gray-400">Describe the session you want and the coach will add it to your plan.</p>
+                                    </div>
+                                    <span class="rounded-full border border-fitYellow/20 bg-fitYellow/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-fitYellow">Open Chat</span>
                                 </div>
-                                <svg class="w-5 h-5 text-gray-500 group-hover:text-fitGreen -rotate-45 group-hover:rotate-0 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                            </a>
+                            </button>
                         </div>
-                    </div>
+                        <div class="mt-6 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
+                            <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Recent Coach Activity</p>
+                            {% if chat_messages %}
+                                {% set latest_message = chat_messages|last %}
+                                <p class="mt-3 text-sm leading-relaxed text-gray-200">{{ latest_message.content }}</p>
+                                <button type="button" onclick="openCoachModal()" class="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-200 hover:bg-white/10 transition">View Last 4 Messages</button>
+                            {% else %}
+                                <p class="mt-3 text-sm leading-relaxed text-gray-400">Your last 4 chat messages will stay tucked inside the coach popup once you start using it.</p>
+                                <button type="button" onclick="openCoachModal()" class="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-200 hover:bg-white/10 transition">Start First Chat</button>
+                            {% endif %}
+                        </div>
+                    </section>
 
-                </div> <div class="h-20"></div>
+                    <section id="schedule-board" class="col-span-12 lg:col-span-7 glass-card rounded-[2rem] p-8">
+                        <div class="flex items-center justify-between gap-4 mb-6">
+                            <div><h4 class="text-2xl font-black text-white">Upcoming Workouts</h4><p class="text-sm text-gray-400">Everything scheduled in chat lands here automatically.</p></div>
+                            <button type="button" onclick='openCoachModal({{ "What is my next workout?"|tojson }})' class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-200 hover:bg-white/10 transition">Ask Coach</button>
+                        </div>
+                        <div class="space-y-4">
+                            {% if upcoming_workouts %}
+                                {% for workout in upcoming_workouts %}
+                                    <div class="rounded-[1.6rem] border border-white/8 bg-white/5 p-5">
+                                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                                            <div><div class="flex items-center gap-3 mb-2"><span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-fitGreen text-black font-black">{{ loop.index }}</span><h5 class="text-lg font-black text-white">{{ workout.title }}</h5></div><p class="text-sm text-gray-300">{{ workout.scheduled_for.strftime('%a, %d %b at %I:%M %p').replace(' 0', ' ') }}</p>{% if workout.notes %}<p class="mt-2 text-sm text-gray-500">{{ workout.notes }}</p>{% endif %}</div>
+                                            <div class="flex items-center gap-3 text-sm"><span class="rounded-full bg-fitYellow/10 px-3 py-1 font-bold text-fitYellow">{{ workout.duration_minutes }} min</span><span class="rounded-full bg-fitGreen/10 px-3 py-1 font-bold text-fitGreen uppercase">{{ workout.status }}</span></div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="rounded-[1.6rem] border border-dashed border-white/10 bg-black/20 p-8 text-center">
+                                    <h5 class="text-xl font-black text-white mb-2">No workouts scheduled yet</h5>
+                                    <p class="text-sm text-gray-400 mb-4">Start with a natural-language prompt and your plan will appear here.</p>
+                                    <button type="button" onclick='openCoachModal({{ "Schedule cardio tomorrow at 6:30 pm for 45 min"|tojson }})' class="rounded-xl bg-white text-black px-4 py-2 text-sm font-bold hover:bg-fitGreen transition">Create first session</button>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </section>
+
+                    <section class="col-span-12 lg:col-span-5 glass-card rounded-[2rem] p-8">
+                        <div class="flex items-center justify-between gap-4 mb-6">
+                            <div><h4 class="text-2xl font-black text-white">Tracking Snapshot</h4><p class="text-sm text-gray-400">Recent check-ins and current stats.</p></div>
+                            <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-gray-200">BMI {{ bmi }}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="rounded-3xl bg-white/5 p-4"><p class="text-xs font-bold uppercase tracking-widest text-gray-500">Weight Logs</p><p class="mt-2 text-3xl font-black text-white">{{ recent_log_count }}</p></div>
+                            <div class="rounded-3xl bg-white/5 p-4"><p class="text-xs font-bold uppercase tracking-widest text-gray-500">Goal</p><p class="mt-2 text-3xl font-black text-white capitalize">{{ current_user.goal }}</p></div>
+                        </div>
+                        <div class="space-y-3">
+                            {% if recent_weight_logs %}
+                                {% for log in recent_weight_logs %}
+                                    <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3"><div><p class="text-sm font-bold text-white">{{ "%.1f"|format(log.weight) }} kg</p><p class="text-xs text-gray-500">{{ log.date.strftime('%d %b %Y') }}</p></div><span class="text-xs font-bold uppercase tracking-wide {% if loop.first %}text-fitGreen{% else %}text-gray-400{% endif %}">{% if loop.first %}Latest{% else %}Recorded{% endif %}</span></div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="rounded-3xl bg-white/5 p-6 text-sm text-gray-400">Your logged weights will show up here as soon as you talk to the coach.</div>
+                            {% endif %}
+                        </div>
+                    </section>
+                </div>
             </div>
         </main>
-        </div>
-    <div id="plan-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full backdrop-blur-md">
-    <div class="relative p-4 w-full max-w-2xl max-h-full">
-        <div class="glass-card rounded-[2rem] shadow-2xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-64 h-64 bg-fitGreen/20 blur-[80px] rounded-full pointer-events-none"></div>
+    </div>
 
-            <div class="flex items-center justify-between p-6 md:p-8 border-b border-white/10 rounded-t">
-                <h3 class="text-3xl font-black text-white tracking-tight">
-                    Your <span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen">Blueprint</span>
-                </h3>
-                <button type="button" class="text-gray-400 bg-transparent hover:bg-white/10 hover:text-white rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-hide="plan-modal">
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
-                    </svg>
-                    <span class="sr-only">Close modal</span>
-                </button>
-            </div>
-
-            <div class="p-6 md:p-8 space-y-8">
-
-                <div class="flex gap-6 items-start">
-                    <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-fitGreen to-fitYellow flex items-center justify-center text-black shadow-[0_0_20px_rgba(74,222,128,0.3)]">
-                         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    </div>
-                    <div>
-                        {% if current_user.goal == 'lose' %}
-                            <h4 class="text-2xl font-bold text-white mb-2">Cut & Shred Protocol</h4>
-                            <p class="text-gray-300 leading-relaxed mb-3">Your primary focus is <span class="text-fitGreen font-bold">Caloric Deficit</span> combined with high-intensity interval training. We are stripping away the excess to reveal the masterpiece underneath.</p>
-                            <div class="pl-4 border-l-4 border-fitGreen/50">
-                                <p class="text-gray-500 italic font-medium">"Sweat is just fat crying. The only bad workout is the one that didn't happen."</p>
-                            </div>
-                        {% else %}
-                            <h4 class="text-2xl font-bold text-white mb-2">Bulk & Build Strategy</h4>
-                            <p class="text-gray-300 leading-relaxed mb-3">Your primary focus is <span class="text-fitYellow font-bold">Progressive Overload</span> and a caloric surplus. We are tearing down muscle fibers to rebuild them thicker and stronger.</p>
-                            <div class="pl-4 border-l-4 border-fitYellow/50">
-                                <p class="text-gray-500 italic font-medium">"Strength doesn't come from what you can do. It comes from overcoming the things you once thought you couldn't."</p>
-                            </div>
-                        {% endif %}
-                    </div>
+    <div id="coach-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm" onclick="if (event.target === this) closeCoachModal();">
+        <div class="glass-card flex max-h-[88vh] w-full max-w-3xl flex-col rounded-[2rem] p-6 md:p-8">
+            <div class="mb-5 flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-widest text-fitGreen">Coach Chat</p>
+                    <h4 class="mt-2 text-2xl font-black text-white">Talk to your coach naturally</h4>
+                    <p class="mt-2 text-sm text-gray-400">Log weight, schedule workouts, or ask for a quick update without cluttering the dashboard.</p>
                 </div>
-
-                <div class="flex gap-6 items-start">
-                    <div class="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-white">
-                         <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z"></path></svg>
-                    </div>
-                    <div>
-                        {% if current_user.diet == 'vegetarian' %}
-                             <h4 class="text-2xl font-bold text-white mb-2">Vegetarian Power</h4>
-                             <p class="text-gray-300 leading-relaxed mb-3">Fueling your body with plant-based proteins and dairy. A clean, ethical approach to performance without compromising on intensity.</p>
-                             <p class="text-gray-500 italic">"Powered by nature. Stronger by choice."</p>
-                        {% elif current_user.diet == 'vegan' %}
-                             <h4 class="text-2xl font-bold text-white mb-2">100% Plant Fuel</h4>
-                             <p class="text-gray-300 leading-relaxed mb-3">Maximizing nutrient density with zero animal products. High fiber, high recovery, and sustainable energy for the long haul.</p>
-                             <p class="text-gray-500 italic">"Clean energy for a mean machine."</p>
-                        {% else %}
-                             <h4 class="text-2xl font-bold text-white mb-2">Unrestricted Fuel</h4>
-                             <p class="text-gray-300 leading-relaxed mb-3">A flexible approach allowing all food groups. Focus on macro-nutrient balance and timing to support your heavy lifting sessions.</p>
-                             <p class="text-gray-500 italic">"Eat like a human, train like a beast."</p>
-                        {% endif %}
-                    </div>
+                <button type="button" onclick="closeCoachModal()" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/10 hover:text-white">Close</button>
+            </div>
+            <div id="coach-feed" class="mb-5 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+                {% if chat_messages %}
+                    {% for message in chat_messages %}
+                        <div class="flex {% if message.role == 'user' %}justify-end{% else %}justify-start{% endif %}">
+                            <div class="max-w-[88%] rounded-[1.5rem] px-4 py-3 {% if message.role == 'user' %}bg-white text-black{% else %}border border-fitGreen/20 bg-white/5 text-white{% endif %}">
+                                <p class="text-[11px] font-bold uppercase tracking-[0.18em] {% if message.role == 'user' %}text-black/50{% else %}text-fitGreen{% endif %}">{{ "You" if message.role == "user" else "Coach" }} &middot; {{ message.created_at.strftime('%I:%M %p').lstrip('0') }}</p>
+                                <p class="mt-2 text-sm leading-relaxed {% if message.role == 'user' %}text-black{% else %}text-gray-100{% endif %}">{{ message.content }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="flex justify-start"><div class="max-w-[88%] rounded-[1.5rem] border border-fitGreen/20 bg-white/5 px-4 py-3 text-white"><p class="text-[11px] font-bold uppercase tracking-[0.18em] text-fitGreen">Coach &middot; now</p><p class="mt-2 text-sm leading-relaxed text-gray-100">I am ready. Try "Log my weight as 81.8 kg" or "Schedule legs tomorrow at 7 am for 60 min".</p></div></div>
+                {% endif %}
+            </div>
+            <form action="{{ url_for('main.coach_message') }}" method="POST" class="space-y-4 border-t border-white/10 pt-5">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <textarea id="coach-input" name="message" rows="3" class="w-full rounded-3xl border border-white/10 bg-black/40 px-5 py-4 text-sm text-white placeholder-gray-500 focus:border-fitGreen focus:ring-fitGreen" placeholder="Try: schedule upper body tomorrow at 7 am for 50 min" required></textarea>
+                <div class="flex flex-wrap gap-2">
+                    {% for example in coach_examples %}
+                        <button type="button" onclick='setCoachPrompt({{ example|tojson }})' class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-gray-300 transition hover:border-fitGreen/30 hover:text-white">{{ example }}</button>
+                    {% endfor %}
                 </div>
-
-            </div>
-
-            <div class="flex items-center p-6 space-x-3 border-t border-white/10 bg-black/20">
-                <button data-modal-hide="plan-modal" type="button" class="w-full text-black bg-gradient-to-r from-fitYellow to-fitGreen hover:opacity-90 font-bold rounded-xl text-sm px-5 py-3.5 text-center transition-all shadow-[0_0_20px_rgba(74,222,128,0.2)]">Got it, Let's Work!</button>
-            </div>
+                <button type="submit" class="w-full rounded-2xl bg-gradient-to-r from-fitYellow to-fitGreen py-4 text-sm font-black text-black transition hover:opacity-90">Send to Coach</button>
+            </form>
         </div>
     </div>
-</div>
+
     <script>
-        // Get theme colors from Tailwind config above
-        const fitGreen = '#4ade80';
-        const fitYellow = '#fef08a';
-        const darkGrid = '#ffffff10'; // very faint white for grid lines
-
-        var options = {
-            // The actual data passed from Flask in main.py
-            series: [{
-                name: 'Weight (kg)',
-                data: {{ trends | tojson }}
-            }],
-            chart: {
-                type: 'area', // Area chart looks sexier than line
-                height: 350,
-                toolbar: { show: false }, // Hide ugly toolbar
-                fontFamily: 'Inter, sans-serif',
-                foreColor: '#9CA3AF', // Text color for axis labels
-                animations: {
-                    enabled: true,
-                    easing: 'easeinout',
-                    speed: 800,
-                }
-            },
-            // The neon green theme color for the line and fill
-            colors: [fitGreen],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.7, // Start strong
-                    opacityTo: 0.1,   // Fade out at bottom
-                    stops: [0, 90, 100],
-                    colorStops: [
-                        { offset: 0, color: fitGreen, opacity: 0.4 },
-                        { offset: 100, color: fitYellow, opacity: 0.1 }
-                    ]
-                }
-            },
+        const options = {
+            series: [{ name: "Weight (kg)", data: {{ trends | tojson }} }],
+            chart: { type: "area", height: 350, toolbar: { show: false }, fontFamily: "Inter, sans-serif", foreColor: "#9CA3AF", animations: { enabled: true, easing: "easeinout", speed: 800 } },
+            colors: ["#4ade80"],
+            fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 90, 100], colorStops: [{ offset: 0, color: "#4ade80", opacity: 0.4 }, { offset: 100, color: "#fef08a", opacity: 0.1 }] } },
             dataLabels: { enabled: false },
-            stroke: {
-                curve: 'smooth', // Smooth sexy lines
-                width: 3,
-                colors: [fitGreen]
-            },
-            grid: {
-                borderColor: darkGrid, // Subtle grid lines
-                strokeDashArray: 4, // Dashed lines
-                xaxis: { lines: { show: false } } // Hide X-axis grid lines for cleaner look
-            },
-            markers: {
-                size: 0, // Hide dots by default
-                hover: { size: 6, colors: [fitYellow], strokeColor: fitGreen, strokeWidth: 2 } // Show cool dot on hover
-            },
-            xaxis: {
-                // Fake labels for past 7 days
-                categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                axisBorder: { show: false },
-                axisTicks: { show: false },
-                 labels: {
-                    style: { fontWeight: 700, fontSize: '12px' },
-                    offsetY: 5
-                }
-            },
-            yaxis: {
-                 labels: {
-                    style: { fontWeight: 700 },
-                    formatter: function (val) { return val + " kg"; }
-                }
-            },
-            tooltip: {
-                theme: 'dark', // Dark mode tooltip
-                x: { show: false },
-                style: { fontSize: '14px', fontFamily: 'Inter, sans-serif' },
-                marker: { show: true, fillColors: [fitGreen] },
-                custom: function({series, seriesIndex, dataPointIndex, w}) {
-                    // Custom HTML tooltip for maximum control
-                    const value = series[seriesIndex][dataPointIndex];
-                    return `<div class="bg-black/80 backdrop-blur-md border border-fitGreen/30 p-3 rounded-xl shadow-[0_0_20px_rgba(74,222,128,0.2)]">
-                              <span class="text-xs font-bold text-gray-400 uppercase">Recorded Weight</span>
-                              <div class="text-2xl font-black text-white">${value} kg</div>
-                            </div>`;
-                }
-            }
+            stroke: { curve: "smooth", width: 3, colors: ["#4ade80"] },
+            grid: { borderColor: "#ffffff10", strokeDashArray: 4, xaxis: { lines: { show: false } } },
+            markers: { size: 0, hover: { size: 6, colors: ["#fef08a"], strokeColor: "#4ade80", strokeWidth: 2 } },
+            xaxis: { categories: {{ trend_labels | tojson }}, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { fontWeight: 700, fontSize: "12px" }, offsetY: 5 } },
+            yaxis: { labels: { style: { fontWeight: 700 }, formatter: function (val) { return val + " kg"; } } },
+            tooltip: { theme: "dark", x: { show: false }, style: { fontSize: "14px", fontFamily: "Inter, sans-serif" }, custom: function({series, seriesIndex, dataPointIndex}) { const value = series[seriesIndex][dataPointIndex]; return `<div class="bg-black/80 backdrop-blur-md border border-fitGreen/30 p-3 rounded-xl shadow-[0_0_20px_rgba(74,222,128,0.2)]"><span class="text-xs font-bold text-gray-400 uppercase">Recorded Weight</span><div class="text-2xl font-black text-white">${value} kg</div></div>`; } }
         };
-
-        var chart = new ApexCharts(document.querySelector("#sexy-chart"), options);
-        chart.render();
+        new ApexCharts(document.querySelector("#sexy-chart"), options).render();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
 </body>

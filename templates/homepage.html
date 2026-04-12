@@ -1,4 +1,4 @@
-<html lang="en">
+﻿<html lang="en">
    <head>
       <meta charset="UTF-8">
       <meta  name="viewport" content="width=device-width, initial-scale=1.0">
@@ -45,7 +45,7 @@ window.onload = function() {
             <nav class="bg-transparent dark:bg-transparent fixed w-full z-20 top-0 start-0 ">
               <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <!-- Logo and brand -->
-                <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <a href="{{ url_for('main.homepage') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
                   <svg class="h-8 w-8" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
                     <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
@@ -59,7 +59,7 @@ window.onload = function() {
 
                 <!-- Buttons for mobile toggle and login -->
                 <div class="flex md:order-2 space-x-3 rtl:space-x-reverse">
-                   <a href="/login">
+                   <a href="{{ url_for('main.login') }}">
                      <button type="button" class="text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 px-3 font-bold">LOGIN</button>
                    </a>
                    <button data-collapse-toggle="navbar-sticky" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-sticky" aria-expanded="false">
@@ -74,7 +74,7 @@ window.onload = function() {
                 <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-sticky">
                   <ul class="flex flex-col p-4 md:p-0 mt-4 font-medium rounded-lg bg-transparent md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-transparent dark:bg-transparent md:dark:bg-transparent dark:border-gray-700">
                     <li>
-                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="" onclick="showSection('welcome')"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Welcome</span></a>
+                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="#" onclick="showSection('welcome'); return false;"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Welcome</span></a>
                     </li>
                     <li>
                       <a href="#" class="dark:hover:bg-transparent dark:hover:text-green-500 block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:border-gray-700 md:dark:hover:bg-transparent" onclick="showSection('about')">Who are we?</a>
@@ -100,12 +100,14 @@ window.onload = function() {
                   <div class="mt-auto mb-0 text-gray-50 md:pb-36 space-y-6">
                   <h2 class="mb-0 text-4xl tracking-tight font-extrabold text-white dark:text-white"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100">WELCOME TO fiT</span></h2>
                      <h1 class="text-3xl md:text-3xl max-w-50 font-medium">LET AI BE YOUR PERSONAL TRAINER</h1>
-                     <p class="max-w-[30rem] font-light ml-4 before:content-[''] relative before:absolute before:w-px before:h-full before:left-0 before:top-0 before:-translate-x-4 before:bg-accent-500 md:text-base text-sm"> We’re thrilled to have you here. Explore our content, discover new insights, and join a community focused on growth and success. Whether you’re looking for tips, resources, or inspiration, we’ve got you covered. Let’s get started on your journey!</p>
+                     <p class="max-w-[30rem] font-light ml-4 before:content-[''] relative before:absolute before:w-px before:h-full before:left-0 before:top-0 before:-translate-x-4 before:bg-accent-500 md:text-base text-sm"> We're thrilled to have you here. Explore our content, discover new insights, and join a community focused on growth and success. Whether you're looking for tips, resources, or inspiration, we've got you covered. Let's get started on your journey!</p>
                      <div class="md:flex-row flex-col flex gap-4">
-                        <a href="/1" >
+                        <a href="#" onclick="showSection('about'); return false;">
                            <button class="inline-block text-base font-medium px-12 py-2 bg-accent-400 rounded-lg cursor-pointer w-full">Know More</button>
                         </a>
-                        <button class="inline-block text-base font-medium px-12 py-2 border border-accent-400 rounded-lg text-accent-400 cursor-pointer bg-gray-50/10 backdrop-blur-3xl">Get Started</button>
+                         <a href="{{ url_for('main.login') }}">
+                            <button class="inline-block text-base font-medium px-12 py-2 border border-accent-400 rounded-lg text-accent-400 cursor-pointer bg-gray-50/10 backdrop-blur-3xl">Get Started</button>
+                         </a>
                      </div>
                   </div>
                   <div class="md:absolute md:right-0 md:bottom-32 text-gray-50 my-16">
@@ -147,7 +149,7 @@ window.onload = function() {
             <nav class="bg-transparent dark:bg-transparent fixed w-full z-20 top-0 start-0 ">
               <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <!-- Logo and brand -->
-                <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <a href="{{ url_for('main.homepage') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
                   <svg class="h-8 w-8" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
                     <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
@@ -161,7 +163,7 @@ window.onload = function() {
 
                 <!-- Buttons for mobile toggle and login -->
                 <div class="flex md:order-2 space-x-3 rtl:space-x-reverse">
-                   <a href="/login">
+                   <a href="{{ url_for('main.login') }}">
                      <button type="button" class="text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 px-3 font-bold">LOGIN</button>
                    </a>
                    <button data-collapse-toggle="navbar-sticky-about" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-sticky-about" aria-expanded="false">
@@ -179,7 +181,7 @@ window.onload = function() {
                       <a href="#" class="dark:hover:bg-transparent dark:hover:text-green-500 block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:border-gray-700 md:dark:hover:bg-transparent"onclick="showSection('welcome')">Welcome</a>
                     </li>
                     <li>
-                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="" onclick="showSection('about')"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Who are we?</span></a>
+                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="#" onclick="showSection('about'); return false;"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Who are we?</span></a>
                     </li>
                     <li>
                       <a href="#" class="dark:hover:bg-transparent dark:hover:text-green-500 block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:border-gray-700 md:dark:hover:bg-transparent"onclick="showSection('plans')">Plans</a>
@@ -204,10 +206,12 @@ window.onload = function() {
                      <h1 class="text-3xl md:text-5xl max-w-[30rem] font-medium">AI Driven Fitness</h1>
                      <p class="max-w-[30rem] font-light ml-4 before:content-[''] relative before:absolute before:w-px before:h-full before:left-0 before:top-0 before:-translate-x-4 before:bg-accent-500 md:text-base text-sm"> Welcome to Fit, your ultimate fitness partner! We are a dedicated community of fitness enthusiasts who believe in the power of healthy living and the importance of physical and mental well-being. Our mission is to empower individuals of all fitness levels to achieve their health goals through personalized training, nutrition guidance, and unwavering support.</p>
                      <div class="md:flex-row flex-col flex gap-4">
-                        <a href="/1">
+                        <a href="{{ url_for('main.login') }}">
                            <button class="inline-block text-base font-medium px-12 py-2 bg-accent-400 rounded-lg cursor-pointer">Know More</button>
                         </a>
+                        <a href="{{ url_for('main.login') }}">
                            <button class="inline-block text-base font-medium px-12 py-2 border border-accent-400 rounded-lg text-accent-400 cursor-pointer bg-gray-50/10 backdrop-blur-3xl">Get Started</button>
+                        </a>
                      </div>
                   </div>
                   <div class="md:absolute md:right-0 md:bottom-32 text-gray-50 my-16">
@@ -249,7 +253,7 @@ window.onload = function() {
             <nav class="bg-transparent dark:bg-transparent fixed w-full z-20 top-0 start-0 ">
               <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <!-- Logo and brand -->
-                <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <a href="{{ url_for('main.homepage') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
                   <svg class="h-8 w-8" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
                     <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
@@ -263,7 +267,7 @@ window.onload = function() {
 
                 <!-- Buttons for mobile toggle and login -->
                 <div class="flex md:order-2 space-x-3 rtl:space-x-reverse">
-                   <a href="/login">
+                   <a href="{{ url_for('main.login') }}">
                      <button type="button" class="text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 px-3 font-bold">LOGIN</button>
                    </a>
                    <button data-collapse-toggle="navbar-sticky-plans" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-sticky-plans" aria-expanded="false">
@@ -284,7 +288,7 @@ window.onload = function() {
                       <a href="#" class="dark:hover:bg-transparent dark:hover:text-green-500 block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:border-gray-700 md:dark:hover:bg-transparent"onclick="showSection('about')">Who are we?</a>
                     </li>
                     <li>
-                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="" onclick="showSection('plans')"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Plans</span></a>
+                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="#" onclick="showSection('plans'); return false;"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Plans</span></a>
                     </li>
                     <li>
                       <a href="#" class="dark:hover:bg-transparent dark:hover:text-green-500 block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:border-gray-700 md:dark:hover:bg-transparent"onclick="showSection('mission')">Mission</a>
@@ -309,7 +313,7 @@ window.onload = function() {
                   <h3 class="mb-4 text-2xl font-semibold">Beginner</h3>
                   <p class="font-dark text-white sm:text-lg dark:text-white"> Access essential workout tools and track your progress, all for free.</p>
                   <div class="flex justify-center items-baseline my-8">
-                     <span class="mr-2 text-5xl font-extrabold">₹0</span>
+                     <span class="mr-2 text-5xl font-extrabold">Rs 0</span>
                      <span class="text-white dark:text-gray-400">/month</span>
                   </div>
                   <!-- List -->
@@ -350,7 +354,7 @@ window.onload = function() {
                         <span>No Customizations</span>
                      </li>
                   </ul>
-                  <a href="/login">
+                  <a href="{{ url_for('main.login') }}">
                   <button class="relative inline-flex items-center justify-center p-0.5 mb-2 me-2 overflow-hidden text-md font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-orange-400 to-orange-900 group-hover:from-pink-500 group-hover:to-orange-400 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-pink-200 dark:focus:ring-pink-800">
                   <span class="relative px-5 py-2.5 transition-all ease-in duration-75 bg-transparent dark:bg-transparent rounded-md group-hover:bg-opacity-0">
                   Login
@@ -363,7 +367,7 @@ window.onload = function() {
                   <h3 class="mb-4 text-2xl font-semibold">Pro</h3>
                   <p class="font-dark text-white sm:text-lg dark:text-white">Unlock advanced workouts, meal plans, & AI coach to level up your game.</p>
                   <div class="flex justify-center items-baseline my-8">
-                     <span class="mr-2 text-5xl font-extrabold">₹2000</span>
+                     <span class="mr-2 text-5xl font-extrabold">Rs 2000</span>
                      <span class="text-white dark:text-gray-400">/month</span>
                   </div>
                   <!-- List -->
@@ -415,7 +419,7 @@ window.onload = function() {
                   <h3 class="mb-4 text-2xl font-semibold">Enterprise</h3>
                   <p class="font-dark text-white sm:text-md dark:text-white">Offer customized training plans, analytics, & multi-user access to elevate your business.</p>
                   <div class="flex justify-center items-baseline my-8">
-                     <span class="mr-2 text-5xl font-extrabold">₹12000</span>
+                     <span class="mr-2 text-5xl font-extrabold">Rs 12000</span>
                      <span class="text-white dark:text-gray-400">/month</span>
                   </div>
                   <!-- List -->
@@ -486,7 +490,7 @@ window.onload = function() {
           <nav class="bg-transparent dark:bg-transparent fixed w-full z-20 top-0 start-0 ">
               <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
                 <!-- Logo and brand -->
-                <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <a href="{{ url_for('main.homepage') }}" class="flex items-center space-x-3 rtl:space-x-reverse">
                   <svg class="h-8 w-8" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
                     <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
@@ -500,7 +504,7 @@ window.onload = function() {
 
                 <!-- Buttons for mobile toggle and login -->
                 <div class="flex md:order-2 space-x-3 rtl:space-x-reverse">
-                   <a href="/login">
+                   <a href="{{ url_for('main.login') }}">
                      <button type="button" class="text-black bg-gradient-to-r from-red-400 to-orange-400 hover:bg-gradient-to-l hover:from-red-200 hover:to-orange-200 focus:ring-4 focus:outline-none focus:ring-lime-200 dark:focus:ring-teal-700 font rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 px-3 font-bold">LOGIN</button>
                    </a>
                    <button data-collapse-toggle="navbar-sticky-mission" type="button" class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600" aria-controls="navbar-sticky-mission" aria-expanded="false">
@@ -524,7 +528,7 @@ window.onload = function() {
                       <a href="#" class="dark:hover:bg-transparent dark:hover:text-green-500 block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700 md:p-0 dark:hover:text-blue-500 dark:text-white dark:hover:bg-gray-700 dark:border-gray-700 md:dark:hover:bg-transparent"onclick="showSection('plans')">Plans</a>
                     </li>
                     <li>
-                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="" onclick="showSection('mission')"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Mission</span></a>
+                     <a class="dark:hover:bg-transparent dark:hover:text-green-500 hover:bg-gray-100 font-bold relative after:h-px after:content-[''] after:w-full after:absolute after:top-full after:bg-accent-500 after:left-0 after:translate-y-1" href="#" onclick="showSection('mission'); return false;"><span class="text-transparent bg-clip-text bg-gradient-to-r to-green-400 from-yellow-100 font-bold">Mission</span></a>
                     </li>
                   </ul>
                 </div>
@@ -545,7 +549,7 @@ window.onload = function() {
          <h2 class="text-4xl tracking-tight font-extrabold text-white dark:text-white mb-1">'One Day' or 'Day One'....</h2>
          <span class="block text-right text-white mb-4">- Dwayne 'The Rock' Johnson</span>
          <p class="mb-6 font-light text-white md:text-lg dark:text-white">Our mission is to empower individuals to lead healthier, happier lives by providing a comprehensive fitness platform that offers personalized workout plans, nutrition guidance, and a supportive community. We believe in making fitness accessible to everyone, regardless of their starting point, and we strive to foster sustainable habits that inspire lifelong wellness.</p>
-         <a href="#">
+         <a href="{{ url_for('main.login') }}">
             <button class="inline-flex items-center text-white bg-orange-600 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:focus:ring-primary-900">
                Get started
                <svg class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
@@ -569,3 +573,4 @@ window.onload = function() {
 </script>
 </body>
 </html>
+
