@@ -68,7 +68,7 @@ def _get_recent_messages() -> list[CoachMessage]:
         select(CoachMessage)
         .where(CoachMessage.user_id == current_user.id)
         .order_by(CoachMessage.created_at.desc())
-        .limit(4)
+        .limit(6)
     ).scalars().all()
     return list(reversed(messages))
 
@@ -175,7 +175,47 @@ def _build_dashboard_context() -> dict:
     else:
         weight_status = "No change"
 
-    coach_mode_label = "AI-ready NLP" if current_app.config.get("OPENAI_API_KEY") else "Built-in NLP"
+    if bmi == 0:
+        bmi_status_label = "Complete profile"
+        bmi_status_class = "text-gray-400"
+    elif bmi < 18.5:
+        bmi_status_label = "Below Range"
+        bmi_status_class = "text-fitYellow"
+    elif bmi < 25:
+        bmi_status_label = "Healthy Range"
+        bmi_status_class = "text-fitGreen"
+    elif bmi < 30:
+        bmi_status_label = "Above Range"
+        bmi_status_class = "text-fitYellow"
+    else:
+        bmi_status_label = "High Range"
+        bmi_status_class = "text-red-300"
+
+    goal_anchor_title = current_user.goal.capitalize() if current_user.goal else "Goal"
+    if current_user.target_weight is not None:
+        goal_anchor_detail = f"{current_user.target_weight:.1f} kg target"
+    else:
+        goal_anchor_detail = "Set your target"
+
+    change_since_start_display = "--"
+    change_since_start_caption = "Add a starting weight"
+    change_since_start_class = "text-white"
+    if current_user.start_weight is not None and current_user.weight is not None:
+        change_since_start = round(current_user.weight - current_user.start_weight, 1)
+        change_since_start_display = f"{change_since_start:+.1f} kg"
+        change_since_start_caption = "since day one"
+        aligned_with_goal = (
+            (current_user.goal == "lose" and change_since_start < 0)
+            or (current_user.goal == "gain" and change_since_start > 0)
+        )
+        if change_since_start == 0:
+            change_since_start_class = "text-white"
+        elif aligned_with_goal:
+            change_since_start_class = "text-fitGreen"
+        else:
+            change_since_start_class = "text-fitYellow"
+
+    coach_mode_label = "fiT-X AI"
 
     return {
         "user": current_user,
@@ -192,10 +232,16 @@ def _build_dashboard_context() -> dict:
         "upcoming_workouts": upcoming_workouts,
         "next_workout": next_workout,
         "next_workout_label": _format_workout_label(next_workout.scheduled_for, now) if next_workout else None,
-        "recent_weight_logs": recent_weight_logs,
         "recent_log_count": len(current_user.logs),
         "weekly_workout_count": weekly_workout_count,
         "weight_status": weight_status,
+        "bmi_status_label": bmi_status_label,
+        "bmi_status_class": bmi_status_class,
+        "goal_anchor_title": goal_anchor_title,
+        "goal_anchor_detail": goal_anchor_detail,
+        "change_since_start_display": change_since_start_display,
+        "change_since_start_caption": change_since_start_caption,
+        "change_since_start_class": change_since_start_class,
     }
 
 

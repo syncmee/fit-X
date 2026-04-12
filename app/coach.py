@@ -11,9 +11,9 @@ from .models import CoachMessage, ScheduledWorkout, User, WeightLog
 
 COACH_QUICK_STARTS = [
     "Log my weight as 82.4 kg today",
+    "Log my meal: oats, banana, and milk for breakfast",
     "Schedule legs tomorrow at 7 am for 60 min",
-    "What is my next workout?",
-    "How am I doing this week?",
+    "Log my workout: completed upper body for 45 min today",
 ]
 
 WORKOUT_LABELS = [
@@ -70,9 +70,9 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
     if _looks_like_help(normalized):
         outcome = CoachOutcome(
             reply=(
-                "I can log weight, schedule workouts, and answer simple progress questions. "
+                "I can log weight, queue meal notes, schedule workouts, and keep workout notes in your activity feed. "
                 "Try: "
-                + "; ".join(COACH_QUICK_STARTS[:3])
+                + "; ".join(COACH_QUICK_STARTS)
                 + "."
             ),
             action="help",
@@ -85,11 +85,16 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
         outcome = _log_weight(user, cleaned_message, now)
     elif _looks_like_workout_schedule(normalized):
         outcome = _schedule_workout(user, cleaned_message, now)
+    elif _looks_like_meal_log(normalized):
+        outcome = _capture_meal_note()
+    elif _looks_like_workout_log(normalized):
+        outcome = _capture_workout_note()
     else:
         outcome = CoachOutcome(
             reply=(
                 "I did not fully catch that yet. Try something like "
-                "'Log my weight as 81.9 kg' or 'Schedule cardio tomorrow at 6:30 pm for 45 min'."
+                "'Log my weight as 81.9 kg', 'Log my meal: paneer wrap for lunch', "
+                "or 'Schedule cardio tomorrow at 6:30 pm for 45 min'."
             ),
             action="fallback",
         )
@@ -114,6 +119,22 @@ def _looks_like_workout_schedule(message: str) -> bool:
     workout_keywords = ("workout", "session", "train", "gym", "run", "cardio", "yoga", "legs", "chest")
     return any(keyword in message for keyword in schedule_keywords) and any(
         keyword in message for keyword in workout_keywords
+    )
+
+
+def _looks_like_meal_log(message: str) -> bool:
+    meal_keywords = ("meal", "breakfast", "lunch", "dinner", "snack", "ate", "eating", "protein", "calories")
+    log_keywords = ("log", "track", "add", "had", "ate")
+    return any(keyword in message for keyword in meal_keywords) and any(
+        keyword in message for keyword in log_keywords
+    )
+
+
+def _looks_like_workout_log(message: str) -> bool:
+    workout_keywords = ("workout", "session", "training", "trained", "completed", "finished", "lifted")
+    log_keywords = ("log", "track", "completed", "finished", "done", "did")
+    return any(keyword in message for keyword in workout_keywords) and any(
+        keyword in message for keyword in log_keywords
     )
 
 
@@ -198,6 +219,26 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
         f"for {duration_minutes} min.{shift_note}"
     )
     return CoachOutcome(reply=reply, action="workout_scheduled")
+
+
+def _capture_meal_note() -> CoachOutcome:
+    return CoachOutcome(
+        reply=(
+            "I saved that meal note in your Activity Feed. "
+            "Macro totals and nutrition search are the next upgrade, but your note is stored here already."
+        ),
+        action="meal_logged",
+    )
+
+
+def _capture_workout_note() -> CoachOutcome:
+    return CoachOutcome(
+        reply=(
+            "I saved that workout update in your Activity Feed. "
+            "Structured workout completion tracking is the next upgrade, but your note is stored here already."
+        ),
+        action="workout_logged",
+    )
 
 
 def _build_schedule_lookup(user: User, now: datetime) -> CoachOutcome:
