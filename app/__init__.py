@@ -42,3 +42,6 @@ def register_cli_commands(app: Flask) -> None:
         with app.app_context():
             db.create_all()
         print("Database initialized.")
+
+
+app = create_app()
