@@ -111,11 +111,12 @@
 
                 <select name="activity-level" class="w-full bg-black border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400" required>
                     <option value="" selected disabled>Activity Level</option>
-                    <option value="sedentary">Sedentary (Not Active)</option>
-                    <option value="light">Lightly Active (1-2 days/wk)</option>
-                    <option value="moderate">Moderately Active (3-5 days/wk)</option>
-                    <option value="athlete">High Performance (Daily)</option>
+                    <option value="sedentary">Inactive (Mostly sitting, little planned exercise)</option>
+                    <option value="light">Low Active (Walking and light training most days)</option>
+                    <option value="moderate">Active (Regular training 3-5 days/week)</option>
+                    <option value="athlete">Very Active (Intense daily training or sport)</option>
                 </select>
+                <p class="text-xs text-gray-500">Pick the level that matches your usual week. This is what fiT uses for your calorie estimate.</p>
 
                 <button type="button" onclick="showSection('onboarding-nutrition')" class="w-full py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black rounded-2xl hover:opacity-90 transition-all">
                     Next Step

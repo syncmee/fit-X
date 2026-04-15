@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select
 
 from .coach import COACH_QUICK_STARTS, process_coach_message
 from .extensions import db
+from .health import DEFAULT_BMI_SUMMARY, DEFAULT_CALORIE_TARGET, build_bmi_summary, estimate_calorie_target
 from .models import CoachMessage, ScheduledWorkout, User, WeightLog
 from .validation import validate_login_form, validate_onboarding_form, validate_signup_form
 
@@ -83,8 +84,8 @@ def _get_recent_weight_logs() -> list[WeightLog]:
 
 
 def _build_dashboard_context() -> dict:
-    daily_calories = 2000
-    bmi = 0
+    calorie_target = DEFAULT_CALORIE_TARGET.copy()
+    bmi_summary = DEFAULT_BMI_SUMMARY.copy()
     progress_percentage = 0
     current_hour = datetime.now().hour
     greeting = "Welcome"
@@ -108,34 +109,31 @@ def _build_dashboard_context() -> dict:
         current_user.weight is not None
         and current_user.height is not None
         and current_user.age is not None
+        and current_user.gender is not None
     ):
-        height_in_meters = current_user.height / 100
-        bmi = round(current_user.weight / (height_in_meters**2), 1)
+        bmi_summary = build_bmi_summary(
+            gender=current_user.gender,
+            age=current_user.age,
+            weight_kg=current_user.weight,
+            height_cm=current_user.height,
+        )
 
-        val_weight = 10 * current_user.weight
-        val_height = 6.25 * current_user.height
-        val_age = 5 * current_user.age
-
-        if current_user.gender == "male":
-            bmr = val_weight + val_height - val_age + 5
-        else:
-            bmr = val_weight + val_height - val_age - 161
-
-        multipliers = {
-            "sedentary": 1.2,
-            "light": 1.375,
-            "moderate": 1.55,
-            "athlete": 1.725,
-        }
-        activity_factor = multipliers.get(current_user.activity_level, 1.2)
-        tdee = bmr * activity_factor
-
-        if current_user.goal == "lose":
-            daily_calories = int(tdee - 500)
-        elif current_user.goal == "gain":
-            daily_calories = int(tdee + 500)
-        else:
-            daily_calories = int(tdee)
+    if (
+        current_user.weight is not None
+        and current_user.height is not None
+        and current_user.age is not None
+        and current_user.gender is not None
+        and current_user.activity_level is not None
+        and current_user.goal is not None
+    ):
+        calorie_target = estimate_calorie_target(
+            gender=current_user.gender,
+            age=current_user.age,
+            height_cm=current_user.height,
+            weight_kg=current_user.weight,
+            activity_level=current_user.activity_level,
+            goal=current_user.goal,
+        )
 
         if current_user.start_weight is not None and current_user.target_weight is not None:
             total_change_needed = abs(current_user.start_weight - current_user.target_weight)
@@ -175,22 +173,6 @@ def _build_dashboard_context() -> dict:
     else:
         weight_status = "No change"
 
-    if bmi == 0:
-        bmi_status_label = "Complete profile"
-        bmi_status_class = "text-gray-400"
-    elif bmi < 18.5:
-        bmi_status_label = "Below Range"
-        bmi_status_class = "text-fitYellow"
-    elif bmi < 25:
-        bmi_status_label = "Healthy Range"
-        bmi_status_class = "text-fitGreen"
-    elif bmi < 30:
-        bmi_status_label = "Above Range"
-        bmi_status_class = "text-fitYellow"
-    else:
-        bmi_status_label = "High Range"
-        bmi_status_class = "text-red-300"
-
     goal_anchor_title = current_user.goal.capitalize() if current_user.goal else "Goal"
     if current_user.target_weight is not None:
         goal_anchor_detail = f"{current_user.target_weight:.1f} kg target"
@@ -219,8 +201,11 @@ def _build_dashboard_context() -> dict:
 
     return {
         "user": current_user,
-        "calories": daily_calories,
-        "bmi": bmi,
+        "calories": calorie_target["target"],
+        "maintenance_calories": calorie_target["maintenance"],
+        "activity_level_label": calorie_target["activity_label"],
+        "calorie_target_note": calorie_target["note"],
+        "bmi": bmi_summary["value"],
         "trends": trend_values,
         "trend_labels": trend_labels,
         "progress": progress_percentage,
@@ -235,8 +220,9 @@ def _build_dashboard_context() -> dict:
         "recent_log_count": len(current_user.logs),
         "weekly_workout_count": weekly_workout_count,
         "weight_status": weight_status,
-        "bmi_status_label": bmi_status_label,
-        "bmi_status_class": bmi_status_class,
+        "bmi_status_label": bmi_summary["status_label"],
+        "bmi_status_class": bmi_summary["status_class"],
+        "bmi_detail": bmi_summary["detail"],
         "goal_anchor_title": goal_anchor_title,
         "goal_anchor_detail": goal_anchor_detail,
         "change_since_start_display": change_since_start_display,

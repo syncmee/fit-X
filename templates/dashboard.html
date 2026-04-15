@@ -59,9 +59,9 @@
 
                 <div class="grid grid-cols-12 gap-6">
                     <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
-                        <div class="flex justify-between items-start mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Daily Fuel Target</h5><span class="text-fitGreen text-sm font-bold">{{ current_user.activity_level }}</span></div>
+                        <div class="flex justify-between items-start mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Daily Fuel Target</h5><span class="text-fitGreen text-sm font-bold">{{ activity_level_label }}</span></div>
                         <h3 class="text-5xl font-black"><span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen">{{ calories }}</span><span class="text-2xl text-gray-400 font-bold"> kcal</span></h3>
-                        <p class="text-sm text-gray-400 mt-4 font-medium">Calculated from your current profile and goal.</p>
+                        <p class="text-sm text-gray-400 mt-4 font-medium">{{ calorie_target_note }}</p>
                     </section>
 
                     <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
@@ -170,8 +170,9 @@
                         <div class="flex items-start justify-between gap-4 mb-6">
                             <div><h4 class="text-2xl font-black text-white">Tracking Snapshot</h4><p class="text-sm text-gray-400">Your headline numbers, target, and motivation in one place.</p></div>
                             <div class="text-right">
-                                <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-gray-200">BMI {{ bmi }}</span>
+                                <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-gray-200">BMI {% if bmi %}{{ bmi }}{% else %}--{% endif %}</span>
                                 <p class="mt-2 text-xs font-bold {{ bmi_status_class }}">{{ bmi_status_label }}</p>
+                                <p class="mt-1 text-[11px] text-gray-500">{{ bmi_detail }}</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
