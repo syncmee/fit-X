@@ -20,7 +20,6 @@ class User(UserMixin, db.Model):
     start_weight = db.Column(db.Float)
     target_weight = db.Column(db.Float)
     activity_level = db.Column(db.String(50))
-    diet = db.Column(db.String(50))
     goal = db.Column(db.String(50))
 
     logs = db.relationship("WeightLog", backref="user", lazy=True, order_by="WeightLog.date")

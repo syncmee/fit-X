@@ -280,8 +280,8 @@ def login():
             db.session.add(new_user)
             db.session.commit()
 
-            flash("Account created. Please sign in to continue.", "success")
-            return redirect(url_for("main.login"))
+            login_user(new_user)
+            return redirect(url_for("main.onboarding"))
 
         cleaned_data, errors = validate_login_form(request.form)
         if errors:
@@ -354,7 +354,6 @@ def onboarding():
         current_user.start_weight = cleaned_data["weight"]
         current_user.target_weight = cleaned_data["target_weight"]
         current_user.activity_level = cleaned_data["activity_level"]
-        current_user.diet = cleaned_data["diet"]
         current_user.goal = cleaned_data["goal"]
         current_user.onboarding = True
 

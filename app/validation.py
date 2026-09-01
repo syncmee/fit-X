@@ -4,8 +4,7 @@ EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORE
 
 ALLOWED_GENDERS = {"male", "female"}
 ALLOWED_ACTIVITY_LEVELS = {"sedentary", "light", "moderate", "athlete"}
-ALLOWED_DIETS = {"everything", "vegetarian", "vegan"}
-ALLOWED_GOALS = {"lose", "gain"}
+ALLOWED_GOALS = {"lose", "gain", "maintain"}
 
 
 def _normalize_text(value: str | None) -> str:
@@ -91,7 +90,6 @@ def validate_onboarding_form(form) -> tuple[dict, list[str]]:
 
     gender = _normalize_text(form.get("gender")).lower()
     activity_level = _normalize_text(form.get("activity-level")).lower()
-    diet = _normalize_text(form.get("diet")).lower()
     goal = _normalize_text(form.get("goal")).lower()
 
     try:
@@ -124,9 +122,6 @@ def validate_onboarding_form(form) -> tuple[dict, list[str]]:
     if activity_level not in ALLOWED_ACTIVITY_LEVELS:
         errors.append("Please choose your activity level.")
 
-    if diet not in ALLOWED_DIETS:
-        errors.append("Please choose your dietary preference.")
-
     if goal not in ALLOWED_GOALS:
         errors.append("Please choose your primary goal.")
 
@@ -143,6 +138,5 @@ def validate_onboarding_form(form) -> tuple[dict, list[str]]:
         "weight": weight,
         "target_weight": target_weight,
         "activity_level": activity_level,
-        "diet": diet,
         "goal": goal,
     }, errors

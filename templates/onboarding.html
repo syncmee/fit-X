@@ -1,234 +1,891 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>fiT - Start Your Journey</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        accent: {"50":"#fff5f0","100":"#ffd6c2","200":"#feb795","300":"#fe9868","400":"#fd783c","500":"#fb580f","600":"#db4603","700":"#b03802","800":"#862b01","900":"#5a1d00","950":"#2f0f00"}
-                    }
-                }
-            }
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fiT-X — Onboarding</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.apexcharts.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0A0A0A',
+          bg2: '#0E0E0E',
+          yellow: '#fef08a',
+          green: '#4ade80',
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --bg-2: #0E0E0E;
+    --surface: rgba(255,255,255,0.03);
+    --surface-2: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #F5F5F5;
+    --muted: #9CA3AF;
+    --dim: #6B7280;
+    --yellow: #fef08a;
+    --green: #4ade80;
+    --grad: linear-gradient(135deg, #fef08a 0%, #4ade80 100%);
+    --grad-soft: linear-gradient(135deg, rgba(254,240,138,0.15) 0%, rgba(74,222,128,0.15) 100%);
+  }
 
-        function showSection(sectionId) {
-            const sections = ["onboarding-welcome", "onboarding-body", "onboarding-nutrition", "onboarding-goals", "onboarding-submit"];
-            sections.forEach(id => {
-                document.getElementById(id).classList.add("hidden");
-                document.getElementById(id).classList.remove("flex");
-            });
-            const target = document.getElementById(sectionId);
-            target.classList.remove("hidden");
-            target.classList.add("flex");
-        }
-    </script>
-    <style>
-        .glass-card {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+  * { -webkit-font-smoothing: antialiased; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
 
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-    </style>
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .tracking-tighter-2 { letter-spacing: -0.04em; }
+
+  .grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  .grad-bg { background: var(--grad); }
+  .grad-border {
+    position: relative;
+  }
+  .grad-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass {
+    background: rgba(20,20,20,0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+  }
+  .glass-strong {
+    background: rgba(15,15,15,0.75);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border-strong);
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  /* Onboarding split layout image */
+  .ob-img {
+    background:
+      linear-gradient(to right, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.95) 100%),
+      linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, transparent 50%, rgba(10,10,10,0.9) 100%),
+      url('https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+    filter: contrast(1.1) brightness(0.8) saturate(0.6);
+  }
+
+  .pulse-dot {
+    position: relative;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--green);
+    opacity: 0.4;
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  /* Form transitions */
+  .step {
+    display: none;
+    animation: slideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .step.active {
+    display: block;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Custom inputs */
+  .input-field {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: var(--green);
+    background: rgba(0,0,0,0.6);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.1);
+  }
+
+  /* Selectable cards */
+  .select-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .select-card:hover {
+    border-color: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.04);
+  }
+  .select-card.selected {
+    border-color: transparent;
+    background: linear-gradient(rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+  }
+  .select-card.selected::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Segmented control */
+  .seg-btn {
+    transition: all 0.2s;
+  }
+  .seg-btn.active {
+    background: var(--grad);
+    color: #000;
+  }
+
+  /* Button shine */
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transition: left 0.6s;
+  }
+  .btn-shine:hover::after { left: 120%; }
+
+  /* Terminal blinking cursor */
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+  .cursor { animation: blink 1s infinite; }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0A0A0A; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::selection { background: rgba(74,222,128,0.3); color: #fff; }
+
+  /* Slider */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    background: rgba(255,255,255,0.1);
+    height: 4px;
+    border-radius: 2px;
+  }
+  input[type=range]::-moz-range-track {
+    background: rgba(255,255,255,0.1);
+    height: 4px;
+    border-radius: 2px;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    margin-top: -8px;
+    background-color: #fff;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(74,222,128,0.2);
+  }
+  input[type=range]::-moz-range-thumb {
+    background-color: #fff;
+    height: 20px;
+    width: 20px;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px rgba(74,222,128,0.2);
+  }
+</style>
 </head>
-<body class="bg-black text-white font-sans selection:bg-green-400 selection:text-black">
+<body class="bg-bg text-white antialiased min-h-screen flex flex-col">
 
-<form action="{{ url_for('main.onboarding') }}" method="POST" class="h-screen w-full relative overflow-hidden">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<!-- Top Nav -->
+<nav class="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-white/5">
+  <div class="max-w-[1400px] mx-auto px-6 lg:px-10 h-16 flex items-center justify-between">
+    <a href="/" class="flex items-center group">
+      <span class="font-bold text-lg tracking-tighter-2">fiT<span class="grad-text">-X</span></span>
+    </a>
 
-    <div class="absolute inset-0 z-0">
-        <img src="https://images.pexels.com/photos/4162489/pexels-photo-4162489.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-             class="w-full h-full object-cover" alt="Background">
-        <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/90"></div>
+    <div class="hidden md:flex items-center gap-3 text-[11px] font-mono uppercase tracking-wider text-gray-500">
+      <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
+      <span>Secure Setup · Session <span class="text-gray-400">8F2A-19X</span></span>
     </div>
 
-    <div class="absolute top-6 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-20">
-        {% with messages = get_flashed_messages(with_categories=True) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-3 rounded-2xl px-5 py-4 text-sm font-medium {% if category == 'error' %}bg-red-500/15 text-red-100 border border-red-400/30{% else %}bg-white/10 text-white border border-white/10{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+    <a href="/" class="text-sm text-gray-400 hover:text-white transition flex items-center gap-2">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      Exit
+    </a>
+  </div>
+</nav>
+
+<!-- Flash Messages -->
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-4">
+  {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+      <div class="space-y-3">
+        {% for category, message in messages %}
+          {% if category == 'error' %}
+          <div class="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-500/15 p-4 text-sm text-red-100 backdrop-blur-sm shadow-xl" role="alert">
+            <svg class="h-4 w-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <div>{{ message }}</div>
+          </div>
+          {% else %}
+          <div class="flex items-center gap-3 rounded-xl border border-green-500/40 bg-green-500/15 p-4 text-sm text-green-100 backdrop-blur-sm shadow-xl" role="alert">
+            <div>{{ message }}</div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+</div>
+
+<form id="onboardingForm" action="{{ url_for('main.onboarding') }}" method="POST" class="flex-1" onsubmit="return false;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" id="fieldGender" name="gender" value="male">
+  <input type="hidden" id="fieldActivityLevel" name="activity-level" value="moderate">
+  <input type="hidden" id="fieldGoal" name="goal" value="lose">
+
+<!-- Main Onboarding Layout -->
+<main class="pt-16 grid lg:grid-cols-2 min-h-screen">
+  
+  <!-- Left Visual Panel -->
+  <aside class="relative ob-img hidden lg:flex flex-col justify-between p-12 overflow-hidden">
+    <div class="absolute inset-0 grid-bg opacity-30 pointer-events-none"></div>
+    
+    <div class="relative z-10 mt-8">
+      <div class="text-[11px] font-mono uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
+        Step <span id="stepIndicator" class="text-white">01</span> / 04
+      </div>
+      <h2 class="mt-4 text-4xl xl:text-5xl font-extrabold tracking-tighter-2 leading-[0.95]">
+        Let's calculate<br>
+        your <span class="grad-text">exact targets.</span>
+      </h2>
+      <p class="mt-4 text-sm text-gray-400 max-w-md leading-relaxed">
+        No guesswork. We use the Mifflin-St Jeor equation and your daily activity to engineer a precise calorie deficit or surplus. Math wins.
+      </p>
     </div>
 
-    <section id="onboarding-welcome" class="relative z-10 h-full flex flex-col items-center justify-center px-4 text-center">
-        <div class="max-w-2xl">
-            <h1 class="text-6xl md:text-8xl font-black tracking-tighter mb-4">
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-100 to-green-400">READY?</span>
-            </h1>
-            <p class="text-gray-400 text-lg md:text-xl mb-8">Before fiT-X builds your AI-powered plan, we need to know your starting line.</p>
-            <button type="button" onclick="showSection('onboarding-body')" class="px-10 py-4 bg-white text-black font-bold rounded-full hover:bg-green-400 transition-all transform hover:scale-105">
-                Let's Go
+    <!-- Floating context cards that update -->
+    <div class="relative z-10 space-y-4 max-w-sm">
+      <div class="glass-strong rounded-xl p-4 border border-white/10">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2">Live Calculation</div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <div class="text-[9px] font-mono text-gray-600">BMR</div>
+            <div id="liveBMR" class="text-xl font-bold tracking-tighter-2 mt-1">--</div>
+          </div>
+          <div>
+            <div class="text-[9px] font-mono text-gray-600">TDEE</div>
+            <div id="liveTDEE" class="text-xl font-bold tracking-tighter-2 mt-1">--</div>
+          </div>
+          <div>
+            <div class="text-[9px] font-mono text-gray-600">BMI</div>
+            <div id="liveBMI" class="text-xl font-bold tracking-tighter-2 mt-1">--</div>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-white/5 text-[10px] font-mono text-gray-500">
+          Updates in real-time as you input your stats
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-3 text-[11px] font-mono text-gray-500">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Your data is encrypted. We never sell, only compute.
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Interactive Panel -->
+  <section class="relative flex flex-col p-6 lg:p-12 overflow-y-auto">
+    <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none"></div>
+    
+    <!-- Progress Bar -->
+    <div class="relative z-10 mb-12 mt-4">
+      <div class="flex justify-between text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2">
+        <span>Setup Progress</span>
+        <span id="progressPercent">25%</span>
+      </div>
+      <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+        <div id="progressBar" class="h-full grad-bg rounded-full transition-all duration-500 ease-out" style="width: 25%"></div>
+      </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="relative z-10 max-w-lg mx-auto w-full flex-1 flex flex-col justify-center">
+
+      <!-- STEP 1: Biometrics -->
+      <div id="step1" class="step active">
+        <h3 class="text-3xl font-bold tracking-tighter-2 mb-2">Your biometrics</h3>
+        <p class="text-sm text-gray-400 mb-8">The base layer for your metabolic rate.</p>
+
+        <!-- Sex -->
+        <div class="mb-8">
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Sex</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" onclick="selectSex('male', this)" class="seg-btn active input-field rounded-lg py-4 text-sm font-medium flex items-center justify-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="6"/><path d="M14 10l7-7M16 3h5v5"/></svg>
+              Male
             </button>
-        </div>
-    </section>
-
-    <section id="onboarding-body" class="hidden relative z-10 h-full flex-col items-center justify-center px-4">
-        <div class="glass-card p-8 md:p-12 rounded-3xl w-full max-w-lg shadow-2xl">
-            <div class="mb-8">
-                <div class="w-full bg-gray-800 rounded-full h-1.5 mb-6">
-                    <div class="bg-gradient-to-r from-yellow-200 to-green-400 h-1.5 rounded-full" style="width: 33%"></div>
-                </div>
-                <h2 class="text-3xl font-bold mb-2">The Basics</h2>
-                <p class="text-gray-400">Tell us about your physical profile.</p>
-            </div>
-
-            <div class="space-y-6">
-                <div class="grid grid-cols-2 gap-4">
-                    <label class="cursor-pointer group">
-                        <input type="radio" name="gender" value="male" class="hidden peer" required>
-                        <div class="p-4 text-center border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all">
-                            Male
-                        </div>
-                    </label>
-                    <label class="cursor-pointer group">
-                        <input type="radio" name="gender" value="female" class="hidden peer">
-                        <div class="p-4 text-center border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all">
-                            Female
-                        </div>
-                    </label>
-                </div>
-
-                <div class="grid grid-cols-3 gap-4">
-                    <input type="number" name="age" placeholder="Age" min="13" max="100" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400 text-white" required>
-                    <input type="number" name="height" placeholder="Height (cm)" min="100" max="260" step="0.1" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400 text-white" required>
-                    <input type="number" name="weight" placeholder="Weight (kg)" min="30" max="350" step="0.1" class="bg-transparent border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400 text-white" required>
-                </div>
-
-                <select name="activity-level" class="w-full bg-black border-gray-700 rounded-2xl p-4 focus:ring-green-400 focus:border-green-400" required>
-                    <option value="" selected disabled>Activity Level</option>
-                    <option value="sedentary">Inactive (Mostly sitting, little planned exercise)</option>
-                    <option value="light">Low Active (Walking and light training most days)</option>
-                    <option value="moderate">Active (Regular training 3-5 days/week)</option>
-                    <option value="athlete">Very Active (Intense daily training or sport)</option>
-                </select>
-                <p class="text-xs text-gray-500">Pick the level that matches your usual week. This is what fiT uses for your calorie estimate.</p>
-
-                <button type="button" onclick="showSection('onboarding-nutrition')" class="w-full py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black rounded-2xl hover:opacity-90 transition-all">
-                    Next Step
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <section id="onboarding-nutrition" class="hidden relative z-10 h-full flex-col items-center justify-center px-4">
-        <div class="glass-card p-8 md:p-12 rounded-3xl w-full max-w-4xl shadow-2xl">
-            <div class="mb-8 text-center">
-                <div class="w-full bg-gray-800 rounded-full h-1.5 mb-6">
-                    <div class="bg-gradient-to-r from-yellow-200 to-green-400 h-1.5 rounded-full" style="width: 66%"></div>
-                </div>
-                <h2 class="text-3xl font-bold mb-2">Fuel Your Body</h2>
-                <p class="text-gray-400">What's your dietary preference?</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <label class="cursor-pointer">
-                    <input type="radio" name="diet" value="everything" class="hidden peer" required>
-                    <div class="h-full p-6 border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all text-center">
-                        <span class="block text-xl font-bold mb-1">Everything</span>
-                        <span class="text-xs text-gray-500">No restrictions</span>
-                    </div>
-                </label>
-                <label class="cursor-pointer">
-                    <input type="radio" name="diet" value="vegetarian" class="hidden peer">
-                    <div class="h-full p-6 border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all text-center">
-                        <span class="block text-xl font-bold mb-1">Vegetarian</span>
-                        <span class="text-xs text-gray-500">Plant-based + Dairy</span>
-                    </div>
-                </label>
-                <label class="cursor-pointer">
-                    <input type="radio" name="diet" value="vegan" class="hidden peer">
-                    <div class="h-full p-6 border border-gray-700 rounded-2xl peer-checked:border-green-400 peer-checked:bg-green-400/10 transition-all text-center">
-                        <span class="block text-xl font-bold mb-1">Vegan</span>
-                        <span class="text-xs text-gray-500">100% Plant-powered</span>
-                    </div>
-                </label>
-            </div>
-
-            <div class="flex gap-4">
-                <button type="button" onclick="showSection('onboarding-body')" class="w-1/3 py-4 border border-gray-700 rounded-2xl hover:bg-gray-800 transition-all">Back</button>
-                <button type="button" onclick="showSection('onboarding-goals')" class="w-2/3 py-4 bg-gradient-to-r from-yellow-200 to-green-400 text-black font-black rounded-2xl transition-all">Continue</button>
-            </div>
-        </div>
-    </section>
-
-    <section id="onboarding-goals" class="hidden relative z-10 h-full flex-col items-center justify-center px-4">
-        <div class="glass-card p-8 md:p-12 rounded-3xl w-full max-w-lg shadow-2xl text-center">
-            <div class="w-full bg-gray-800 rounded-full h-1.5 mb-10">
-                <div class="bg-gradient-to-r from-yellow-200 to-green-400 h-1.5 rounded-full" style="width: 90%"></div>
-            </div>
-
-            <h2 class="text-4xl font-black mb-8 italic">CHOOSE YOUR FOCUS</h2>
-
-            <div class="space-y-4 mb-8">
-                <label class="block cursor-pointer">
-                    <input type="radio" name="goal" value="lose" class="hidden peer" required>
-                    <div class="p-6 border-2 border-gray-700 rounded-3xl peer-checked:border-green-400 peer-checked:bg-green-400 text-left transition-all group">
-                        <h3 class="text-2xl font-bold group-peer-checked:text-black">Cut &amp; Shred</h3>
-                        <p class="text-gray-500 group-peer-checked:text-black/70">Focus on fat loss and definition.</p>
-                    </div>
-                </label>
-                <label class="block cursor-pointer">
-                    <input type="radio" name="goal" value="gain" class="hidden peer">
-                    <div class="p-6 border-2 border-gray-700 rounded-3xl peer-checked:border-green-400 peer-checked:bg-green-400 text-left transition-all group">
-                        <h3 class="text-2xl font-bold group-peer-checked:text-black">Bulk &amp; Build</h3>
-                        <p class="text-gray-500 group-peer-checked:text-black/70">Focus on muscle mass and strength.</p>
-                    </div>
-                </label>
-            </div>
-
-            <div class="mt-6 mb-8">
-                <div class="relative">
-                    <input
-                        type="number"
-                        name="target_weight"
-                        min="30"
-                        max="350"
-                        step="0.1"
-                        class="w-full bg-black border-2 border-gray-700 rounded-2xl p-4 pr-24 text-white focus:ring-green-400 focus:border-green-400 font-bold text-lg outline-none placeholder-gray-600"
-                        placeholder="e.g. 75"
-                        required
-                    >
-                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold pointer-events-none">
-                        kg
-                    </span>
-                </div>
-            </div>
-
-            <button type="button" onclick="showSection('onboarding-submit')" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-green-400 transition-all">
-                Almost There
+            <button type="button" onclick="selectSex('female', this)" class="seg-btn input-field rounded-lg py-4 text-sm font-medium flex items-center justify-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="14" r="6"/><path d="M14 10l7-7M16 3h5v5" transform="rotate(180 12 12)"/></svg>
+              Female
             </button>
+          </div>
         </div>
-    </section>
 
-    <section id="onboarding-submit" class="hidden relative z-10 h-full flex-col items-center justify-center px-4 text-center">
-        <div class="max-w-xl">
-            <h2 class="text-5xl font-black mb-6">
-                "The only bad workout is the one that <span class="text-green-400">didn't happen</span>."
-            </h2>
-            <p class="text-gray-400 mb-10 italic">- Start today, not tomorrow.</p>
+        <!-- Age, Height, Weight Grid -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Age</label>
+            <div class="relative">
+              <input id="inAge" name="age" type="number" min="13" max="100" value="29" required class="input-field rounded-lg w-full px-4 py-3.5 text-lg font-mono font-semibold pr-8">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-600">yrs</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Height</label>
+            <div class="relative">
+              <input id="inHeight" name="height" type="number" min="100" max="260" step="0.1" value="178" required class="input-field rounded-lg w-full px-4 py-3.5 text-lg font-mono font-semibold pr-8">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-600">cm</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Weight</label>
+            <div class="relative">
+              <input id="inWeight" name="weight" type="number" min="30" max="350" step="0.1" value="82" required class="input-field rounded-lg w-full px-4 py-3.5 text-lg font-mono font-semibold pr-8">
+              <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-600">kg</span>
+            </div>
+          </div>
+        </div>
 
-            <button type="submit" class="px-16 py-6 bg-gradient-to-r from-yellow-200 to-green-400 text-black text-2xl font-black rounded-full shadow-[0_0_50px_rgba(74,222,128,0.3)] hover:scale-110 transition-all animate-pulse">
-                FINISH SETUP
+        <!-- Activity Level -->
+        <div class="mb-10">
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Activity Level</label>
+          <div id="activityContainer" class="space-y-2">
+            <button type="button" onclick="selectActivity(1.2, 'Sedentary', 'sedentary', this)" class="select-card w-full text-left input-field rounded-lg p-4 flex justify-between items-center">
+              <div>
+                <div class="text-sm font-semibold">Sedentary</div>
+                <div class="text-[11px] text-gray-500 font-mono mt-1">Office job, little exercise</div>
+              </div>
+              <span class="text-[10px] font-mono text-gray-600">×1.2</span>
             </button>
+            <button type="button" onclick="selectActivity(1.375, 'Light', 'light', this)" class="select-card w-full text-left input-field rounded-lg p-4 flex justify-between items-center">
+              <div>
+                <div class="text-sm font-semibold">Light</div>
+                <div class="text-[11px] text-gray-500 font-mono mt-1">1-3 days/wk exercise</div>
+              </div>
+              <span class="text-[10px] font-mono text-gray-600">×1.375</span>
+            </button>
+            <button type="button" onclick="selectActivity(1.55, 'Moderate', 'moderate', this)" class="select-card selected w-full text-left input-field rounded-lg p-4 flex justify-between items-center">
+              <div>
+                <div class="text-sm font-semibold">Moderate</div>
+                <div class="text-[11px] text-gray-500 font-mono mt-1">3-5 days/wk exercise</div>
+              </div>
+              <span class="text-[10px] font-mono text-gray-600">×1.55</span>
+            </button>
+            <button type="button" onclick="selectActivity(1.9, 'Athlete', 'athlete', this)" class="select-card w-full text-left input-field rounded-lg p-4 flex justify-between items-center">
+              <div>
+                <div class="text-sm font-semibold">Very Active / Athlete</div>
+                <div class="text-[11px] text-gray-500 font-mono mt-1">6-7 days/wk or physical job</div>
+              </div>
+              <span class="text-[10px] font-mono text-gray-600">×1.9</span>
+            </button>
+          </div>
         </div>
-    </section>
-</form>
 
-<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+        <div class="flex justify-end">
+          <button type="button" onclick="nextStep(2)" class="btn-shine relative inline-flex items-center gap-2 text-sm font-semibold text-black grad-bg px-6 py-3.5 rounded-md hover:opacity-90 transition">
+            Continue
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Goal -->
+      <div id="step2" class="step">
+        <h3 class="text-3xl font-bold tracking-tighter-2 mb-2">Pick your goal</h3>
+        <p class="text-sm text-gray-400 mb-8">This determines your calorie target and macro split. You can change this later.</p>
+
+        <div class="space-y-4">
+          <div onclick="selectGoal('lose', this)" class="select-card input-field rounded-2xl p-6 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-yellow border border-yellow/30 px-2 py-1 rounded">Lose</span>
+              <span class="text-[10px] font-mono text-gray-500">−0.5 to −1.0 kg/wk</span>
+            </div>
+            <h4 class="text-2xl font-bold tracking-tighter-2">Cut phase</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Sustainable deficit, protein-forward macros to preserve lean mass.</p>
+          </div>
+
+          <div onclick="selectGoal('maintain', this)" class="select-card input-field rounded-2xl p-6 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-gray-300 border border-white/20 px-2 py-1 rounded">Maintain</span>
+              <span class="text-[10px] font-mono text-gray-500">±0.2 kg/wk</span>
+            </div>
+            <h4 class="text-2xl font-bold tracking-tighter-2">Recomp</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Maintenance calories, high protein, slow body-comp shift.</p>
+          </div>
+
+          <div onclick="selectGoal('gain', this)" class="select-card input-field rounded-2xl p-6 cursor-pointer">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-green border border-green/30 px-2 py-1 rounded">Gain</span>
+              <span class="text-[10px] font-mono text-gray-500">+0.25 to +0.5 kg/wk</span>
+            </div>
+            <h4 class="text-2xl font-bold tracking-tighter-2">Lean bulk</h4>
+            <p class="text-xs text-gray-400 mt-2 leading-relaxed">Small surplus, progressive overload for clean composition gains.</p>
+          </div>
+        </div>
+
+        <div class="flex justify-between mt-10">
+          <button type="button" onclick="nextStep(1)" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white px-6 py-3.5 transition">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>
+            Back
+          </button>
+          <button type="button" onclick="nextStep(3)" class="btn-shine relative inline-flex items-center gap-2 text-sm font-semibold text-black grad-bg px-6 py-3.5 rounded-md hover:opacity-90 transition">
+            Continue
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Pace & Macros -->
+      <div id="step3" class="step">
+        <h3 class="text-3xl font-bold tracking-tighter-2 mb-2">Tune the pace</h3>
+        <p class="text-sm text-gray-400 mb-8">Aggressive targets yield faster results but require stricter adherence.</p>
+
+        <div class="glass-strong rounded-2xl p-6 mb-8 border border-white/10">
+          <div class="flex justify-between mb-4">
+            <span class="text-sm font-medium text-gray-300">Weekly rate</span>
+            <span id="paceValue" class="text-sm font-mono font-bold text-green">−0.5 kg/wk</span>
+          </div>
+          <input id="paceSlider" type="range" min="1" max="3" value="2" step="1" class="w-full" oninput="updatePace(this.value)">
+          
+          <div class="flex justify-between text-[10px] font-mono text-gray-600 mt-2">
+            <span>Conservative</span>
+            <span>Balanced</span>
+            <span>Aggressive</span>
+          </div>
+
+          <div class="mt-6 pt-6 border-t border-white/5 grid grid-cols-2 gap-4">
+            <div>
+              <div class="text-[10px] font-mono uppercase text-gray-500">Daily Target</div>
+              <div class="text-3xl font-bold tracking-tighter-2 mt-1 grad-text" id="finalKcal">--</div>
+              <div class="text-[10px] font-mono text-gray-600 mt-1">kcal / day</div>
+            </div>
+            <div>
+              <div class="text-[10px] font-mono uppercase text-gray-500">Daily Deficit</div>
+              <div class="text-3xl font-bold tracking-tighter-2 mt-1 text-yellow" id="finalDeficit">--</div>
+              <div class="text-[10px] font-mono text-gray-600 mt-1">kcal / day</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-[11px] font-mono text-gray-500 mb-10 flex items-start gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          <span>Aggressive deficits may result in muscle loss. fiT-X will increase protein targets to mitigate this.</span>
+        </div>
+
+        <div class="flex justify-between">
+          <button type="button" onclick="nextStep(2)" class="inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white px-6 py-3.5 transition">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M11 5l-7 7 7 7"/></svg>
+            Back
+          </button>
+          <button type="button" onclick="computePlan()" class="btn-shine relative inline-flex items-center gap-2 text-sm font-semibold text-black grad-bg px-6 py-3.5 rounded-md hover:opacity-90 transition">
+            Compute Plan
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Computing -->
+      <div id="step4" class="step text-center">
+        <div class="flex flex-col items-center justify-center py-10">
+          <div class="relative w-16 h-16 mb-8">
+            <div class="absolute inset-0 rounded-full grad-bg opacity-20 animate-ping"></div>
+            <div class="relative w-16 h-16 rounded-full grad-bg flex items-center justify-center">
+              <span class="font-mono font-bold text-black text-xl">X</span>
+            </div>
+          </div>
+          <h3 class="text-2xl font-bold tracking-tighter-2 mb-2">fiT-X is crunching numbers</h3>
+          <p class="text-sm text-gray-400 mb-8">Building your daily targets, macro split, and training schedule...</p>
+          
+          <div class="glass rounded-xl p-5 max-w-md w-full text-left font-mono text-xs space-y-2 border border-white/5">
+            <div id="log1" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Parsing biometric profile...</span></div>
+            <div id="log2" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Calculating BMR via Mifflin-St Jeor...</span></div>
+            <div id="log3" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Multiplying by activity factor...</span></div>
+            <div id="log4" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Adjusting target for goal deficit...</span></div>
+            <div id="log5" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Optimizing macro ratios for lean mass...</span></div>
+            <div id="log6" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Initializing fiT-X AI Coach profile...</span></div>
+            <div id="log7" class="text-gray-600 flex items-center gap-2"><span class="text-gray-700">></span> <span>Generating daily schedule...</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 5: Result -->
+      <div id="step5" class="step">
+        <div class="text-center mb-10">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full grad-bg mb-4">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h3 class="text-3xl font-bold tracking-tighter-2 mb-2">Your plan is ready</h3>
+          <p class="text-sm text-gray-400">Your daily targets are locked in. The fiT-X coach will adjust them daily at 04:30.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="glass-strong rounded-xl p-5 border border-white/10">
+            <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Daily Target</div>
+            <div class="text-4xl font-bold tracking-tighter-2 mt-1 grad-text" id="rKcal">--</div>
+            <div class="text-[10px] font-mono text-gray-600 mt-1">kcal / day</div>
+          </div>
+          <div class="glass-strong rounded-xl p-5 border border-white/10">
+            <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Goal Pace</div>
+            <div class="text-4xl font-bold tracking-tighter-2 mt-1" id="rPace">--</div>
+            <div class="text-[10px] font-mono text-gray-600 mt-1">estimated rate</div>
+          </div>
+        </div>
+
+        <div class="glass-strong rounded-xl p-5 border border-white/10 mb-6">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-mono uppercase tracking-wider text-gray-500">Macro Split</span>
+            <span class="text-xs font-mono text-gray-400">/ 100%</span>
+          </div>
+          
+          <div id="macroChart"></div>
+          
+          <div class="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-white/5">
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <div class="w-2 h-2 rounded-sm bg-yellow"></div>
+                <span class="text-[10px] font-mono uppercase text-gray-500">Protein</span>
+              </div>
+              <div class="text-xl font-bold tracking-tighter-2" id="rProtein">--</div>
+              <div class="text-[10px] font-mono text-gray-600">grams</div>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <div class="w-2 h-2 rounded-sm bg-green"></div>
+                <span class="text-[10px] font-mono uppercase text-gray-500">Carbs</span>
+              </div>
+              <div class="text-xl font-bold tracking-tighter-2" id="rCarbs">--</div>
+              <div class="text-[10px] font-mono text-gray-600">grams</div>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5 mb-1">
+                <div class="w-2 h-2 rounded-sm bg-white/40"></div>
+                <span class="text-[10px] font-mono uppercase text-gray-500">Fats</span>
+              </div>
+              <div class="text-xl font-bold tracking-tighter-2" id="rFats">--</div>
+              <div class="text-[10px] font-mono text-gray-600">grams</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass rounded-xl p-4 mb-8 flex items-start gap-3 border border-white/5">
+          <div class="w-8 h-8 rounded-full grad-bg flex items-center justify-center flex-shrink-0">
+            <span class="font-mono font-bold text-black text-xs">X</span>
+          </div>
+          <div>
+            <div class="text-xs font-semibold mb-1">fiT-X Coach · First message</div>
+            <p class="text-xs text-gray-400 leading-relaxed">
+              Welcome. I've set your daily target to <span id="coachKcal" class="font-mono text-green">--</span> kcal. Log your first meal or workout whenever you're ready. I'll watch the trend and adjust things if we plateau.
+            </p>
+          </div>
+        </div>
+
+        <button type="button" onclick="finishOnboarding()" class="btn-shine relative w-full inline-flex items-center justify-center gap-2 text-sm font-semibold text-black grad-bg px-6 py-4 rounded-md hover:opacity-90 transition">
+          Enter Dashboard
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script>
+  // State
+  const state = {
+    sex: 'male',
+    age: 29,
+    height: 178,
+    weight: 82,
+    activity: 1.55,
+    activityName: 'Moderate',
+    activityLevel: 'moderate',
+    goal: 'lose',
+    pace: 2 // 1=slow, 2=balanced, 3=aggressive
+  };
+
+  // Live calculations on Step 1
+  function calcLiveStats() {
+    const bmr = state.sex === 'male' 
+      ? 10 * state.weight + 6.25 * state.height - 5 * state.age + 5
+      : 10 * state.weight + 6.25 * state.height - 5 * state.age - 161;
+    
+    const tdee = bmr * state.activity;
+    const bmi = state.weight / Math.pow(state.height / 100, 2);
+
+    document.getElementById('liveBMR').textContent = Math.round(bmr);
+    document.getElementById('liveTDEE').textContent = Math.round(tdee);
+    document.getElementById('liveBMI').textContent = bmi.toFixed(1);
+    
+    return { bmr, tdee };
+  }
+
+  // Input listeners for Step 1
+  ['inAge', 'inHeight', 'inWeight'].forEach(id => {
+    document.getElementById(id).addEventListener('input', (e) => {
+      const key = id.replace('in', '').toLowerCase();
+      state[key] = parseFloat(e.target.value) || 0;
+      calcLiveStats();
+    });
+  });
+
+  function selectSex(sex, el) {
+    state.sex = sex;
+    document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    calcLiveStats();
+  }
+
+  function selectActivity(val, name, levelId, el) {
+    state.activity = val;
+    state.activityName = name;
+    state.activityLevel = levelId;
+    document.querySelectorAll('#activityContainer .select-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    calcLiveStats();
+  }
+
+  // Step Navigation
+  function nextStep(step) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + step).classList.add('active');
+    
+    const percent = (step / 4) * 100;
+    document.getElementById('progressBar').style.width = percent + '%';
+    document.getElementById('progressPercent').textContent = percent + '%';
+    document.getElementById('stepIndicator').textContent = String(step).padStart(2, '0');
+    
+    if (step === 3) updatePace(state.pace);
+  }
+
+  // Step 2: Goal Selection
+  function selectGoal(goal, el) {
+    state.goal = goal;
+    document.querySelectorAll('#step2 .select-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    // Reset pace to balanced when changing goal
+    state.pace = 2;
+  }
+
+  // Step 3: Pace slider
+  function updatePace(val) {
+    state.pace = parseInt(val);
+    const paceMap = {
+      lose: { 1: -0.25, 2: -0.5, 3: -0.75 },
+      gain: { 1: 0.125, 2: 0.25, 3: 0.4 },
+      maintain: { 1: 0, 2: 0, 3: 0 }
+    };
+    
+    const kgChange = paceMap[state.goal][val];
+    const sign = kgChange > 0 ? '+' : (kgChange < 0 ? '−' : '±');
+    document.getElementById('paceValue').textContent = `${sign}${Math.abs(kgChange)} kg/wk`;
+
+    const { tdee } = calcLiveStats();
+    const kcalAdjust = (kgChange * 7700) / 7; // 7700 kcal per kg of body weight
+    
+    const targetKcal = Math.round(tdee + kcalAdjust);
+    document.getElementById('finalKcal').textContent = targetKcal.toLocaleString();
+    
+    const deficit = Math.round(kcalAdjust);
+    const defSign = deficit > 0 ? '+' : (deficit < 0 ? '−' : '±');
+    document.getElementById('finalDeficit').textContent = `${defSign}${Math.abs(deficit).toLocaleString()}`;
+    
+    return { tdee, targetKcal, kcalAdjust };
+  }
+
+  // Step 4: Compute & terminal animation
+  function computePlan() {
+    nextStep(4);
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressPercent').textContent = '100%';
+    document.getElementById('stepIndicator').textContent = '04';
+    
+    const logs = ['log1', 'log2', 'log3', 'log4', 'log5', 'log6', 'log7'];
+    logs.forEach((id, i) => {
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        el.classList.remove('text-gray-600');
+        el.classList.add('text-green');
+        el.innerHTML = `<span class="text-gray-500">></span> <span>${el.querySelector('span').textContent}</span> <span class="text-gray-600">[OK]</span>`;
+      }, 400 * (i + 1));
+    });
+
+    setTimeout(() => {
+      generateFinalPlan();
+      nextStep(5);
+    }, 4000);
+  }
+
+  // Step 5: Generate Final Plan UI
+  function generateFinalPlan() {
+    const { targetKcal, kcalAdjust } = updatePace(state.pace);
+    
+    // Calculate Macros
+    let proteinPerKg = 2.2; // High protein baseline for cut/recomp
+    if (state.goal === 'gain') proteinPerKg = 1.8;
+    if (state.goal === 'maintain') proteinPerKg = 2.0;
+    
+    const proteinGrams = Math.round(state.weight * proteinPerKg);
+    const proteinKcal = proteinGrams * 4;
+    
+    // Fats = 25% of total calories
+    const fatKcal = targetKcal * 0.25;
+    const fatGrams = Math.round(fatKcal / 9);
+    
+    // Carbs = remainder
+    const carbKcal = targetKcal - proteinKcal - fatKcal;
+    const carbGrams = Math.round(carbKcal / 4);
+    
+    const paceText = document.getElementById('paceValue').textContent;
+    
+    document.getElementById('rKcal').textContent = targetKcal.toLocaleString();
+    document.getElementById('rPace').textContent = paceText.split(' ')[0]; // Just the +/-
+    document.getElementById('rProtein').textContent = proteinGrams + 'g';
+    document.getElementById('rCarbs').textContent = carbGrams + 'g';
+    document.getElementById('rFats').textContent = fatGrams + 'g';
+    document.getElementById('coachKcal').textContent = targetKcal.toLocaleString();
+
+    // Render Donut Chart
+    const options = {
+      series: [proteinGrams, carbGrams, fatGrams],
+      chart: { type: 'donut', height: 200, fontFamily: 'Inter, sans-serif', animations: { enabled: true, speed: 800 } },
+      labels: ['Protein', 'Carbs', 'Fats'],
+      colors: ['#fef08a', '#4ade80', 'rgba(255,255,255,0.4)'],
+      stroke: { width: 0 },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '75%',
+            background: 'transparent',
+            labels: {
+              show: true,
+              total: {
+                show: true,
+                label: 'Daily kcal',
+                fontSize: '11px',
+                fontFamily: 'JetBrains Mono, monospace',
+                color: '#6B7280',
+                formatter: () => targetKcal.toLocaleString()
+              }
+            }
+          }
+        }
+      },
+      legend: { show: false },
+      dataLabels: { enabled: false },
+      tooltip: {
+        theme: 'dark',
+        style: { fontFamily: 'JetBrains Mono, monospace' },
+        y: { formatter: (val) => val + 'g' }
+      }
+    };
+    
+    if (window.ApexCharts) {
+      const chart = new ApexCharts(document.querySelector('#macroChart'), options);
+      chart.render();
+    }
+  }
+
+  function finishOnboarding() {
+    // Sync state to hidden fields
+    document.getElementById('fieldGender').value = state.sex;
+    document.getElementById('fieldActivityLevel').value = state.activityLevel;
+    document.getElementById('fieldGoal').value = state.goal;
+
+    // Calculate dynamic target weight since the UI implies it based on pace and goal
+    let targetWeight = parseFloat(state.weight);
+    if (state.goal === 'lose') targetWeight -= 5;
+    if (state.goal === 'gain') targetWeight += 5;
+
+    // Create hidden target_weight input
+    const twInput = document.createElement('input');
+    twInput.type = 'hidden';
+    twInput.name = 'target_weight';
+    twInput.value = targetWeight;
+    document.getElementById('onboardingForm').appendChild(twInput);
+
+    // Submit the form
+    document.getElementById('onboardingForm').submit();
+  }
+
+  // Initialize live stats on load
+  calcLiveStats();
+</script>
+
 </body>
 </html>
