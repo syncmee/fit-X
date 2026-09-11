@@ -7,9 +7,15 @@ __pycache__/
 *.pyd
 instance/*.db
 instance/*.sqlite*
+.claude/
+.mcp.json
+*.stackdump
+do-not-read.md
+Claude Code Setup — Existing Flask Fitness App.md
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
 .idea/
+test_onboarding.py
