@@ -1105,6 +1105,7 @@ ACTION TYPES (each an object inside "actions"; use an empty array for pure quest
 5. {{"type":"complete_workout","title":"Activity","days_ago":0,"duration_minutes":int,"calories_burned":int}}  — the user already finished it. days_ago 0-7. Estimate burn the same way.
 
 RULES:
+- The app already computes the user's official daily calorie target (daily_calorie_target in the context). Treat it as the single source of truth for intake advice — never present a different daily number as the plan. If the user asks for more aggressive or faster pacing, explain the current target and why it is conservative; suggest talking to a professional for anything beyond it.
 - The user may phrase anything casually ("had 2 rotis and dal", "did 40 min zone 2", "leg day tomorrow 7am"). Interpret sensibly and fill every field; if a required value is genuinely unknown or implausible, do NOT invent it — ask one short question in "reply" with empty actions.
 - For progress questions ("how am i doing", "what did I eat today"), answer from the context data above with empty actions.
 - Reply in the language the user writes in.
