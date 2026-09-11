@@ -1,181 +1,397 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>fiT - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        fitYellow: "#fef08a",
-                        fitGreen: "#4ade80",
-                        darkBg: "#0A0A0A",
-                    },
-                    fontFamily: {
-                        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
-                    }
-                }
-            }
-        }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fiT-X — Sign in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0A0A0A',
+          bg2: '#0E0E0E',
+          yellow: '#fef08a',
+          green: '#4ade80',
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --bg-2: #0E0E0E;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #F5F5F5;
+    --muted: #9CA3AF;
+    --yellow: #fef08a;
+    --green: #4ade80;
+    --grad: linear-gradient(135deg, #fef08a 0%, #4ade80 100%);
+  }
 
-        function showSection(sectionId) {
-            document.getElementById("sign-in").style.display = "none";
-            document.getElementById("sign-up").style.display = "none";
-            document.getElementById(sectionId).style.display = "block";
-        }
-    </script>
-    <style>
-        .glass-card {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+  * { -webkit-font-smoothing: antialiased; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden; /* Prevent body scroll */
+  }
 
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #000 inset !important;
-            -webkit-text-fill-color: white !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-    </style>
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .tracking-tighter-2 { letter-spacing: -0.04em; }
+
+  .grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .grad-bg { background: var(--grad); }
+
+  .glass {
+    background: rgba(20,20,20,0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+  }
+  .glass-strong {
+    background: rgba(15,15,15,0.75);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border-strong);
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .login-img {
+    background:
+      linear-gradient(to right, rgba(10,10,10,0.5) 0%, rgba(10,10,10,0.95) 100%),
+      linear-gradient(to bottom, rgba(10,10,10,0.3) 0%, transparent 50%, rgba(10,10,10,0.9) 100%),
+      url('https://images.unsplash.com/photo-1534258936925-c58bed479fcb?q=80&w=1600&auto=format&fit=crop') center/cover no-repeat;
+    filter: contrast(1.1) brightness(0.8) saturate(0.6);
+  }
+
+  .pulse-dot {
+    position: relative;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--green);
+    opacity: 0.4;
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  .input-field {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: var(--green);
+    background: rgba(0,0,0,0.6);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.1);
+  }
+
+  .btn-shine {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-shine::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transition: left 0.6s;
+  }
+  .btn-shine:hover::after { left: 120%; }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::selection { background: rgba(74,222,128,0.3); color: #fff; }
+
+  .tab-btn { transition: all 0.2s; }
+  .tab-btn.active {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+  }
+</style>
 </head>
-<body class="relative min-h-[100dvh] bg-black text-white font-sans antialiased selection:bg-fitGreen selection:text-black">
+<body class="bg-bg text-white antialiased h-screen flex flex-col">
 
-    <!-- Background -->
-    <div class="fixed inset-0 z-0" aria-hidden="true">
-        <img class="h-full w-full object-cover object-center" src="https://images.pexels.com/photos/163403/box-sport-men-training-163403.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="">
-        <div class="absolute inset-0 bg-gradient-to-b from-black/85 via-black/70 to-black/95"></div>
+<!-- Top Nav -->
+<nav class="flex-shrink-0 h-16 glass-strong border-b border-white/5 z-50">
+  <div class="max-w-[1400px] mx-auto px-6 lg:px-10 h-full flex items-center justify-between">
+    <a href="/" class="flex items-center group">
+      <span class="font-bold text-lg tracking-tighter-2">fiT<span class="grad-text">-X</span></span>
+    </a>
+    
+    <div class="hidden md:flex items-center gap-3 text-[11px] font-mono uppercase tracking-wider text-gray-500">
+      <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
+      <span>Secure Connection · <span class="text-gray-400">TLS 1.3</span></span>
     </div>
 
-    <!-- Brand (links home) -->
-    <header class="absolute top-0 left-0 z-50 w-full">
-        <div class="mx-auto flex max-w-7xl items-center px-5 py-5 sm:px-8">
-            <a href="{{ url_for('main.homepage') }}" class="group flex items-center gap-2" aria-label="Back to fiT home">
-                <svg class="h-8 w-8 text-white transition-colors group-hover:text-fitGreen" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="94" y="81" width="40" height="350" fill="currentColor"></rect>
-                    <rect x="264" y="81" width="40" height="350" fill="currentColor"></rect>
-                    <circle cx="199" cy="131" r="50" fill="currentColor"></circle>
-                    <circle cx="199" cy="246" r="50" fill="currentColor"></circle>
-                    <circle cx="369" cy="131" r="50" fill="currentColor"></circle>
-                    <circle cx="369" cy="246" r="50" fill="currentColor"></circle>
-                </svg>
-                <span class="text-2xl font-black tracking-tighter">fiT</span>
-            </a>
+    <a href="/" class="text-sm text-gray-400 hover:text-white transition flex items-center gap-2">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- Main Login Layout -->
+<main class="flex-1 grid lg:grid-cols-2 min-h-0 overflow-hidden">
+  
+  <!-- Left Visual Panel -->
+  <aside class="relative login-img hidden lg:flex flex-col justify-between p-10 xl:p-12 overflow-hidden">
+    <div class="absolute inset-0 grid-bg opacity-30 pointer-events-none"></div>
+    
+    <div class="relative z-10">
+      <div class="text-[11px] font-mono uppercase tracking-wider text-gray-400 flex items-center gap-2">
+        <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
+        Coach Status · Online
+      </div>
+      <h2 class="mt-4 text-3xl xl:text-4xl font-extrabold tracking-tighter-2 leading-[0.95]">
+        Your coach<br>
+        is <span class="grad-text">waiting.</span>
+      </h2>
+      <p class="mt-3 text-sm text-gray-400 max-w-md leading-relaxed">
+        Log in to see today's adjusted targets, your weekly trend, and your next scheduled workout.
+      </p>
+    </div>
+
+    <div class="relative z-10 max-w-sm space-y-4">
+      <div class="glass-strong rounded-xl p-4 border border-white/10">
+        <div class="flex items-center gap-2.5 mb-3">
+          <div class="w-7 h-7 rounded-full grad-bg flex items-center justify-center">
+            <span class="font-mono font-bold text-black text-[10px]">X</span>
+          </div>
+          <span class="text-xs font-semibold">fiT-X Coach</span>
+          <span class="pulse-dot ml-auto" style="width:6px;height:6px;"></span>
         </div>
-    </header>
+        <div class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2 text-xs text-gray-200">
+          Welcome back. I noticed your RHR dropped 2 bpm this week. Recovery is solid. We're sticking to the 2,400 kcal target today. First log is ready.
+        </div>
+      </div>
+      
+      <div class="flex items-center justify-between text-[11px] font-mono text-gray-500">
+        <span>Last sync: 06:42</span>
+        <span class="text-green">04:30 recalc · on schedule</span>
+      </div>
+    </div>
+  </aside>
 
-    <!-- Auth -->
-    <main class="relative z-10 flex min-h-[100dvh] items-center justify-center px-4 py-28 sm:py-24">
-        <div class="w-full max-w-md">
+  <!-- Right Auth Panel -->
+  <!-- Added overflow-y-auto to allow scrolling ONLY if viewport is too short -->
+  <section class="relative flex flex-col p-6 lg:p-8 h-full min-h-0 overflow-y-auto">
+    <div class="absolute inset-0 grid-bg opacity-20 pointer-events-none"></div>
+    
+    <div class="relative z-10 w-full max-w-md mx-auto flex-1 flex flex-col justify-center py-4">
+      
+      <!-- Header -->
+      <div class="mb-6">
+        <h3 class="text-2xl font-bold tracking-tighter-2 mb-1">
+          <span id="formTitle">Sign in</span>
+        </h3>
+        <p class="text-sm text-gray-400" id="formSub">Welcome back. Log in to resume your plan.</p>
+      </div>
 
-            {% with messages = get_flashed_messages(with_categories=True) %}
-              {% if messages %}
-                <div class="mb-6 space-y-3">
-                  {% for category, message in messages %}
-                    {% if category == 'error' %}
-                    <div class="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-500/15 p-4 text-sm text-red-100 backdrop-blur-sm" role="alert">
-                      <svg class="h-4 w-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                      </svg>
-                      <div><span class="font-black uppercase">{{ category }}!</span> {{ message }}</div>
-                    </div>
-                    {% else %}
-                    <div class="flex items-center gap-3 rounded-xl bg-gradient-to-r from-fitYellow to-fitGreen p-4 text-sm text-black shadow-[0_0_20px_rgba(74,222,128,0.3)]" role="alert">
-                      <svg class="h-4 w-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
-                      </svg>
-                      <div><span class="font-black uppercase">{{ category }}!</span> {{ message }}</div>
-                    </div>
-                    {% endif %}
-                  {% endfor %}
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          <div class="mb-5 space-y-3">
+            {% for category, message in messages %}
+              {% if category == 'error' %}
+                <div class="flex items-center gap-3 rounded-xl border border-red-500/40 bg-red-500/15 p-4 text-sm text-red-100 backdrop-blur-sm" role="alert">
+                  <svg class="h-4 w-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                  </svg>
+                  <div><span class="font-black uppercase">{{ category }}!</span> {{ message }}</div>
+                </div>
+              {% else %}
+                <div class="flex items-center gap-3 rounded-xl bg-gradient-to-r from-yellow to-green p-4 text-sm text-black shadow-[0_0_20px_rgba(74,222,128,0.3)]" role="alert">
+                  <svg class="h-4 w-4 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                  </svg>
+                  <div><span class="font-black uppercase">{{ category }}!</span> {{ message }}</div>
                 </div>
               {% endif %}
-            {% endwith %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-            <section id="sign-in" {% if active_section == 'signup' %}style="display: none;"{% endif %}>
-                <div class="glass-card rounded-3xl p-7 shadow-2xl sm:p-10">
-                    <div class="mb-8 text-center">
-                        <h1 class="mb-2 text-3xl font-black">Welcome Back</h1>
-                        <p class="text-gray-400">Sign in to your <span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen font-bold">fiT</span> account</p>
-                    </div>
+      <!-- Tab Switcher -->
+      <div class="flex p-1 bg-white/5 rounded-lg mb-5 border border-white/5">
+        <button id="tab-signin" onclick="switchTab('signin')" class="tab-btn active flex-1 text-sm font-medium py-2.5 rounded-md text-gray-400">
+          Sign in
+        </button>
+        <button id="tab-signup" onclick="switchTab('signup')" class="tab-btn flex-1 text-sm font-medium py-2.5 rounded-md text-gray-400">
+          Start free
+        </button>
+      </div>
 
-                    <form class="space-y-6" action="{{ url_for('main.login') }}" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="form_type" value="signin">
-                        <div>
-                            <label for="email" class="mb-2 block text-sm font-bold text-gray-400">Your Email</label>
-                            <input type="email" name="email" id="email" autocomplete="email" class="w-full rounded-xl border border-gray-700 bg-black/50 p-4 text-white placeholder-gray-600 transition-all focus:border-fitGreen focus:ring-fitGreen" placeholder="name@company.com" required>
-                        </div>
-                        <div>
-                            <div class="mb-2 flex items-center justify-between">
-                                <label for="password" class="block text-sm font-bold text-gray-400">Password</label>
-                                <a href="#" class="text-sm font-medium text-fitGreen transition-colors hover:text-green-300">Forgot?</a>
-                            </div>
-                            <input type="password" name="password" id="password" autocomplete="current-password" class="w-full rounded-xl border border-gray-700 bg-black/50 p-4 text-white placeholder-gray-600 transition-all focus:border-fitGreen focus:ring-fitGreen" placeholder="Enter your password" required>
-                        </div>
+      <!-- Form Container -->
+      <form id="authForm" action="{{ url_for('main.login') }}" method="POST" class="space-y-3" onsubmit="handleAuth(event)">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" id="authAction" name="action" value="login">
 
-                        <div class="flex items-center">
-                            <input id="remember" name="remember" type="checkbox" class="h-4 w-4 rounded border border-gray-600 bg-gray-700 text-fitGreen focus:ring-2 focus:ring-fitGreen">
-                            <label for="remember" class="ml-2 text-sm font-medium text-gray-300">Remember me</label>
-                        </div>
-
-                        <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-fitYellow to-fitGreen py-4 text-lg font-black text-black shadow-[0_0_20px_rgba(74,222,128,0.2)] transition-all hover:scale-[1.02] hover:opacity-90">
-                            SIGN IN
-                        </button>
-
-                        <p class="text-center text-sm font-light text-gray-400">
-                            New here? <a href="#" onclick="showSection('sign-up'); return false;" class="font-bold text-white transition-colors hover:text-fitGreen">Create an account</a>
-                        </p>
-                    </form>
-                </div>
-            </section>
-
-            <section id="sign-up" {% if active_section != 'signup' %}style="display: none;"{% endif %}>
-                <div class="glass-card rounded-3xl p-7 shadow-2xl sm:p-10">
-                    <div class="mb-8 text-center">
-                        <h1 class="mb-2 text-3xl font-black">Join the Movement</h1>
-                        <p class="text-gray-400">Start your journey with <span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen font-bold">fiT</span>, powered by the fiT-X AI coach</p>
-                    </div>
-
-                    <form class="space-y-6" action="{{ url_for('main.login') }}" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="form_type" value="signup">
-                        <div>
-                            <label for="name-signup" class="mb-2 block text-sm font-bold text-gray-400">Full Name</label>
-                            <input type="text" name="name-signup" id="name-signup" autocomplete="name" class="w-full rounded-xl border border-gray-700 bg-black/50 p-4 text-white placeholder-gray-600 transition-all focus:border-fitGreen focus:ring-fitGreen" placeholder="John Doe" minlength="2" maxlength="80" required>
-                        </div>
-                        <div>
-                            <label for="email-signup" class="mb-2 block text-sm font-bold text-gray-400">Your Email</label>
-                            <input type="email" name="email-signup" id="email-signup" autocomplete="email" class="w-full rounded-xl border border-gray-700 bg-black/50 p-4 text-white placeholder-gray-600 transition-all focus:border-fitGreen focus:ring-fitGreen" placeholder="name@company.com" required>
-                        </div>
-                        <div>
-                            <label for="password-signup" class="mb-2 block text-sm font-bold text-gray-400">Password</label>
-                            <input type="password" name="password-signup" id="password-signup" autocomplete="new-password" class="w-full rounded-xl border border-gray-700 bg-black/50 p-4 text-white placeholder-gray-600 transition-all focus:border-fitGreen focus:ring-fitGreen" placeholder="Use 8+ characters with letters and numbers" minlength="8" required>
-                        </div>
-
-                        <button type="submit" class="w-full rounded-xl bg-gradient-to-r from-fitYellow to-fitGreen py-4 text-lg font-black text-black shadow-[0_0_20px_rgba(74,222,128,0.2)] transition-all hover:scale-[1.02] hover:opacity-90">
-                            CREATE ACCOUNT
-                        </button>
-
-                        <p class="text-center text-sm font-light text-gray-400">
-                            Already have an account? <a href="#" onclick="showSection('sign-in'); return false;" class="font-bold text-white transition-colors hover:text-fitGreen">Login here</a>
-                        </p>
-                    </form>
-                </div>
-            </section>
+        <!-- Signup Only: Name -->
+        <div id="fieldName" class="hidden">
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Full Name</label>
+          <input type="text" name="name" minlength="2" maxlength="80" placeholder="Marcus Allen" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono" autocomplete="name">
         </div>
-    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+        <!-- Email -->
+        <div>
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Email</label>
+          <input type="email" name="email" placeholder="marcus@fit-x.app" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono" autocomplete="email" required>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Password</label>
+            <a href="#" id="forgotLink" class="text-[10px] font-mono text-gray-500 hover:text-green transition">Forgot?</a>
+          </div>
+          <div class="relative">
+            <input id="passwordInput" name="password" minlength="8" type="password" placeholder="••••••••••••" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-10" autocomplete="current-password" required>
+            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-shine relative w-full inline-flex items-center justify-center gap-2 text-sm font-semibold text-black grad-bg px-6 py-3 rounded-md hover:opacity-90 transition mt-2">
+          <span id="btnText">Sign in</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+
+        <!-- Divider -->
+        <div class="relative flex py-3 items-center">
+          <div class="flex-grow border-t border-white/5"></div>
+          <span class="flex-shrink mx-4 text-[10px] font-mono uppercase tracking-wider text-gray-600">Or continue with</span>
+          <div class="flex-grow border-t border-white/5"></div>
+        </div>
+
+        <!-- Social Buttons -->
+        <div class="grid grid-cols-2 gap-3">
+          <button type="button" class="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium py-2.5 rounded-md transition">
+            <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" opacity="0.9"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity="0.8"/><path fill="#fff" d="M5.84 14.09c-.24-.74-.38-1.53-.38-2.09s.14-1.35.38-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" opacity="0.7"/><path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" opacity="0.6"/></svg>
+            Google
+          </button>
+          <button type="button" class="flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 text-sm font-medium py-2.5 rounded-md transition">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+            Apple
+          </button>
+        </div>
+      </form>
+
+      <!-- Footer / Trust Badge -->
+      <div class="mt-6 pt-4 border-t border-white/5 text-center">
+        <p class="text-[10px] font-mono text-gray-600">
+          By continuing, you agree to fiT-X's <a href="#" class="hover:text-gray-400 transition">Terms</a> and <a href="#" class="hover:text-gray-400 transition">Privacy Policy</a>.
+        </p>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<script>
+  // Tab switching logic
+  function switchTab(tab) {
+    const tabSignin = document.getElementById('tab-signin');
+    const tabSignup = document.getElementById('tab-signup');
+    const fieldName = document.getElementById('fieldName');
+    const formTitle = document.getElementById('formTitle');
+    const formSub = document.getElementById('formSub');
+    const btnText = document.getElementById('btnText');
+    const forgotLink = document.getElementById('forgotLink');
+    const passwordInput = document.getElementById('passwordInput');
+    const authAction = document.getElementById('authAction');
+
+    if (tab === 'signin') {
+      tabSignin.classList.add('active');
+      tabSignup.classList.remove('active');
+      fieldName.classList.add('hidden');
+      formTitle.textContent = 'Sign in';
+      formSub.textContent = 'Welcome back. Log in to resume your plan.';
+      btnText.textContent = 'Sign in';
+      forgotLink.classList.remove('hidden');
+      passwordInput.setAttribute('autocomplete', 'current-password');
+
+      if (authAction) authAction.value = 'login';
+    } else {
+      tabSignin.classList.remove('active');
+      tabSignup.classList.add('active');
+      fieldName.classList.remove('hidden');
+      formTitle.textContent = 'Create account';
+      formSub.textContent = '90 seconds to onboard. First plan in minutes.';
+      btnText.textContent = 'Start free';
+      forgotLink.classList.add('hidden');
+      passwordInput.setAttribute('autocomplete', 'new-password');
+
+      if (authAction) authAction.value = 'signup';
+    }
+  }
+
+  // Server-side tab state (after validation errors)
+  {% if active_section == 'signup' %}
+    switchTab('signup');
+  {% else %}
+    switchTab('signin');
+  {% endif %}
+
+  // Password visibility toggle
+  function togglePassword() {
+    const input = document.getElementById('passwordInput');
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+
+  // Form submit handler — shows spinner then lets the browser submit the form naturally
+  function handleAuth(e) {
+    const actionInput = document.getElementById('authAction');
+    const btnText = document.getElementById('btnText');
+    const isSignup = actionInput && actionInput.value === 'signup';
+
+    // Update the hidden action field so the backend knows which path to take
+    if (actionInput) {
+      // already set by switchTab()
+    }
+
+    // Replace button text with loading spinner, then let the form POST
+    btnText.innerHTML = '<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Authenticating...</span>';
+    // Allow the native form submission to proceed
+  }
+</script>
+
 </body>
 </html>

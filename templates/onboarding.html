@@ -273,7 +273,6 @@
 
     <a href="/" class="text-sm text-gray-400 hover:text-white transition flex items-center gap-2">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      Exit
     </a>
   </div>
 </nav>
@@ -318,7 +317,7 @@
     <div class="relative z-10 mt-8">
       <div class="text-[11px] font-mono uppercase tracking-wider text-gray-400 flex items-center gap-2">
         <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
-        Step <span id="stepIndicator" class="text-white">01</span> / 04
+        Step <span id="stepIndicator" class="text-white">01</span> / 05
       </div>
       <h2 class="mt-4 text-4xl xl:text-5xl font-extrabold tracking-tighter-2 leading-[0.95]">
         Let's calculate<br>
@@ -367,10 +366,10 @@
     <div class="relative z-10 mb-12 mt-4">
       <div class="flex justify-between text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2">
         <span>Setup Progress</span>
-        <span id="progressPercent">25%</span>
+        <span id="progressPercent">20%</span>
       </div>
       <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-        <div id="progressBar" class="h-full grad-bg rounded-full transition-all duration-500 ease-out" style="width: 25%"></div>
+        <div id="progressBar" class="h-full grad-bg rounded-full transition-all duration-500 ease-out" style="width: 20%"></div>
       </div>
     </div>
 
@@ -724,12 +723,12 @@
   function nextStep(step) {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     document.getElementById('step' + step).classList.add('active');
-    
-    const percent = (step / 4) * 100;
+
+    const percent = (step / 5) * 100;
     document.getElementById('progressBar').style.width = percent + '%';
     document.getElementById('progressPercent').textContent = percent + '%';
     document.getElementById('stepIndicator').textContent = String(step).padStart(2, '0');
-    
+
     if (step === 3) updatePace(state.pace);
   }
 
@@ -771,10 +770,7 @@
   // Step 4: Compute & terminal animation
   function computePlan() {
     nextStep(4);
-    document.getElementById('progressBar').style.width = '100%';
-    document.getElementById('progressPercent').textContent = '100%';
-    document.getElementById('stepIndicator').textContent = '04';
-    
+
     const logs = ['log1', 'log2', 'log3', 'log4', 'log5', 'log6', 'log7'];
     logs.forEach((id, i) => {
       setTimeout(() => {

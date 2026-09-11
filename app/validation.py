@@ -42,9 +42,11 @@ def _parse_float(value: str | None, field_name: str, minimum: float, maximum: fl
 def validate_signup_form(form) -> tuple[dict, list[str]]:
     errors: list[str] = []
 
-    name = _normalize_text(form.get("name-signup"))
-    email = _normalize_email(form.get("email-signup"))
-    password = form.get("password-signup", "")
+    # Support both the legacy login-old.html field names (name-signup/email-signup/password-signup)
+    # and the unified auth UI field names (name/email/password).
+    name = _normalize_text(form.get("name-signup") or form.get("name"))
+    email = _normalize_email(form.get("email-signup") or form.get("email"))
+    password = form.get("password-signup") or form.get("password") or ""
 
     if len(name) < 2 or len(name) > 80:
         errors.append("Name must be between 2 and 80 characters.")
