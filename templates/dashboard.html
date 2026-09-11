@@ -1,256 +1,1591 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>fiT Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script>
-        tailwind.config = { darkMode: "class", theme: { extend: { colors: { fitYellow: "#fef08a", fitGreen: "#4ade80", darkBg: "#0A0A0A" }, fontFamily: { sans: ["Inter", "sans-serif"] } } } };
-        function scrollCoachFeed() { const feed = document.getElementById("coach-feed"); if (feed) { feed.scrollTop = feed.scrollHeight; } }
-        function setCoachPrompt(text) { const input = document.getElementById("coach-input"); if (input) { input.value = text; input.focus(); input.setSelectionRange(input.value.length, input.value.length); } }
-        function openCoachModal(text = "") { const modal = document.getElementById("coach-modal"); if (!modal) { return; } modal.classList.remove("hidden"); modal.classList.add("flex"); if (text) { setCoachPrompt(text); } scrollCoachFeed(); }
-        function closeCoachModal() { const modal = document.getElementById("coach-modal"); if (!modal) { return; } modal.classList.add("hidden"); modal.classList.remove("flex"); if (window.location.hash === "#coach-chat") { history.replaceState(null, "", window.location.pathname + window.location.search); } }
-        window.addEventListener("load", () => { if (window.location.hash === "#coach-chat") { openCoachModal(); return; } scrollCoachFeed(); });
-        window.addEventListener("keydown", (event) => { if (event.key === "Escape") { closeCoachModal(); } });
-    </script>
-    <style>
-        ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: #0A0A0A; } ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; } ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
-        .glass-card { background-color: rgba(18, 18, 18, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
-        .nav-active { background: linear-gradient(to right, rgba(254, 240, 138, 0.1), rgba(74, 222, 128, 0.1)); border-left: 4px solid #4ade80; color: #4ade80; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fiT-X — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0A0A0A',
+          bg2: '#0E0E0E',
+          bg3: '#121212',
+          yellow: '#fef08a',
+          green: '#4ade80',
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --bg-2: #0E0E0E;
+    --bg-3: #121212;
+    --surface: rgba(255,255,255,0.03);
+    --surface-2: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #F5F5F5;
+    --muted: #9CA3AF;
+    --dim: #6B7280;
+    --yellow: #fef08a;
+    --green: #4ade80;
+    --grad: linear-gradient(135deg, #fef08a 0%, #4ade80 100%);
+    --grad-soft: linear-gradient(135deg, rgba(254,240,138,0.15) 0%, rgba(74,222,128,0.15) 100%);
+  }
+
+  * { -webkit-font-smoothing: antialiased; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden; /* App-like container */
+  }
+
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .tracking-tighter-2 { letter-spacing: -0.04em; }
+
+  .grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .grad-bg { background: var(--grad); }
+  .grad-border {
+    position: relative;
+  }
+  .grad-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: var(--grad);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .glass {
+    background: rgba(20,20,20,0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+  }
+  .glass-strong {
+    background: rgba(15,15,15,0.85);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border-strong);
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .pulse-dot {
+    position: relative;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+  }
+  .pulse-dot::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: var(--green);
+    opacity: 0.4;
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
+
+  /* Sidebar Nav Links */
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    color: #9CA3AF;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav-link:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .nav-link.active {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+  }
+  .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 16px;
+    background: var(--grad);
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* Mobile Bottom Nav Links */
+  .mobile-nav-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    color: #9CA3AF;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    flex: 1;
+  }
+  .mobile-nav-link:hover { color: #fff; }
+  .mobile-nav-link.active {
+    color: #fff;
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* Modal & Chatbot Animations */
+  .modal-overlay {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+  .modal-content {
+    transform: scale(0.95);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal-overlay.active .modal-content { transform: scale(1); }
+
+  /* Chatbot Launcher & Window */
+  .chat-launcher {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+  }
+  .chat-launcher:hover { transform: scale(1.05); }
+
+  .chat-window {
+    width: 640px;
+    max-width: 95vw;
+    height: 640px;
+    max-height: 85vh;
+    transform: translateY(20px) scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, width 0.3s ease, height 0.3s ease;
+  }
+  .chat-window.active {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .chat-window.expanded {
+    width: 90vw;
+    max-width: 1400px;
+    height: 90vh;
+    max-height: 90vh;
+  }
+  /* Mobile: near full-screen console */
+  @media (max-width: 767px) {
+    .chat-window {
+      width: calc(100vw - 12px);
+      max-width: calc(100vw - 12px);
+      height: calc(100dvh - 108px);
+      max-height: calc(100dvh - 108px);
+    }
+    .chat-window.expanded {
+      width: calc(100vw - 12px);
+      max-width: calc(100vw - 12px);
+      height: calc(100dvh - 108px);
+      max-height: calc(100dvh - 108px);
+    }
+  }
+
+  /* Mac Window Dots */
+  .win-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .win-dot:hover { opacity: 1; transform: scale(1.1); }
+  .dot-green { background-color: #4ade80; opacity: 0.8; }
+  .dot-yellow { background-color: #facc15; opacity: 0.8; }
+  .dot-red { background-color: #f87171; opacity: 0.8; }
+
+  /* Custom Toggle Switch */
+  .toggle {
+    width: 36px; height: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    transition: left 0.2s;
+  }
+  .toggle.active { background: var(--grad); }
+  .toggle.active::after { left: 18px; background: #0A0A0A; }
+
+  /* Settings Sidebar */
+  .settings-nav {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    color: #9CA3AF;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .settings-nav:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .settings-nav.active { background: rgba(255,255,255,0.05); color: #fff; }
+  .settings-nav.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 16px;
+    background: var(--grad);
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* Segmented Control in Settings */
+  .seg-control {
+    display: flex;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+  }
+  .seg-control button {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #9CA3AF;
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+  }
+  .seg-control button.active {
+    background: var(--grad);
+    color: #000;
+  }
+
+  .input-field {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.2s;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: var(--green);
+    background: rgba(0,0,0,0.6);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.1);
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  ::selection { background: rgba(74,222,128,0.3); color: #fff; }
+</style>
 </head>
-<body class="bg-darkBg text-gray-100 font-sans antialiased overflow-hidden">
-    <div class="flex h-screen">
-        <aside class="w-64 h-full bg-black/50 backdrop-blur-xl border-r border-white/5 flex-col hidden md:flex">
-            <div class="h-20 flex items-center px-8"><a href="{{ url_for('main.homepage') }}" class="text-3xl font-black tracking-tighter"><span class="bg-clip-text text-transparent bg-gradient-to-r from-fitYellow to-fitGreen">fiT</span>.</a></div>
-            <nav class="flex-1 px-4 space-y-2 py-4">
-                <a href="#" class="nav-active flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all">Command Center</a>
-                <a href="#coach-chat" onclick="openCoachModal(); return false;" class="flex items-center px-4 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">fiT-X Console</a>
-                <a href="#schedule-board" class="flex items-center px-4 py-3 text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">Upcoming Sessions</a>
-            </nav>
-            <div class="p-4">
-                <div class="glass-card p-4 rounded-2xl flex items-center">
-                    <img class="w-10 h-10 rounded-full border-2 border-fitGreen p-0.5" src="https://ui-avatars.com/api/?name={{ current_user.name }}&background=0A0A0A&color=4ade80&bold=true" alt="Avatar">
-                    <div class="ml-4"><h5 class="text-sm font-bold text-white">{{ current_user.name }}</h5><p class="text-xs text-fitGreen capitalize">{{ current_user.goal }} focus</p></div>
-                </div>
-            </div>
-        </aside>
-        <main class="flex-1 flex flex-col h-screen overflow-hidden bg-gradient-to-br from-darkBg to-black">
-            <header class="h-20 flex items-center justify-between px-8 border-b border-white/5 z-10">
-                <div><h2 class="text-2xl font-black tracking-tight">{{ greeting }}, {{ current_user.name }}</h2><p class="text-sm text-gray-400 mt-1">Track weight, meals, and workouts in fiT with fiT-X ready when you need it.</p></div>
-                <div class="flex items-center gap-4">
-                    <span class="hidden md:inline-flex items-center rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-xs font-bold uppercase tracking-wide text-fitGreen">{{ coach_mode_label }}</span>
-                    <a href="{{ url_for('main.logout') }}" class="text-sm font-bold text-gray-400 hover:text-red-400 transition">Logout</a>
-                </div>
-            </header>
-            <div class="flex-1 overflow-y-auto p-8">
-                {% with messages = get_flashed_messages(with_categories=True) %}
-                    {% if messages %}
-                        <div class="space-y-3 mb-6">
-                            {% for category, message in messages %}
-                                <div class="glass-card rounded-2xl px-5 py-4 text-sm font-medium border {% if category == 'error' %}border-red-400/30 text-red-200{% elif category == 'success' %}border-fitGreen/30 text-green-100{% else %}border-white/10 text-gray-100{% endif %}">{{ message }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
+<body class="bg-bg text-white antialiased h-screen flex flex-col">
 
-                <div class="grid grid-cols-12 gap-6">
-                    <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
-                        <div class="flex justify-between items-start mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Daily Fuel Target</h5><span class="text-fitGreen text-sm font-bold">{{ activity_level_label }}</span></div>
-                        <h3 class="text-5xl font-black"><span class="text-transparent bg-clip-text bg-gradient-to-r from-fitYellow to-fitGreen">{{ calories }}</span><span class="text-2xl text-gray-400 font-bold"> kcal</span></h3>
-                        <p class="text-sm text-gray-400 mt-4 font-medium">{{ calorie_target_note }}</p>
-                    </section>
-
-                    <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8">
-                        <div class="flex justify-between items-start mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Current Weight</h5><span class="flex items-center text-xs font-bold text-fitGreen bg-fitGreen/10 px-2 py-1 rounded-full">{{ weight_status }}</span></div>
-                        <h3 class="text-5xl font-black text-white">{% if current_user.weight is not none %}{{ "%.1f"|format(current_user.weight) }}{% else %}--{% endif %}<span class="text-2xl text-gray-400 font-bold"> kg</span></h3>
-                        <div class="mt-6">
-                            <div class="flex justify-between text-xs font-bold text-gray-500 mb-1"><span>Goal Progress</span><span>{{ progress }}%</span></div>
-                            <div class="w-full bg-black/50 rounded-full h-3 p-0.5 border border-white/5"><div class="bg-gradient-to-r from-fitYellow to-fitGreen h-full rounded-full relative" style="width: {{ progress }}%"><span class="absolute right-0 -top-1 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(74,222,128,0.5)]"></span></div></div>
-                        </div>
-                    </section>
-
-                    <section class="col-span-12 md:col-span-4 glass-card rounded-[2rem] p-8 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between mb-4"><h5 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Next Session</h5><span class="text-xs font-bold text-fitYellow">{{ weekly_workout_count }} / next 7d</span></div>
-                            {% if next_workout %}
-                                <h3 class="text-3xl font-black text-white mb-2">{{ next_workout.title }}</h3>
-                                <p class="text-sm text-gray-300 mb-4">{{ next_workout_label }}</p>
-                                <div class="space-y-3 text-sm">
-                                    <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3"><span class="text-gray-400">Duration</span><span class="font-bold text-white">{{ next_workout.duration_minutes }} min</span></div>
-                                    <div class="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3"><span class="text-gray-400">Check-ins</span><span class="font-bold text-white">{{ recent_log_count }}</span></div>
-                                </div>
-                            {% else %}
-                                <h3 class="text-3xl font-black text-white mb-2">Nothing queued</h3>
-                                <p class="text-sm text-gray-400 leading-relaxed">Ask fiT-X to create your next session and it will appear here.</p>
-                            {% endif %}
-                        </div>
-                        <button type="button" onclick='openCoachModal({{ "Schedule a full body workout tomorrow at 7 am for 50 min"|tojson }})' class="w-full mt-6 py-3 text-sm font-bold bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition text-white">Plan with fiT-X</button>
-                    </section>
-
-                    <section class="col-span-12 lg:col-span-7 glass-card rounded-[2rem] p-8 min-h-[420px]">
-                        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-                            <div><h4 class="text-2xl font-black text-white">Weight Trajectory</h4><p class="text-sm text-gray-400 font-medium">Every chat-based weight check-in updates this chart.</p></div>
-                            <div class="flex bg-black/50 rounded-xl p-1 border border-white/5"><button class="px-4 py-2 text-xs font-bold rounded-lg bg-fitGreen text-black">Week</button><button class="px-4 py-2 text-xs font-bold rounded-lg text-gray-400 hover:text-white transition">Trend</button></div>
-                        </div>
-                        <div id="sexy-chart" class="h-full w-full"></div>
-                    </section>
-
-                    <section id="coach-console" class="col-span-12 lg:col-span-5 glass-card rounded-[2rem] p-6">
-                        <div class="flex items-start justify-between gap-4 mb-6">
-                            <div><h4 class="text-2xl font-black text-white">fiT-X Console</h4><p class="text-sm text-gray-400">Four quick actions up front, full chat only when you want it.</p></div>
-                            <span class="rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-fitGreen">{{ coach_mode_label }}</span>
-                        </div>
-                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <button type="button" onclick='openCoachModal({{ "Log my weight as 81.8 kg today"|tojson }})' class="rounded-[1.4rem] border border-white/10 bg-white/5 p-4 text-left transition hover:border-fitGreen/30 hover:bg-white/10">
-                                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500">Quick Check-In</p>
-                                <div class="mt-3 flex items-center justify-between gap-3">
-                                    <h5 class="text-base font-black text-white">Log Weight</h5>
-                                    <span class="rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-fitGreen">Ask fiT-X</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick='openCoachModal({{ "Log my meal: oats, banana, and milk for breakfast"|tojson }})' class="rounded-[1.4rem] border border-white/10 bg-white/5 p-4 text-left transition hover:border-fitYellow/30 hover:bg-white/10">
-                                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500">Nutrition Note</p>
-                                <div class="mt-3 flex items-center justify-between gap-3">
-                                    <h5 class="text-base font-black text-white">Log Meal</h5>
-                                    <span class="rounded-full border border-fitYellow/20 bg-fitYellow/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-fitYellow">Ask fiT-X</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick='openCoachModal({{ "Schedule a full body workout tomorrow at 7 am for 50 min"|tojson }})' class="rounded-[1.4rem] border border-white/10 bg-white/5 p-4 text-left transition hover:border-fitGreen/30 hover:bg-white/10">
-                                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500">Training Planner</p>
-                                <div class="mt-3 flex items-center justify-between gap-3">
-                                    <h5 class="text-base font-black text-white">Schedule Workout</h5>
-                                    <span class="rounded-full border border-fitGreen/20 bg-fitGreen/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-fitGreen">Ask fiT-X</span>
-                                </div>
-                            </button>
-                            <button type="button" onclick='openCoachModal({{ "Log my workout: completed upper body for 45 min today"|tojson }})' class="rounded-[1.4rem] border border-white/10 bg-white/5 p-4 text-left transition hover:border-fitYellow/30 hover:bg-white/10">
-                                <p class="text-[11px] font-bold uppercase tracking-widest text-gray-500">Workout Note</p>
-                                <div class="mt-3 flex items-center justify-between gap-3">
-                                    <h5 class="text-base font-black text-white">Log Workout</h5>
-                                    <span class="rounded-full border border-fitYellow/20 bg-fitYellow/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-fitYellow">Ask fiT-X</span>
-                                </div>
-                            </button>
-                        </div>
-                        <div class="mt-6 rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
-                            <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Activity Feed</p>
-                            <p class="mt-3 text-sm leading-relaxed text-gray-400">Open fiT-X to see your latest 6 prompts, check-ins, and fiT-X replies.</p>
-                            <button type="button" onclick="openCoachModal()" class="mt-4 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-200 hover:bg-white/10 transition">View Last 6 Updates</button>
-                        </div>
-                    </section>
-
-                    <section id="schedule-board" class="col-span-12 lg:col-span-7 glass-card rounded-[2rem] p-8">
-                        <div class="flex items-center justify-between gap-4 mb-6">
-                            <div><h4 class="text-2xl font-black text-white">Upcoming Workouts</h4><p class="text-sm text-gray-400">Everything scheduled in chat lands here automatically.</p></div>
-                            <button type="button" onclick='openCoachModal({{ "What is my next workout?"|tojson }})' class="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-200 hover:bg-white/10 transition">Ask fiT-X</button>
-                        </div>
-                        <div class="space-y-4">
-                            {% if upcoming_workouts %}
-                                {% for workout in upcoming_workouts %}
-                                    <div class="rounded-[1.6rem] border border-white/8 bg-white/5 p-5">
-                                        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                                            <div><div class="flex items-center gap-3 mb-2"><span class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-fitGreen text-black font-black">{{ loop.index }}</span><h5 class="text-lg font-black text-white">{{ workout.title }}</h5></div><p class="text-sm text-gray-300">{{ workout.scheduled_for.strftime('%a, %d %b at %I:%M %p').replace(' 0', ' ') }}</p>{% if workout.notes %}<p class="mt-2 text-sm text-gray-500">{{ workout.notes }}</p>{% endif %}</div>
-                                            <div class="flex items-center gap-3 text-sm"><span class="rounded-full bg-fitYellow/10 px-3 py-1 font-bold text-fitYellow">{{ workout.duration_minutes }} min</span><span class="rounded-full bg-fitGreen/10 px-3 py-1 font-bold text-fitGreen uppercase">{{ workout.status }}</span></div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="rounded-[1.6rem] border border-dashed border-white/10 bg-black/20 p-8 text-center">
-                                    <h5 class="text-xl font-black text-white mb-2">No workouts scheduled yet</h5>
-                                    <p class="text-sm text-gray-400 mb-4">Start with a natural-language prompt and your plan will appear here.</p>
-                                    <button type="button" onclick='openCoachModal({{ "Schedule cardio tomorrow at 6:30 pm for 45 min"|tojson }})' class="rounded-xl bg-white text-black px-4 py-2 text-sm font-bold hover:bg-fitGreen transition">Create first session</button>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </section>
-
-                    <section class="col-span-12 lg:col-span-5 glass-card rounded-[2rem] p-8">
-                        <div class="flex items-start justify-between gap-4 mb-6">
-                            <div><h4 class="text-2xl font-black text-white">Tracking Snapshot</h4><p class="text-sm text-gray-400">Your headline numbers, target, and motivation in one place.</p></div>
-                            <div class="text-right">
-                                <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-gray-200">BMI {% if bmi %}{{ bmi }}{% else %}--{% endif %}</span>
-                                <p class="mt-2 text-xs font-bold {{ bmi_status_class }}">{{ bmi_status_label }}</p>
-                                <p class="mt-1 text-[11px] text-gray-500">{{ bmi_detail }}</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
-                            <div class="rounded-3xl bg-white/5 p-4">
-                                <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Latest Weight</p>
-                                <p class="mt-2 text-3xl font-black text-white">{% if current_user.weight is not none %}{{ "%.1f"|format(current_user.weight) }} kg{% else %}--{% endif %}</p>
-                                <p class="mt-2 text-xs text-gray-500">The single most important number.</p>
-                            </div>
-                            <div class="rounded-3xl bg-white/5 p-4">
-                                <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Goal Anchor</p>
-                                <p class="mt-2 text-2xl font-black text-white capitalize">{{ goal_anchor_title }}</p>
-                                <p class="mt-2 text-xs text-gray-400">{{ goal_anchor_detail }}</p>
-                            </div>
-                            <div class="rounded-3xl bg-white/5 p-4">
-                                <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Change Since Start</p>
-                                <p class="mt-2 text-3xl font-black {{ change_since_start_class }}">{{ change_since_start_display }}</p>
-                                <p class="mt-2 text-xs text-gray-400">{{ change_since_start_caption }}</p>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-        </main>
+<!-- Flash toasts -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div id="toastStack" class="fixed top-20 right-6 z-[80] space-y-2 w-80">
+    {% for category, message in messages %}
+    <div data-toast class="glass-strong rounded-lg px-4 py-3 text-xs font-medium {% if category == 'error' %}border-red-400/40 text-red-200{% else %}border-green/30 text-green{% endif %}">
+      {{ message }}
     </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
 
-    <div id="coach-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 px-4 py-6 backdrop-blur-sm" onclick="if (event.target === this) closeCoachModal();">
-        <div class="glass-card flex max-h-[88vh] w-full max-w-3xl flex-col rounded-[2rem] p-6 md:p-8">
-            <div class="mb-5 flex items-start justify-between gap-4">
-                <div>
-                    <p class="text-xs font-bold uppercase tracking-widest text-fitGreen">fiT-X AI</p>
-                    <h4 class="mt-2 text-2xl font-black text-white">Ask fiT-X naturally</h4>
-                    <p class="mt-2 text-sm text-gray-400">Log weight, save meal notes, schedule workouts, or capture workout updates without cluttering the dashboard.</p>
-                </div>
-                <button type="button" onclick="closeCoachModal()" class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-gray-300 transition hover:bg-white/10 hover:text-white">Close</button>
-            </div>
-            <div id="coach-feed" class="mb-5 min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
-                {% if chat_messages %}
-                    {% for message in chat_messages %}
-                        <div class="flex {% if message.role == 'user' %}justify-end{% else %}justify-start{% endif %}">
-                            <div class="max-w-[88%] rounded-[1.5rem] px-4 py-3 {% if message.role == 'user' %}bg-white text-black{% else %}border border-fitGreen/20 bg-white/5 text-white{% endif %}">
-                                <p class="text-[11px] font-bold uppercase tracking-[0.18em] {% if message.role == 'user' %}text-black/50{% else %}text-fitGreen{% endif %}">{{ "You" if message.role == "user" else "fiT-X" }} &middot; {{ message.created_at.strftime('%I:%M %p').lstrip('0') }}</p>
-                                <p class="mt-2 text-sm leading-relaxed {% if message.role == 'user' %}text-black{% else %}text-gray-100{% endif %}">{{ message.content }}</p>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="flex justify-start"><div class="max-w-[88%] rounded-[1.5rem] border border-fitGreen/20 bg-white/5 px-4 py-3 text-white"><p class="text-[11px] font-bold uppercase tracking-[0.18em] text-fitGreen">fiT-X &middot; now</p><p class="mt-2 text-sm leading-relaxed text-gray-100">I am ready. Try "Log my weight as 81.8 kg" or "Schedule legs tomorrow at 7 am for 60 min".</p></div></div>
-                {% endif %}
-            </div>
-            <form action="{{ url_for('main.coach_message') }}" method="POST" class="space-y-4 border-t border-white/10 pt-5">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <textarea id="coach-input" name="message" rows="3" class="w-full rounded-3xl border border-white/10 bg-black/40 px-5 py-4 text-sm text-white placeholder-gray-500 focus:border-fitGreen focus:ring-fitGreen" placeholder="Try: log my meal: oats and banana for breakfast" required></textarea>
-                <div class="flex flex-wrap gap-2">
-                    {% for example in coach_examples %}
-                        <button type="button" onclick='setCoachPrompt({{ example|tojson }})' class="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-gray-300 transition hover:border-fitGreen/30 hover:text-white">{{ example }}</button>
-                    {% endfor %}
-                </div>
-                <button type="submit" class="w-full rounded-2xl bg-gradient-to-r from-fitYellow to-fitGreen py-4 text-sm font-black text-black transition hover:opacity-90">Ask fiT-X</button>
-            </form>
+<!-- Main App Shell -->
+<div class="flex-1 flex min-h-0">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="w-60 flex-shrink-0 bg-bg2 border-r border-white/5 flex-col hidden md:flex">
+    <div class="h-16 flex items-center px-5 border-b border-white/5">
+      <a href="{{ url_for('main.homepage') }}" class="flex items-center gap-2.5">
+        <div class="relative w-7 h-7 rounded-md grad-bg flex items-center justify-center">
+          <span class="font-mono font-bold text-black text-sm">X</span>
         </div>
+        <span class="font-bold text-lg tracking-tighter-2">fiT<span class="grad-text">-X</span></span>
+      </a>
     </div>
 
-    <script>
-        const options = {
-            series: [{ name: "Weight (kg)", data: {{ trends | tojson }} }],
-            chart: { type: "area", height: 350, toolbar: { show: false }, fontFamily: "Inter, sans-serif", foreColor: "#9CA3AF", animations: { enabled: true, easing: "easeinout", speed: 800 } },
-            colors: ["#4ade80"],
-            fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.1, stops: [0, 90, 100], colorStops: [{ offset: 0, color: "#4ade80", opacity: 0.4 }, { offset: 100, color: "#fef08a", opacity: 0.1 }] } },
-            dataLabels: { enabled: false },
-            stroke: { curve: "smooth", width: 3, colors: ["#4ade80"] },
-            grid: { borderColor: "#ffffff10", strokeDashArray: 4, xaxis: { lines: { show: false } } },
-            markers: { size: 0, hover: { size: 6, colors: ["#fef08a"], strokeColor: "#4ade80", strokeWidth: 2 } },
-            xaxis: { categories: {{ trend_labels | tojson }}, axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { fontWeight: 700, fontSize: "12px" }, offsetY: 5 } },
-            yaxis: { labels: { style: { fontWeight: 700 }, formatter: function (val) { return val + " kg"; } } },
-            tooltip: { theme: "dark", x: { show: false }, style: { fontSize: "14px", fontFamily: "Inter, sans-serif" }, custom: function({series, seriesIndex, dataPointIndex}) { const value = series[seriesIndex][dataPointIndex]; return `<div class="bg-black/80 backdrop-blur-md border border-fitGreen/30 p-3 rounded-xl shadow-[0_0_20px_rgba(74,222,128,0.2)]"><span class="text-xs font-bold text-gray-400 uppercase">Weight</span><div class="text-2xl font-black text-white">${value} kg</div></div>`; } }
-        };
-        new ApexCharts(document.querySelector("#sexy-chart"), options).render();
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.2/dist/flowbite.min.js"></script>
+    <nav class="flex-1 p-3 space-y-1 relative">
+      <a href="#" onclick="switchView('dashboard'); return false;" data-view="dashboard" class="nav-link active relative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="#" onclick="switchView('nutrition'); return false;" data-view="nutrition" class="nav-link relative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h18M3 11a2 2 0 0 0 2-2V6a2 2 0 0 1 4 0v3M3 11a2 2 0 0 0 2 2v3a2 2 0 0 0 4 0v-3M19 11V8a3 3 0 0 0-6 0v3"/></svg>
+        Nutrition
+      </a>
+      <a href="#" onclick="switchView('workouts'); return false;" data-view="workouts" class="nav-link relative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M2 9h4M2 15h4M18 9h4M18 15h4M6 12h12"/></svg>
+        Workouts
+      </a>
+      <a href="#" onclick="switchView('progress'); return false;" data-view="progress" class="nav-link relative">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+        Progress
+      </a>
+
+      <div class="pt-4 mt-4 border-t border-white/5">
+        <div class="px-3 text-[10px] font-mono uppercase tracking-wider text-gray-600 mb-2">Quick Actions</div>
+        <button onclick="openMealModal()" class="w-full mt-1 text-left nav-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Log Food
+        </button>
+        <button onclick="toggleChat()" class="w-full mt-1 text-left nav-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Ask Coach
+        </button>
+      </div>
+    </nav>
+
+    <!-- Clickable Profile Block -->
+    <div class="p-3 border-t border-white/5">
+      <div onclick="openSettings()" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer relative group">
+        <div class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center font-mono font-bold text-sm">
+          {{ user_initials }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium truncate">{{ user.name }}</div>
+          <div class="text-[10px] font-mono text-gray-500">Day {{ day_count }} · {{ phase_label }}</div>
+        </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-500 group-hover:text-white transition"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================== MAIN CONTENT ===================== -->
+  <main class="flex-1 flex flex-col min-w-0 overflow-y-auto bg-bg relative pb-20 md:pb-0">
+    <div class="absolute inset-0 grid-bg pointer-events-none opacity-50"></div>
+
+    <!-- Top Bar -->
+    <header class="sticky top-0 z-30 h-20 glass-strong border-b border-white/5 flex items-center justify-between px-6 lg:px-8">
+      <div>
+        <h1 id="viewTitle" class="text-xl font-bold tracking-tighter-2">Dashboard</h1>
+        <p class="text-[11px] font-mono text-gray-500">{{ now_label }}</p>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-2 text-[11px] font-mono text-gray-500 glass px-3 py-1.5 rounded-md border border-white/5">
+          <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
+          {{ coach_mode_label }} · Coach active
+        </div>
+
+        <button class="relative text-gray-400 hover:text-white transition">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+
+        <button onclick="openMealModal()" class="btn-shine relative inline-flex items-center gap-2 text-sm font-semibold text-black grad-bg px-4 py-2 rounded-md hover:opacity-90 transition">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Log Food
+        </button>
+      </div>
+    </header>
+
+    <!-- View Containers -->
+    <div class="relative z-10 p-6 lg:p-8 flex-1">
+
+      <!-- ===================== PILLAR 1: DASHBOARD ===================== -->
+      <div id="view-dashboard" class="view-container space-y-5">
+
+        <!-- Key Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 items-start">
+          <div class="glass rounded-xl p-4 flex items-center gap-4">
+            <div class="relative w-14 h-14 flex-shrink-0">
+              <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"></circle>
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="url(#ringGrad)" stroke-width="3" stroke-dasharray="97.3" stroke-dashoffset="{{ ring_offset }}" stroke-linecap="round"></circle>
+                <defs>
+                  <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fef08a" />
+                    <stop offset="100%" stop-color="#4ade80" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-xs font-bold font-mono">{{ intake_pct }}%</span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Today's Intake</span>
+                <span class="text-[10px] font-mono {% if intake_over %}text-yellow{% else %}text-green{% endif %}">{% if intake_over %}Over{% elif intake_today %}On track{% else %}—{% endif %}</span>
+              </div>
+              <div class="flex items-baseline gap-1.5">
+                <span class="text-2xl font-bold tracking-tighter-2">{{ intake_today }}</span>
+                <span class="text-xs text-gray-500 font-mono">/ {{ calories }}</span>
+              </div>
+              <div class="text-[10px] font-mono text-gray-600 mt-0.5">{% if intake_today %}{{ intake_remaining }} kcal remaining{% else %}nothing logged yet{% endif %} · {{ activity_level_label }}</div>
+            </div>
+          </div>
+
+          <div class="glass rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Weight</span>
+              <span class="text-[10px] font-mono {{ weight_delta_class }}">{{ weight_delta_display }}</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-3xl font-bold tracking-tighter-2">{{ weight_display }}</span>
+              <span class="text-xs text-gray-500 font-mono">kg</span>
+            </div>
+            <div class="mt-2 flex items-center gap-1 text-[10px] font-mono text-gray-500">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>{% if trend_avg is not none %}Trend: {{ trend_avg }} kg (7d avg){% else %}No check-ins yet{% endif %}</span>
+            </div>
+          </div>
+
+          <div class="glass rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-gray-500">BMI</span>
+              <span class="text-[10px] font-mono {{ bmi_status_class }}">{{ bmi_status_label }}</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-3xl font-bold tracking-tighter-2">{% if bmi %}{{ bmi }}{% else %}--{% endif %}</span>
+              <span class="text-xs text-gray-500 font-mono">kg/m²</span>
+            </div>
+            <div class="mt-2 h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div class="h-full grad-bg rounded-full" style="width: {{ [bmi * 2.5, 100] | min }}%"></div>
+            </div>
+            <div class="text-[10px] font-mono text-gray-600 mt-1.5">{{ bmi_detail }}</div>
+          </div>
+
+          <div class="glass rounded-xl p-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Streak</span>
+              <span class="text-[10px] font-mono text-yellow">★</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-3xl font-bold tracking-tighter-2 grad-text">{{ streak }}</span>
+              <span class="text-xs text-gray-500 font-mono">days</span>
+            </div>
+            <div class="mt-2 flex gap-0.5">
+              {% for logged in streak_week %}
+              <span class="flex-1 h-1.5 rounded-sm {% if logged %}grad-bg{% else %}bg-white/10{% endif %}"></span>
+              {% endfor %}
+            </div>
+            <div class="text-[10px] font-mono text-gray-600 mt-1.5">Log a weight check-in to extend</div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-5">
+          <div class="lg:col-span-2 glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-300">Weight Trend</h3>
+                <p class="text-[10px] font-mono text-gray-500 mt-0.5">{% if goal_weight is not none %}Target {{ goal_weight }} kg · {% endif %}every check-in updates this chart</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="setWeightRange('7d', this)" data-range="7d" class="weight-range-btn text-[10px] font-mono text-gray-400 border border-white/10 px-2 py-1 rounded hover:bg-white/5 transition">7D</button>
+                <button onclick="setWeightRange('14d', this)" data-range="14d" class="weight-range-btn text-[10px] font-mono text-white grad-bg px-2 py-1 rounded">14D</button>
+                <button onclick="setWeightRange('1m', this)" data-range="1m" class="weight-range-btn text-[10px] font-mono text-gray-400 border border-white/10 px-2 py-1 rounded hover:bg-white/5 transition">1M</button>
+                <button onclick="setWeightRange('all', this)" data-range="all" class="weight-range-btn text-[10px] font-mono text-gray-400 border border-white/10 px-2 py-1 rounded hover:bg-white/5 transition">All</button>
+              </div>
+            </div>
+            <div id="chart-weight"></div>
+          </div>
+
+          <div class="lg:col-span-1 glass rounded-2xl p-5 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-300">Today's Plan</h3>
+              <span class="text-[10px] font-mono text-gray-500">{{ next_workout.title if next_workout else 'No session' }}</span>
+            </div>
+            <div class="space-y-3 flex-1">
+              {% if next_workout %}
+              <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                <div class="w-9 h-9 rounded-md grad-bg flex items-center justify-center flex-shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><path d="M6 4v16M18 4v16M2 9h4M2 15h4M18 9h4M18 15h4M6 12h12"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-medium truncate">{{ next_workout.title }}</div>
+                  <div class="text-[10px] font-mono text-gray-500">{{ next_workout_label }} · {{ next_workout.duration_minutes }} min</div>
+                </div>
+                <span class="text-[10px] font-mono text-yellow">Ready</span>
+              </div>
+              <div class="space-y-2 text-xs px-1">
+                <div class="flex justify-between"><span class="text-gray-400">Scheduled this week</span><span class="font-mono text-green">{{ weekly_workout_count }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Sessions done this week</span><span class="font-mono text-green">{{ week_activity.done_count }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Active minutes this week</span><span class="font-mono text-gray-500">{{ week_activity.total_minutes }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Water today</span><span class="font-mono text-blue-400">{{ water_today_l }} / {{ water_goal_l }} L</span></div>
+              </div>
+              {% else %}
+              <div class="flex-1 flex items-center justify-center text-center">
+                <div>
+                  <p class="text-xs text-gray-400 leading-relaxed">Nothing queued yet.<br>Ask the coach to schedule your next session.</p>
+                  <button onclick="toggleChat()" class="mt-3 text-[10px] font-mono font-semibold grad-bg text-black px-3 py-1.5 rounded-md hover:opacity-90 transition">Plan with fiT-X</button>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Real: planned minutes per day this week, any activity type counts -->
+          <div class="lg:col-span-1 glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-300">Weekly Activity</h3>
+              <span class="text-[10px] font-mono text-green">{{ week_activity.total_minutes }} min</span>
+            </div>
+            <div id="chart-volume"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== PILLAR 2: NUTRITION ===================== -->
+      <div id="view-nutrition" class="view-container hidden space-y-5">
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="lg:col-span-1 glass rounded-2xl p-5 flex flex-col">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-semibold text-gray-300">Macro Distribution</h3>
+              <span class="text-[10px] font-mono text-gray-500">Today</span>
+            </div>
+            <div class="flex-1 flex items-center justify-center">
+              <div id="chart-nutrition-macros" class="w-full"></div>
+            </div>
+          </div>
+
+          <div class="lg:col-span-2 glass rounded-2xl p-5 flex flex-col">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-300">Weekly Calorie Net</h3>
+                <p class="text-[10px] font-mono text-gray-500 mt-0.5">logged intake − {{ calories }} kcal daily target</p>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono">
+                <span class="flex items-center gap-1 text-gray-400"><span class="w-2 h-2 rounded-sm bg-green"></span> Deficit</span>
+                <span class="flex items-center gap-1 text-gray-400"><span class="w-2 h-2 rounded-sm bg-yellow"></span> Surplus</span>
+              </div>
+            </div>
+            <div class="flex-1">
+              <div id="chart-calorie-net" class="w-full"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meal cards: real entries -->
+        {% set meal_meta = [('breakfast', 'Breakfast'), ('lunch', 'Lunch'), ('dinner', 'Dinner'), ('snack', 'Snacks')] %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {% for meal_type, meal_title in meal_meta %}
+          <div class="glass rounded-2xl p-5 flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+              <h4 class="text-sm font-semibold text-gray-300">{{ meal_title }}</h4>
+              <span class="text-[10px] font-mono text-gray-500">{{ meal_type_totals.get(meal_type, 0) }} kcal</span>
+            </div>
+            <div class="space-y-3 flex-1 text-xs overflow-y-auto max-h-64">
+              {% for entry in meals_by_type.get(meal_type, []) %}
+              <div class="p-2 bg-white/5 rounded-lg border border-white/5">
+                <div class="flex justify-between items-start gap-2">
+                  <span class="font-medium break-words min-w-0">{{ entry.name }}</span>
+                  <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <span class="text-gray-500 font-mono text-[10px]">{{ entry.logged_at.strftime('%H:%M') }}</span>
+                    <form method="POST" action="{{ url_for('dashboard.meals_delete', entry_id=entry.id) }}" onsubmit="return confirm('Remove this entry?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" title="Remove" class="text-gray-600 hover:text-red-400 transition leading-none">&times;</button>
+                    </form>
+                  </div>
+                </div>
+                <div class="flex gap-1 mt-1.5 items-center flex-wrap">
+                  {% if entry.protein %}<span class="text-[9px] font-mono bg-yellow/20 text-yellow px-1.5 py-0.5 rounded">{{ entry.protein }}P</span>{% endif %}
+                  {% if entry.carbs %}<span class="text-[9px] font-mono bg-green/20 text-green px-1.5 py-0.5 rounded">{{ entry.carbs }}C</span>{% endif %}
+                  {% if entry.fats %}<span class="text-[9px] font-mono bg-white/10 text-gray-300 px-1.5 py-0.5 rounded">{{ entry.fats }}F</span>{% endif %}
+                  <span class="ml-auto text-[9px] font-mono bg-blue-400/10 text-blue-300 px-1.5 py-0.5 rounded">{{ entry.calories }} kcal</span>
+                </div>
+              </div>
+              {% else %}
+              <div class="h-full flex items-center justify-center py-4">
+                <span class="text-gray-600 font-mono text-[10px]">No items logged yet</span>
+              </div>
+              {% endfor %}
+            </div>
+            <button onclick="openMealModal('{{ meal_type }}')" class="mt-3 text-xs font-medium text-gray-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg py-2 transition flex items-center justify-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg> Add Food
+            </button>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- Computed from profile: g/kg targets vs today's totals -->
+          <div class="glass rounded-2xl p-5">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-sm font-semibold text-gray-300">Macro Targets</h3>
+              <span class="text-[10px] font-mono text-gray-500">vs today</span>
+            </div>
+            <div class="space-y-6">
+              {% set macro_rows = [('Protein', today_totals.protein, macro_targets.protein, 'grad-bg'),
+                                   ('Carbs', today_totals.carbs, macro_targets.carbs, 'bg-green'),
+                                   ('Fats', today_totals.fats, macro_targets.fats, 'bg-yellow')] %}
+              {% for label, have, target, bar_class in macro_rows %}
+              <div>
+                <div class="flex justify-between text-xs mb-2">
+                  <span class="text-gray-400">{{ label }}</span>
+                  <span class="font-mono text-gray-400">{{ have }}g / {{ target }}g</span>
+                </div>
+                <div class="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div class="h-full {{ bar_class }} rounded-full" style="width: {{ [(have / target * 100) if target else 0, 100] | min }}%"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            <p class="text-[10px] font-mono text-gray-600 mt-6">Protein 1.8 g/kg · fats 0.9 g/kg · carbs fill the remaining {{ calories }} kcal target.</p>
+          </div>
+
+          <!-- Water: persisted -->
+          <div class="glass rounded-2xl p-5">
+            <div class="flex justify-between items-center mb-6">
+              <h3 class="text-sm font-semibold text-gray-300">Hydration</h3>
+              <span class="text-2xl font-bold tracking-tighter-2 font-mono">{{ water_today_l }}<span class="text-sm text-gray-500">L / {{ water_goal_l }}L</span></span>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              <form method="POST" action="{{ url_for('dashboard.water_add') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="amount_ml" value="250">
+                <button type="submit" class="w-full glass p-3 rounded-lg hover:bg-white/10 active:scale-95 transition text-center border border-white/5">
+                  <div class="text-xl font-bold text-blue-400 mb-1">+1</div>
+                  <div class="text-[10px] font-mono text-gray-500">250ml</div>
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('dashboard.water_add') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="amount_ml" value="500">
+                <button type="submit" class="w-full glass p-3 rounded-lg hover:bg-white/10 active:scale-95 transition text-center border border-white/5">
+                  <div class="text-xl font-bold text-blue-400 mb-1">+2</div>
+                  <div class="text-[10px] font-mono text-gray-500">500ml</div>
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('dashboard.water_add') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="amount_ml" value="1000">
+                <button type="submit" class="w-full glass p-3 rounded-lg hover:bg-white/10 active:scale-95 transition text-center border border-white/5">
+                  <div class="text-xl font-bold text-blue-400 mb-1">+4</div>
+                  <div class="text-[10px] font-mono text-gray-500">1L</div>
+                </button>
+              </form>
+            </div>
+            <div class="flex gap-1 h-2">
+              {% for segment in range(12) %}
+              <span class="flex-1 rounded-sm {% if segment < water_segments %}bg-blue-500/80{% else %}bg-white/10{% endif %}"></span>
+              {% endfor %}
+            </div>
+            <p class="text-[10px] font-mono text-gray-600 mt-2">{{ water_pct }}% of your {{ water_goal_l }} L goal · or tell the coach "log 500 ml water".</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== PILLAR 3: WORKOUTS ===================== -->
+      <!-- Activity-agnostic: any session type counts; no gym-only constructs -->
+      <div id="view-workouts" class="view-container hidden space-y-5">
+
+        <div class="grid grid-cols-4 md:grid-cols-7 gap-3">
+          {% for day in week_strip %}
+          <div class="glass rounded-xl p-3 text-center {% if day.state == 'today' %}grad-border{% else %}border border-white/5{% endif %} {% if loop.index > 5 %}hidden md:block{% endif %}">
+            <div class="text-[10px] font-mono {% if day.state == 'today' %}text-gray-400{% else %}text-gray-500{% endif %} mb-1">{{ day.day_label }} {{ day.date_label }}</div>
+            <div class="text-sm font-semibold {% if day.state == 'today' %}text-white{% endif %}">{{ day.title }}</div>
+            <div class="mt-2 h-1 w-full {% if day.state in ('today', 'planned') %}grad-bg{% else %}bg-white/10{% endif %} rounded-full"></div>
+            <div class="text-[10px] font-mono mt-1 {% if day.state == 'today' %}text-yellow{% elif day.state == 'planned' %}text-green{% else %}text-gray-500{% endif %}">{% if day.state == 'today' %}Today{% elif day.state == 'planned' %}Ready{% else %}Rest{% endif %}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <div class="lg:col-span-2 glass rounded-2xl p-5">
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-300">Upcoming Sessions</h3>
+                <p class="text-[10px] font-mono text-gray-500 mt-0.5">Any activity counts — gym, yoga, runs, combat sports, pilates.</p>
+              </div>
+              <button onclick="toggleChat()" class="text-xs font-semibold text-black grad-bg px-3 py-1.5 rounded-md hover:opacity-90 transition">Schedule via Coach</button>
+            </div>
+
+            <div class="space-y-3">
+              {% for workout in upcoming_workouts %}
+              <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                <div class="w-9 h-9 rounded-md grad-bg flex items-center justify-center flex-shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><path d="M6 4v16M18 4v16M2 9h4M2 15h4M18 9h4M18 15h4M6 12h12"/></svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-medium truncate">{{ workout.title }}</div>
+                  <div class="text-[10px] font-mono text-gray-500">{{ workout.scheduled_for.strftime('%a, %d %b · %I:%M %p').lstrip('0') }} · {{ workout.duration_minutes }} min</div>
+                </div>
+                <form method="POST" action="{{ url_for('dashboard.workout_done', workout_id=workout.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="text-[10px] font-mono font-semibold text-green border border-green/30 px-2.5 py-1.5 rounded-md hover:bg-green/10 transition">Mark done</button>
+                </form>
+              </div>
+              {% else %}
+              <div class="rounded-xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
+                <h5 class="text-sm font-bold text-white mb-2">No sessions scheduled</h5>
+                <p class="text-xs text-gray-400 mb-4">Tell the coach what you're doing — "Schedule yoga tomorrow at 7 am for 60 min" or "Schedule boxing Monday at 6 pm".</p>
+                <button onclick="toggleChat()" class="rounded-xl grad-bg text-black px-4 py-2 text-xs font-bold hover:opacity-90 transition">Create a session</button>
+              </div>
+              {% endfor %}
+            </div>
+
+            {% if recent_completed %}
+            <div class="mt-6 pt-5 border-t border-white/5">
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Recent Sessions</h4>
+                <span class="text-[10px] font-mono text-green">completed</span>
+              </div>
+              <div class="space-y-2">
+                {% for workout in recent_completed %}
+                <div class="flex items-center justify-between text-xs px-3 py-2 bg-white/5 rounded-lg border border-white/5">
+                  <span class="font-medium">{{ workout.title }}</span>
+                  <span class="text-gray-500 font-mono text-[10px]">{{ workout.scheduled_for.strftime('%a, %d %b') }} · {{ workout.duration_minutes }} min{% if workout.calories_burned %} · ~{{ workout.calories_burned }} kcal{% endif %} · <span class="text-green">done</span></span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="space-y-5">
+            <div class="glass rounded-2xl p-5">
+              <h3 class="text-sm font-semibold text-gray-300 mb-4">This Week</h3>
+              <div class="grid grid-cols-2 gap-3 text-center">
+                <div class="bg-black/30 rounded-lg p-3 border border-white/5">
+                  <div class="text-[10px] font-mono text-gray-500">DONE</div>
+                  <div class="text-xl font-bold tracking-tighter-2 mt-1">{{ week_activity.done_count }}</div>
+                </div>
+                <div class="bg-black/30 rounded-lg p-3 border border-white/5">
+                  <div class="text-[10px] font-mono text-gray-500">MINUTES</div>
+                  <div class="text-xl font-bold tracking-tighter-2 mt-1">{{ week_activity.total_minutes }}</div>
+                </div>
+                <div class="bg-black/30 rounded-lg p-3 border border-white/5 col-span-2">
+                  <div class="text-[10px] font-mono text-gray-500">EST. CALORIES BURNED</div>
+                  <div class="text-xl font-bold tracking-tighter-2 mt-1 text-green">{% if week_activity.total_burned %}~{{ week_activity.total_burned }}<span class="text-xs text-gray-500"> kcal</span>{% else %}—{% endif %}</div>
+                </div>
+              </div>
+              <p class="text-[10px] font-mono text-gray-600 mt-4">Avg session: {{ week_activity.avg_duration }} min · every activity type counts equally.</p>
+            </div>
+
+            <div class="glass rounded-2xl p-5 grad-border">
+              <h3 class="text-sm font-semibold text-gray-300 mb-4">Keep It Simple</h3>
+              <div class="space-y-2 text-[11px] text-gray-400 leading-relaxed">
+                <p><span class="font-mono text-green">1.</span> Schedule any session with the coach.</p>
+                <p><span class="font-mono text-green">2.</span> Mark it done when finished, or say "Log my workout: completed yoga for 45 min".</p>
+                <p><span class="font-mono text-green">3.</span> Your minutes and streaks build automatically.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== PILLAR 4: PROGRESS ===================== -->
+      <div id="view-progress" class="view-container hidden space-y-5">
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <div class="lg:col-span-2 glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-sm font-semibold text-gray-300">Weight Trend</h3>
+                <p class="text-[10px] font-mono text-gray-500 mt-0.5">{% if goal_weight is not none %}Target {{ goal_weight }} kg{% else %}Set a target weight in onboarding{% endif %} · all check-ins</p>
+              </div>
+              <div class="text-right">
+                <span class="text-[10px] font-mono text-gray-500">Goal progress</span>
+                <div class="text-sm font-mono font-bold text-green">{{ goal_progress }}%</div>
+              </div>
+            </div>
+            <div id="chart-extended-weight"></div>
+          </div>
+
+          <div class="lg:col-span-1 glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-300">Body Measurements</h3>
+              <span class="text-[10px] font-mono text-gray-500">coming soon</span>
+            </div>
+            <div class="h-full flex items-center justify-center py-10 text-center">
+              <div>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-600 mx-auto mb-3"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+                <p class="text-xs text-gray-500 leading-relaxed">Measurement logging (waist, chest, arms, body fat) is on the roadmap.<br>Weight and BMI already track automatically.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          <div class="lg:col-span-2 glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-300">Weekly Active Minutes</h3>
+              <span class="text-[10px] font-mono text-gray-500">completed sessions · last 8 weeks</span>
+            </div>
+            <div id="chart-weekly-minutes"></div>
+          </div>
+
+          <div class="lg:col-span-1 glass rounded-2xl p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-gray-300">Adherence Heatmap</h3>
+              <span class="text-[10px] font-mono text-gray-500">Last 12 Weeks</span>
+            </div>
+            <div class="grid grid-cols-12 gap-1.5 w-full max-w-xs mx-auto">
+              {% for level in heatmap_levels %}
+              <span class="w-full aspect-square rounded-sm transition-all hover:scale-110 {{ heatmap_colors[level] }}"></span>
+              {% endfor %}
+            </div>
+            <div class="flex items-center justify-end gap-2 mt-4 text-[10px] font-mono text-gray-500">
+              <span>Less</span>
+              <div class="w-3 h-3 rounded-sm bg-white/5"></div>
+              <div class="w-3 h-3 rounded-sm bg-yellow/30"></div>
+              <div class="w-3 h-3 rounded-sm bg-green/50"></div>
+              <div class="w-3 h-3 rounded-sm bg-green"></div>
+              <span>More</span>
+            </div>
+            <p class="text-[10px] font-mono text-gray-600 mt-3">Green = weight check-in · yellow = meals logged that day.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ===================== MOBILE BOTTOM NAV ===================== -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 glass-strong border-t border-white/5 flex items-center justify-around px-2">
+  <button onclick="switchView('dashboard')" data-view="dashboard" class="mobile-nav-link active">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Home
+  </button>
+  <button onclick="switchView('nutrition')" data-view="nutrition" class="mobile-nav-link">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11h18M3 11a2 2 0 0 0 2-2V6a2 2 0 0 1 4 0v3M3 11a2 2 0 0 0 2 2v3a2 2 0 0 0 4 0v-3M19 11V8a3 3 0 0 0-6 0v3"/></svg>
+    Nutrition
+  </button>
+  <button onclick="switchView('workouts')" data-view="workouts" class="mobile-nav-link">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4v16M18 4v16M2 9h4M2 15h4M18 9h4M18 15h4M6 12h12"/></svg>
+    Workouts
+  </button>
+  <button onclick="switchView('progress')" data-view="progress" class="mobile-nav-link">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
+    Progress
+  </button>
+</nav>
+
+<!-- ===================== FLOATING AI COACH CONSOLE ===================== -->
+<div id="chatLauncher" onclick="toggleChat()" class="chat-launcher fixed bottom-24 right-2 md:bottom-6 md:right-6 z-50 w-14 h-14 rounded-full grad-bg flex items-center justify-center cursor-pointer shadow-2xl shadow-green/20">
+  <span class="font-mono font-bold text-black text-xl">X</span>
+  <span class="absolute top-1 right-1 w-3 h-3 bg-green rounded-full border-2 border-bg"></span>
+</div>
+
+<div id="chatWindow" class="chat-window fixed bottom-20 right-1.5 md:bottom-6 md:right-6 z-50 glass-strong rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+
+  <div class="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-black/40">
+    <span class="text-xs font-mono text-gray-500 ml-2">coach.fit-x.app/console</span>
+    <div class="flex items-center gap-2">
+      <span onclick="newChatSession()" class="win-dot dot-green" title="Clear view"></span>
+      <span onclick="toggleFullscreenChat()" class="win-dot dot-yellow" title="Toggle Fullscreen"></span>
+      <span onclick="toggleChat()" class="win-dot dot-red" title="Minimize"></span>
+    </div>
+  </div>
+
+  <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 overflow-hidden">
+    <div class="col-span-1 lg:col-span-3 flex flex-col border-r border-white/5 min-h-0">
+      <div id="chatBody" class="flex-1 p-6 space-y-5 overflow-y-auto min-h-0">
+        {% for message in chat_messages %}
+          {% if message.role == 'user' %}
+        <div class="flex gap-2.5 justify-end">
+          <div class="max-w-[80%]">
+            <div class="text-right text-[10px] font-mono text-gray-500 mb-1">{{ message.created_at.strftime('%I:%M %p').lstrip('0') }} · You</div>
+            <div class="grad-bg text-black rounded-lg rounded-tr-sm px-3 py-2.5 text-xs font-medium">{{ message.content }}</div>
+          </div>
+        </div>
+          {% else %}
+        <div class="flex gap-2.5">
+          <div class="w-7 h-7 rounded-full grad-bg flex items-center justify-center flex-shrink-0 mt-1">
+            <span class="font-mono font-bold text-black text-[10px]">X</span>
+          </div>
+          <div class="flex-1">
+            <div class="text-[10px] font-mono text-gray-500 mb-1">{{ message.created_at.strftime('%I:%M %p').lstrip('0') }} · {{ coach_mode_label }}</div>
+            <div class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2.5 text-xs text-gray-200 leading-relaxed">{{ message.content }}</div>
+          </div>
+        </div>
+          {% endif %}
+        {% else %}
+        <div class="flex gap-2.5">
+          <div class="w-7 h-7 rounded-full grad-bg flex items-center justify-center flex-shrink-0 mt-1">
+            <span class="font-mono font-bold text-black text-[10px]">X</span>
+          </div>
+          <div class="flex-1">
+            <div class="text-[10px] font-mono text-gray-500 mb-1">{{ coach_mode_label }}</div>
+            <div class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2.5 text-xs text-gray-200 leading-relaxed">
+              I can log food with calories and macros, track weight and water, and schedule or complete any workout — gym, yoga, running, combat sports. Try a quick action or just type it.
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <form action="{{ url_for('dashboard.coach_message') }}" method="POST" class="p-4 border-t border-white/5 bg-black/30">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus-within:border-green">
+          <span class="text-gray-600 text-xs font-mono">›</span>
+          <input id="coachInput" type="text" name="message" placeholder="Ask coach..." autocomplete="off" required class="flex-1 bg-transparent text-xs outline-none placeholder:text-gray-600" />
+          <button type="submit" class="text-[10px] font-mono font-semibold text-green border border-green/30 px-2 py-1 rounded hover:bg-green/10 transition">Send ⏎</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-span-2 p-6 bg-black/20 overflow-y-auto hidden lg:block">
+      <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3">Coach actions</div>
+      <div class="space-y-2">
+        <button data-prompt="{{ coach_examples[0] }}" class="coach-action w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg p-3 transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium">Log weight</span>
+            <span class="text-[9px] font-mono text-gray-600 group-hover:text-green transition">kg</span>
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono mt-0.5">{% if user.weight is not none %}last: {{ '%.1f'|format(user.weight) }} kg{% else %}natural language{% endif %}</div>
+        </button>
+        <button data-prompt="{{ coach_examples[1] }}" class="coach-action w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg p-3 transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium">Log food</span>
+            <span class="text-[9px] font-mono text-gray-600 group-hover:text-green transition">kcal + macros</span>
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono mt-0.5">today: {{ intake_today }} kcal</div>
+        </button>
+        <button data-prompt="{{ coach_examples[3] }}" class="coach-action w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg p-3 transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium">Log water</span>
+            <span class="text-[9px] font-mono text-gray-600 group-hover:text-green transition">ml</span>
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono mt-0.5">today: {{ water_today_l }} L</div>
+        </button>
+        <button data-prompt="{{ coach_examples[2] }}" class="coach-action w-full text-left bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg p-3 transition group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium">Schedule session</span>
+            <span class="text-[9px] font-mono text-gray-600 group-hover:text-green transition">any activity</span>
+          </div>
+          <div class="text-[10px] text-gray-500 font-mono mt-0.5">{{ weekly_workout_count }} planned this week</div>
+        </button>
+      </div>
+      <div class="mt-6 pt-6 border-t border-white/5">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3">Today's plan</div>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between"><span class="text-gray-400">Calorie target</span><span class="font-mono text-green">{{ calories }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Logged</span><span class="font-mono text-gray-500">{{ intake_today }} kcal</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Maintenance</span><span class="font-mono text-gray-500">{{ maintenance_calories }}</span></div>
+          <div class="flex justify-between"><span class="text-gray-400">Water</span><span class="font-mono text-gray-500">{{ water_today_l }} / {{ water_goal_l }} L</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== ADD FOOD MODAL ===================== -->
+<div id="mealModal" class="modal-overlay fixed inset-0 z-[70] flex items-center justify-center p-4">
+  <div class="modal-content w-full max-w-md glass-strong rounded-2xl p-6 relative">
+    <button onclick="closeMealModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <h2 class="text-xl font-bold tracking-tighter-2 mb-1">Log Food</h2>
+    <p class="text-xs text-gray-400 mb-6">Name plus calories (or macros — kcal is computed as 4/4/9 per gram).</p>
+    <form action="{{ url_for('dashboard.meals_add') }}" method="POST" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="meal_type" id="mealTypeInput" value="snack">
+      <div>
+        <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Food / Meal</label>
+        <input type="text" name="name" id="mealNameInput" required maxlength="60" placeholder="e.g. Chicken rice bowl" class="input-field rounded-lg w-full px-4 py-3 text-sm">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Calories</label>
+          <div class="relative">
+            <input type="number" name="calories" id="mealCalInput" min="0" max="10000" placeholder="487" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-10">
+            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">kcal</span>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Meal</label>
+          <select name="meal_type_confirm" id="mealTypeSelect" onchange="document.getElementById('mealTypeInput').value = this.value" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono">
+            <option value="breakfast">Breakfast</option>
+            <option value="lunch">Lunch</option>
+            <option value="dinner">Dinner</option>
+            <option value="snack" selected>Snack</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Protein</label>
+          <div class="relative">
+            <input type="number" name="protein" min="0" max="1000" placeholder="38" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-7">
+            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Carbs</label>
+          <div class="relative">
+            <input type="number" name="carbs" min="0" max="1000" placeholder="68" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-7">
+            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+          </div>
+        </div>
+        <div>
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Fats</label>
+          <div class="relative">
+            <input type="number" name="fats" min="0" max="1000" placeholder="9" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-7">
+            <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+          </div>
+        </div>
+      </div>
+      <button type="submit" class="w-full grad-bg text-black text-sm font-bold py-3 rounded-lg hover:opacity-90 transition">Add Entry</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== SETTINGS MODAL ===================== -->
+<div id="settingsModal" class="modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4">
+  <div class="modal-content w-full max-w-4xl h-[85vh] glass-strong rounded-2xl flex flex-col md:flex-row overflow-hidden relative">
+    <button onclick="closeSettings()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition z-10">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="w-full md:w-56 border-b md:border-b-0 md:border-r border-white/5 p-4 flex-shrink-0">
+      <div class="text-[11px] font-mono uppercase tracking-wider text-gray-500 mb-4 px-2">Settings</div>
+      <div class="flex flex-row md:flex-col gap-1 relative">
+        <button onclick="switchSettingsTab('biometrics')" class="settings-nav active" data-tab="biometrics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+          Biometrics
+        </button>
+        <button onclick="switchSettingsTab('goals')" class="settings-nav" data-tab="goals">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+          Goals & Nutrition
+        </button>
+        <button onclick="switchSettingsTab('coach')" class="settings-nav" data-tab="coach">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+          AI Coach
+        </button>
+        <button onclick="switchSettingsTab('integrations')" class="settings-nav" data-tab="integrations">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Integrations
+        </button>
+        <button onclick="switchSettingsTab('account')" class="settings-nav" data-tab="account">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Account
+        </button>
+      </div>
+    </div>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+      <div id="tab-biometrics" class="settings-content">
+        <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Biometrics</h2>
+        <p class="text-sm text-gray-400 mb-8">The base layer for your metabolic rate calculation. Edit these in onboarding for now.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Current Weight</label>
+            <div class="relative">
+              <input type="number" value="{{ '%.1f'|format(user.weight) if user.weight is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">kg</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Height</label>
+            <div class="relative">
+              <input type="number" value="{{ user.height if user.height is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">cm</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Age</label>
+            <div class="relative">
+              <input type="number" value="{{ user.age if user.age is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">yrs</span>
+            </div>
+          </div>
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Activity Level</label>
+            <select class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono">
+              <option {% if user.activity_level == 'sedentary' %}selected{% endif %}>Inactive (sedentary)</option>
+              <option {% if user.activity_level == 'light' %}selected{% endif %}>Low Active (light)</option>
+              <option {% if user.activity_level == 'moderate' %}selected{% endif %}>Active (moderate)</option>
+              <option {% if user.activity_level == 'athlete' %}selected{% endif %}>Very Active (athlete)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="tab-goals" class="settings-content hidden">
+        <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Goals & Nutrition</h2>
+        <p class="text-sm text-gray-400 mb-8">Your current phase, based on the goal you set during onboarding.</p>
+        <div class="space-y-8">
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Current Phase</label>
+            <div class="seg-control w-full md:w-1/2">
+              <button class="{% if user.goal == 'lose' %}active{% endif %}">Cut</button>
+              <button class="{% if user.goal == 'maintain' %}active{% endif %}">Maintain</button>
+              <button class="{% if user.goal == 'gain' %}active{% endif %}">Bulk</button>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-2">
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Goal Progress</label>
+              <span class="text-sm font-mono font-bold text-green">{{ goal_progress }}%</span>
+            </div>
+            <div class="h-2 bg-white/5 rounded-full overflow-hidden">
+              <div class="h-full grad-bg rounded-full" style="width: {{ goal_progress }}%"></div>
+            </div>
+            <p class="text-[11px] font-mono text-gray-600 mt-2">{{ calorie_target_note }}</p>
+          </div>
+          <div class="border-t border-white/5 pt-6">
+            <div class="flex items-center justify-between mb-4">
+              <label class="text-sm font-medium text-gray-300">Macro Overrides</label>
+              <div class="toggle" onclick="toggleSwitch(this)"></div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 opacity-50 pointer-events-none" id="macroOverrides">
+              <div>
+                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Protein</label>
+                <div class="relative">
+                  <input type="number" value="{{ macro_targets.protein }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Carbs</label>
+                <div class="relative">
+                  <input type="number" value="{{ macro_targets.carbs }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+                </div>
+              </div>
+              <div>
+                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Fats</label>
+                <div class="relative">
+                  <input type="number" value="{{ macro_targets.fats }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-coach" class="settings-content hidden">
+        <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">AI Coach</h2>
+        <p class="text-sm text-gray-400 mb-8">The fiT-X coach logs food, weight, water, and any workout from natural language.</p>
+        <div class="space-y-8">
+          <div>
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Coach Tone</label>
+            <div class="seg-control w-full md:w-1/2">
+              <button class="active" onclick="switchSeg(this)">Direct</button>
+              <button onclick="switchSeg(this)">Encouraging</button>
+              <button onclick="switchSeg(this)">Analytical</button>
+            </div>
+            <p class="text-[11px] font-mono text-gray-600 mt-2">Preview: <span class="text-gray-400">"log breakfast: oats, banana - 420 kcal 20p 60c 8f" → logged.</span></p>
+          </div>
+        </div>
+      </div>
+      <div id="tab-integrations" class="settings-content hidden">
+        <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Integrations</h2>
+        <p class="text-sm text-gray-400 mb-8">Device sync is a design placeholder — toggles are not connected yet.</p>
+        <div class="space-y-4">
+          <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold">Apple Health</div>
+                <div class="text-xs text-gray-500">Sync weight, steps, and workouts</div>
+              </div>
+            </div>
+            <div class="toggle active" onclick="toggleSwitch(this)"></div>
+          </div>
+          <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" opacity="0.9"/><path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity="0.8"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold">Google Fit</div>
+                <div class="text-xs text-gray-500">Sync steps, sleep, and heart rate</div>
+              </div>
+            </div>
+            <div class="toggle" onclick="toggleSwitch(this)"></div>
+          </div>
+          <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold">Oura Ring</div>
+                <div class="text-xs text-gray-500">Sync sleep, HRV, and body temp</div>
+              </div>
+            </div>
+            <div class="toggle active" onclick="toggleSwitch(this)"></div>
+          </div>
+        </div>
+      </div>
+      <div id="tab-account" class="settings-content hidden">
+        <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Account</h2>
+        <p class="text-sm text-gray-400 mb-8">Manage your profile and display preferences.</p>
+        <div class="space-y-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Full Name</label>
+              <input type="text" value="{{ user.name }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono">
+            </div>
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Email</label>
+              <input type="email" value="{{ user.email }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono">
+            </div>
+          </div>
+          <div class="border-t border-white/5 pt-6">
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Measurement Units</label>
+            <div class="seg-control w-full md:w-1/3">
+              <button class="active" onclick="switchSeg(this)">Metric</button>
+              <button onclick="switchSeg(this)">Imperial</button>
+            </div>
+          </div>
+          <div class="border-t border-white/5 pt-6 flex items-center gap-8">
+            <a href="{{ url_for('main.logout') }}" class="text-sm font-medium text-gray-300 hover:text-white transition border border-white/10 rounded-lg px-4 py-2 hover:bg-white/5">Log Out</a>
+            <button class="text-sm font-medium text-red-400 hover:text-red-300 transition">Delete Account Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============= View Controller =============
+  function switchView(viewName) {
+    document.querySelectorAll('.view-container').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.nav-link[data-view], .mobile-nav-link[data-view]').forEach(el => el.classList.remove('active'));
+
+    document.getElementById(`view-${viewName}`).classList.remove('hidden');
+    document.querySelectorAll(`[data-view="${viewName}"]`).forEach(el => el.classList.add('active'));
+
+    const titles = {
+      dashboard: 'Dashboard',
+      nutrition: 'Nutrition',
+      workouts: 'Workouts',
+      progress: 'Progress'
+    };
+    document.getElementById('viewTitle').textContent = titles[viewName];
+
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  }
+
+  // ============= Chatbot Logic =============
+  function toggleChat() {
+    const launcher = document.getElementById('chatLauncher');
+    const chatWindow = document.getElementById('chatWindow');
+    const isWindowActive = chatWindow.classList.contains('active');
+
+    if (isWindowActive) {
+      chatWindow.classList.remove('active');
+      chatWindow.classList.remove('expanded');
+      setTimeout(() => { launcher.style.display = 'flex'; }, 200);
+    } else {
+      launcher.style.display = 'none';
+      chatWindow.classList.add('active');
+      setTimeout(scrollChatToBottom, 250);
+    }
+  }
+
+  function scrollChatToBottom() {
+    const chatBody = document.getElementById('chatBody');
+    if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function toggleFullscreenChat() {
+    const chatWindow = document.getElementById('chatWindow');
+    chatWindow.classList.toggle('expanded');
+    setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 300);
+  }
+
+  function newChatSession() {
+    const chatBody = document.getElementById('chatBody');
+    chatBody.innerHTML = `
+      <div class="flex gap-2.5">
+        <div class="w-7 h-7 rounded-full grad-bg flex items-center justify-center flex-shrink-0 mt-1">
+          <span class="font-mono font-bold text-black text-[10px]">X</span>
+        </div>
+        <div class="flex-1">
+          <div class="text-[10px] font-mono text-gray-500 mb-1">New Session · Now</div>
+          <div class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2.5 text-xs text-gray-200 leading-relaxed">
+            View cleared. Your history is still saved — what would you like to log or ask?
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Coach quick-action buttons prefill the chat input
+  document.querySelectorAll('.coach-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('coachInput');
+      if (!input) return;
+      input.value = btn.dataset.prompt;
+      input.focus();
+    });
+  });
+
+  // ============= Meal Modal =============
+  function openMealModal(mealType) {
+    const modal = document.getElementById('mealModal');
+    const typeInput = document.getElementById('mealTypeInput');
+    const typeSelect = document.getElementById('mealTypeSelect');
+    if (mealType && typeInput && typeSelect) {
+      typeInput.value = mealType;
+      typeSelect.value = mealType;
+    }
+    modal.classList.add('active');
+    setTimeout(() => { const el = document.getElementById('mealNameInput'); if (el) el.focus(); }, 250);
+  }
+  function closeMealModal() {
+    document.getElementById('mealModal').classList.remove('active');
+  }
+  document.getElementById('mealModal').addEventListener('click', function(e) {
+    if (e.target === this) closeMealModal();
+  });
+
+  // ============= Settings Modal Logic =============
+  function openSettings() {
+    document.getElementById('settingsModal').classList.add('active');
+  }
+  function closeSettings() {
+    document.getElementById('settingsModal').classList.remove('active');
+  }
+  document.getElementById('settingsModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSettings();
+  });
+  function switchSettingsTab(tabName) {
+    document.querySelectorAll('.settings-content').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.settings-nav').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.remove('hidden');
+    document.querySelector(`.settings-nav[data-tab="${tabName}"]`).classList.add('active');
+  }
+  function toggleSwitch(el) {
+    el.classList.toggle('active');
+    const parent = el.closest('.glass') || el.closest('.border-t');
+    if (parent && parent.querySelector('#macroOverrides')) {
+      const overrides = parent.querySelector('#macroOverrides');
+      if (el.classList.contains('active')) {
+        overrides.classList.remove('opacity-50', 'pointer-events-none');
+      } else {
+        overrides.classList.add('opacity-50', 'pointer-events-none');
+      }
+    }
+  }
+  function switchSeg(el) {
+    const siblings = el.parentElement.querySelectorAll('button');
+    siblings.forEach(s => s.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow.classList.contains('active')) { toggleChat(); return; }
+    closeSettings();
+    closeMealModal();
+  });
+
+  // Deep links: #coach opens the console, #nutrition/#workouts/#progress switch views
+  window.addEventListener('load', () => {
+    const hash = window.location.hash;
+    if (hash === '#coach') {
+      toggleChat();
+    } else if (['#nutrition', '#workouts', '#progress'].includes(hash)) {
+      switchView(hash.slice(1));
+    }
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    scrollChatToBottom();
+  });
+
+  // ============= Flash toasts =============
+  document.querySelectorAll('[data-toast]').forEach(el => {
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.4s ease';
+      el.style.opacity = '0';
+      setTimeout(() => el.remove(), 450);
+    }, 4500);
+  });
+
+  // ============= ApexCharts Logic =============
+  const WEIGHT_VALUES = {{ weight_values | tojson }};
+  const WEIGHT_LABELS = {{ weight_labels | tojson }};
+  const GOAL_WEIGHT = {{ goal_weight | tojson }};
+  const RANGE_SIZES = { '7d': 7, '14d': 14, '1m': 30, 'all': WEIGHT_VALUES.length };
+
+  function buildWeightOptions(values, labels) {
+    const points = GOAL_WEIGHT != null ? values.concat([GOAL_WEIGHT]) : values;
+    const pad = Math.max((Math.max(...points) - Math.min(...points)) * 0.15, 0.4);
+    return {
+      chart: { type: 'area', height: 256, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+      series: [{ name: 'Weight', data: values }],
+      colors: ['#4ade80'],
+      stroke: { curve: 'smooth', width: 3 },
+      fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0, stops: [0, 100] } },
+      dataLabels: { enabled: false },
+      grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4, padding: { left: 10, right: 10 } },
+      xaxis: { categories: labels, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      yaxis: { min: Math.min(...points) - pad, max: Math.max(...points) + pad, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val.toFixed(1) + 'kg' } },
+      tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, x: { show: false } },
+      annotations: GOAL_WEIGHT != null ? { yaxis: [{ y: GOAL_WEIGHT, borderColor: '#fef08a', strokeDashArray: 4, label: { text: 'Goal ' + GOAL_WEIGHT.toFixed(1), style: { color: '#0A0A0A', background: '#fef08a', fontFamily: 'JetBrains Mono', fontSize: '10px', fontWeight: 600 } } }] } : undefined
+    };
+  }
+
+  const weightChart = new ApexCharts(document.querySelector('#chart-weight'), buildWeightOptions(WEIGHT_VALUES, WEIGHT_LABELS));
+  weightChart.render();
+
+  function setWeightRange(range, btn) {
+    const size = RANGE_SIZES[range] || WEIGHT_VALUES.length;
+    document.querySelectorAll('.weight-range-btn').forEach(el => {
+      el.className = 'weight-range-btn text-[10px] font-mono text-gray-400 border border-white/10 px-2 py-1 rounded hover:bg-white/5 transition';
+    });
+    btn.className = 'weight-range-btn text-[10px] font-mono text-white grad-bg px-2 py-1 rounded';
+    weightChart.updateSeries([{ name: 'Weight', data: WEIGHT_VALUES.slice(-size) }]);
+    weightChart.updateOptions({ xaxis: { categories: WEIGHT_LABELS.slice(-size) } }, false, true);
+  }
+
+  // 2. Weekly Activity — real planned/completed minutes per day
+  const weekMinutes = {{ week_activity.minutes | tojson }};
+  const weekMinuteLabels = {{ week_activity.labels | tojson }};
+  const volOpts = {
+    chart: { type: 'bar', height: 224, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', sparkline: { enabled: false } },
+    series: [{ name: 'Minutes', data: weekMinutes }],
+    colors: ['#4ade80'],
+    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+    dataLabels: { enabled: false },
+    grid: { show: false, padding: { left: -10, right: 0, top: -20, bottom: -10 } },
+    xaxis: { categories: weekMinuteLabels, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { show: false },
+    tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, x: { show: false }, marker: { show: false } }
+  };
+  new ApexCharts(document.querySelector('#chart-volume'), volOpts).render();
+
+  // 3. Nutrition Macro Donut — today's real totals
+  const TODAY_TOTALS = {{ today_totals | tojson }};
+  const macroOpts = {
+    chart: { type: 'donut', height: 256, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+    series: [TODAY_TOTALS.protein, TODAY_TOTALS.carbs, TODAY_TOTALS.fats],
+    labels: ['Protein', 'Carbs', 'Fats'],
+    colors: ['#fef08a', '#4ade80', 'rgba(255,255,255,0.4)'],
+    stroke: { width: 0 },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: '75%',
+          background: 'transparent',
+          labels: {
+            show: true,
+            total: { show: true, label: 'Total kcal', fontSize: '11px', fontFamily: 'JetBrains Mono', color: '#6B7280', formatter: () => TODAY_TOTALS.calories.toLocaleString() }
+          }
+        }
+      }
+    },
+    legend: { position: 'bottom', labels: { colors: '#9CA3AF', fontFamily: 'JetBrains Mono', fontSize: '10px' }, markers: { width: 8, height: 8 } },
+    dataLabels: { enabled: false },
+    tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, y: { formatter: (val) => val + 'g' } }
+  };
+  new ApexCharts(document.querySelector('#chart-nutrition-macros'), macroOpts).render();
+
+  // 4. Weekly Calorie Net — real intake minus target
+  const weekNetLabels = {{ week_net_labels | tojson }};
+  const weekNetValues = {{ week_net_values | tojson }};
+  const calorieNetOpts = {
+    chart: { type: 'bar', height: 256, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+    series: [{ name: 'Net Calories', data: weekNetValues }],
+    colors: ['#4ade80'],
+    plotOptions: { bar: { colors: { ranges: [{ from: -10000, to: 0, color: '#4ade80' }, { from: 1, to: 10000, color: '#fef08a' }] }, columnWidth: '45%', borderRadius: 6 } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4, padding: { left: 10, right: 10 } },
+    xaxis: { categories: weekNetLabels, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val + ' kcal' } },
+    tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, x: { show: false } }
+  };
+  new ApexCharts(document.querySelector('#chart-calorie-net'), calorieNetOpts).render();
+
+  // 5. Progress Weight Chart — all real check-ins
+  const goalSeries = GOAL_WEIGHT != null ? WEIGHT_VALUES.map(() => GOAL_WEIGHT) : [];
+  const extWeightOpts = {
+    chart: { type: 'area', height: 288, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+    series: [
+      { name: 'Weight', data: WEIGHT_VALUES },
+      ...(goalSeries.length ? [{ name: 'Goal', data: goalSeries }] : [])
+    ],
+    colors: ['#4ade80', 'rgba(254,240,138,0.5)'],
+    stroke: { curve: 'smooth', width: [3, 2], dashArray: [0, 4] },
+    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0, stops: [0, 100] } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4, padding: { left: 10, right: 10 } },
+    xaxis: { categories: WEIGHT_LABELS, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val.toFixed(1) + 'kg' } },
+    tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' } },
+    legend: { show: false }
+  };
+  new ApexCharts(document.querySelector('#chart-extended-weight'), extWeightOpts).render();
+
+  // 6. Weekly Active Minutes — completed sessions, last 8 weeks
+  const weeksHistoryLabels = {{ weeks_history_labels | tojson }};
+  const weeksHistoryMinutes = {{ weeks_history_minutes | tojson }};
+  const weeklyMinutesOpts = {
+    chart: { type: 'bar', height: 288, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+    series: [{ name: 'Minutes', data: weeksHistoryMinutes }],
+    colors: ['#4ade80'],
+    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+    dataLabels: { enabled: false },
+    grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4, padding: { left: 10, right: 10 } },
+    xaxis: { categories: weeksHistoryLabels, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    yaxis: { labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val + 'm' } },
+    tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' } }
+  };
+  new ApexCharts(document.querySelector('#chart-weekly-minutes'), weeklyMinutesOpts).render();
+
+</script>
+
 </body>
 </html>

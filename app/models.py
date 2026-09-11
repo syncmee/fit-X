@@ -63,6 +63,7 @@ class ScheduledWorkout(db.Model):
     duration_minutes = db.Column(db.Integer, nullable=False, default=60)
     status = db.Column(db.String(20), nullable=False, default="scheduled", index=True)
     notes = db.Column(db.Text)
+    calories_burned = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
@@ -79,6 +80,35 @@ class CoachMessage(db.Model):
 
     def __repr__(self) -> str:
         return f"<CoachMessage {self.role} {self.created_at}>"
+
+
+class MealEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    meal_type = db.Column(db.String(20), nullable=False, default="meal")  # breakfast/lunch/dinner/snack
+    calories = db.Column(db.Integer, nullable=False, default=0)
+    protein = db.Column(db.Integer, nullable=False, default=0)
+    carbs = db.Column(db.Integer, nullable=False, default=0)
+    fats = db.Column(db.Integer, nullable=False, default=0)
+    logged_at = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    user = db.relationship("User", backref="meal_entries")
+
+    def __repr__(self) -> str:
+        return f"<MealEntry {self.name} {self.calories}kcal {self.logged_at}>"
+
+
+class WaterLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount_ml = db.Column(db.Integer, nullable=False)
+    logged_at = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    user = db.relationship("User", backref="water_logs")
+
+    def __repr__(self) -> str:
+        return f"<WaterLog {self.amount_ml}ml {self.logged_at}>"
 
 
 @login_manager.user_loader

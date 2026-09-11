@@ -3,6 +3,7 @@ from pathlib import Path
 from flask import Flask
 
 from .config import Config
+from .dashboard import dashboard_bp
 from .extensions import db, login_manager, migrate
 from .routes import main_bp
 from .security import generate_csrf_token, validate_csrf_request
@@ -30,7 +31,23 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
 
     app.register_blueprint(main_bp)
+    app.register_blueprint(dashboard_bp)
     register_cli_commands(app)
+
+    # create_all is idempotent; guarantees MealEntry/WaterLog exist in prod,
+    # where gunicorn never runs main.py's __main__ block.
+    with app.app_context():
+        db.create_all()
+        # No Alembic migrations in this project, so new columns ship as guarded
+        # ALTERs (they no-op once applied).
+        for statement in (
+            "ALTER TABLE scheduled_workout ADD COLUMN calories_burned INTEGER",
+        ):
+            try:
+                db.session.execute(db.text(statement))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
     return app
 
