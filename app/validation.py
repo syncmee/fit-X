@@ -93,6 +93,11 @@ def validate_onboarding_form(form) -> tuple[dict, list[str]]:
     gender = _normalize_text(form.get("gender")).lower()
     activity_level = _normalize_text(form.get("activity-level")).lower()
     goal = _normalize_text(form.get("goal")).lower()
+    try:
+        pace = int(form.get("pace") or 2)
+    except (TypeError, ValueError):
+        pace = 2
+    pace = max(1, min(3, pace))
 
     try:
         age = _parse_int(form.get("age"), "Age", 13, 100)
@@ -141,4 +146,5 @@ def validate_onboarding_form(form) -> tuple[dict, list[str]]:
         "target_weight": target_weight,
         "activity_level": activity_level,
         "goal": goal,
+        "pace": pace,
     }, errors

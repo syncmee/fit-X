@@ -117,11 +117,12 @@ A module-level `app = create_app()` is created so `main:app` (gunicorn) and `fro
 ## 6. Health / domain logic (inside `app/dashboard.py`)
 
 Self-contained, standards-based, and worth preserving (now housed in the dashboard module):
-- **EER (Estimated Energy Requirement)** coefficient tables for adults and teens, split by sex, used by `estimate_calorie_target`.
+- **Calorie target** — Mifflin-St Jeor BMR × activity multiplier (TDEE), adjusted by the pace the user chose on the onboarding slider (`User.pace`: ±kg/week × 7700 kcal / 7 days). This is intentionally the same math as the onboarding preview, so the number shown at signup is the number on the dashboard.
+- **Macro targets** — protein 2.2 / 1.8 / 2.0 g/kg (cut / gain / maintain), fats 25% of calories, carbs fill the remainder — same as the onboarding preview.
 - `calculate_bmi` and `build_bmi_summary` (returns label + Tailwind color class).
 - **CDC BMI-for-age percentiles** looked up from `app/data/bmiagerev.csv`, cached with `@lru_cache`.
 
-This logic is domain-correct — treat changes here as higher-risk and verify against the source equations.
+This logic is domain-correct — treat changes here as higher-risk and verify against the source equations. If you change one side (onboarding JS or backend), change both.
 
 ---
 

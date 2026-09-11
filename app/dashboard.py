@@ -48,57 +48,26 @@ ACTIVITY_LEVEL_LABELS = {
     "athlete": "Very Active",
 }
 
-ADULT_EER_COEFFICIENTS = {
-    "male": {
-        "sedentary": (753.07, -10.83, 6.50, 14.10),
-        "light": (581.47, -10.83, 8.30, 14.94),
-        "moderate": (1004.82, -10.83, 6.52, 15.91),
-        "athlete": (-517.88, -10.83, 15.61, 19.11),
-    },
-    "female": {
-        "sedentary": (584.90, -7.01, 5.72, 11.71),
-        "light": (575.77, -7.01, 6.60, 12.14),
-        "moderate": (710.25, -7.01, 6.54, 12.34),
-        "athlete": (511.83, -7.01, 9.07, 12.56),
-    },
+# Mifflin-St Jeor activity multipliers — must match the onboarding UI exactly.
+ACTIVITY_MULTIPLIERS = {
+    "sedentary": 1.2,
+    "light": 1.375,
+    "moderate": 1.55,
+    "athlete": 1.9,
 }
 
-TEEN_EER_COEFFICIENTS = {
-    "male": {
-        "younger": {
-            "sedentary": (-447.51, 3.68, 13.01, 13.15, 25),
-            "light": (19.12, 3.68, 8.62, 20.28, 25),
-            "moderate": (-388.19, 3.68, 12.66, 20.46, 25),
-            "athlete": (-671.75, 3.68, 15.38, 23.25, 25),
-        },
-        "older": {
-            "sedentary": (-447.51, 3.68, 13.01, 13.15, 20),
-            "light": (19.12, 3.68, 8.62, 20.28, 20),
-            "moderate": (-388.19, 3.68, 12.66, 20.46, 20),
-            "athlete": (-671.75, 3.68, 15.38, 23.25, 20),
-        },
-    },
-    "female": {
-        "younger": {
-            "sedentary": (55.59, -22.25, 8.43, 17.07, 30),
-            "light": (-297.54, -22.25, 12.77, 14.73, 30),
-            "moderate": (-189.55, -22.25, 11.74, 18.34, 30),
-            "athlete": (-709.59, -22.25, 18.22, 14.25, 30),
-        },
-        "older": {
-            "sedentary": (55.59, -22.25, 8.43, 17.07, 20),
-            "light": (-297.54, -22.25, 12.77, 14.73, 20),
-            "moderate": (-189.55, -22.25, 11.74, 18.34, 20),
-            "athlete": (-709.59, -22.25, 18.22, 14.25, 20),
-        },
-    },
+# Weekly kg change per pace level (1 slow, 2 balanced, 3 aggressive), by goal.
+PACE_KG_PER_WEEK = {
+    "lose": {1: -0.25, 2: -0.5, 3: -0.75},
+    "gain": {1: 0.125, 2: 0.25, 3: 0.4},
+    "maintain": {1: 0.0, 2: 0.0, 3: 0.0},
 }
 
 DEFAULT_CALORIE_TARGET = {
     "target": 2000,
     "maintenance": 2000,
     "activity_label": "Profile needed",
-    "note": "Complete your profile for an age-aware calorie estimate.",
+    "note": "Complete your profile for a personal calorie estimate.",
 }
 
 DEFAULT_BMI_SUMMARY = {
@@ -124,38 +93,35 @@ def estimate_calorie_target(
     weight_kg: float,
     activity_level: str,
     goal: str,
+    pace: int = 2,
 ) -> dict[str, int | str]:
-    maintenance = _calculate_eer(
-        gender=gender,
-        age=age,
-        height_cm=height_cm,
-        weight_kg=weight_kg,
-        activity_level=activity_level,
-    )
-    target = maintenance
+    """Daily calorie target from the onboarding math: Mifflin-St Jeor TDEE
+    plus the pace chosen on the slider (kg/week x 7700 kcal / 7 days)."""
+    if gender == "male":
+        bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age + 5
+    else:
+        bmr = 10 * weight_kg + 6.25 * height_cm - 5 * age - 161
 
-    if goal == "lose":
-        adjustment = _goal_adjustment(maintenance=maintenance, age=age, goal=goal)
-        target = maintenance - adjustment
+    maintenance = bmr * ACTIVITY_MULTIPLIERS.get(activity_level, 1.55)
+    kg_per_week = PACE_KG_PER_WEEK.get(goal, PACE_KG_PER_WEEK["maintain"]).get(pace, 0.0)
+    kcal_adjust = kg_per_week * 7700 / 7
+    target = int(round(maintenance + kcal_adjust))
+
+    sign = "+" if kg_per_week > 0 else ("−" if kg_per_week < 0 else "±")
+    pace_label = {1: "slow", 2: "balanced", 3: "aggressive"}.get(pace, "balanced")
+    if kg_per_week == 0:
         note = (
-            f"Age-aware estimate with {ACTIVITY_LEVEL_LABELS[activity_level]} activity. "
-            f"Maintenance is about {maintenance} kcal; target uses a gentle {adjustment} kcal deficit."
-        )
-    elif goal == "gain":
-        adjustment = _goal_adjustment(maintenance=maintenance, age=age, goal=goal)
-        target = maintenance + adjustment
-        note = (
-            f"Age-aware estimate with {ACTIVITY_LEVEL_LABELS[activity_level]} activity. "
-            f"Maintenance is about {maintenance} kcal; target uses a steady {adjustment} kcal surplus."
+            f"Your maintenance (TDEE) is about {round(maintenance)} kcal with "
+            f"{ACTIVITY_LEVEL_LABELS[activity_level]} activity — you chose to maintain."
         )
     else:
         note = (
-            f"Age-aware estimate with {ACTIVITY_LEVEL_LABELS[activity_level]} activity. "
-            f"Maintenance lands around {maintenance} kcal."
+            f"Your TDEE is about {round(maintenance)} kcal with {ACTIVITY_LEVEL_LABELS[activity_level]} activity; "
+            f"target uses your {pace_label} pace ({sign}{abs(kg_per_week)} kg/week)."
         )
 
     return {
-        "target": int(round(target)),
+        "target": target,
         "maintenance": int(round(maintenance)),
         "activity_label": ACTIVITY_LEVEL_LABELS[activity_level],
         "note": note,
@@ -173,46 +139,6 @@ def build_bmi_summary(*, gender: str, age: int, weight_kg: float, height_cm: flo
     return _build_child_bmi_summary(gender=gender, age=age, bmi=bmi)
 
 
-def _calculate_eer(
-    *,
-    gender: str,
-    age: int,
-    height_cm: float,
-    weight_kg: float,
-    activity_level: str,
-) -> int:
-    if age >= 19:
-        baseline, age_coeff, height_coeff, weight_coeff = ADULT_EER_COEFFICIENTS[gender][activity_level]
-        value = baseline + (age_coeff * age) + (height_coeff * height_cm) + (weight_coeff * weight_kg)
-        return int(round(value))
-
-    teen_group = "younger" if age < 14 else "older"
-    baseline, age_coeff, height_coeff, weight_coeff, growth_allowance = TEEN_EER_COEFFICIENTS[gender][teen_group][activity_level]
-    value = (
-        baseline
-        + (age_coeff * age)
-        + (height_coeff * height_cm)
-        + (weight_coeff * weight_kg)
-        + growth_allowance
-    )
-    return int(round(value))
-
-
-def _goal_adjustment(*, maintenance: int, age: int, goal: str) -> int:
-    # The official equations estimate maintenance/EER. Goal pacing stays
-    # intentionally gentler for teens because their estimates already include
-    # growth needs, and the dashboard should avoid pushing aggressive cuts.
-    if goal == "lose":
-        if age < 19:
-            return min(300, max(150, int(round(maintenance * 0.10))))
-        return min(500, max(200, int(round(maintenance * 0.15))))
-
-    if goal == "gain":
-        if age < 19:
-            return min(250, max(150, int(round(maintenance * 0.08))))
-        return min(350, max(150, int(round(maintenance * 0.10))))
-
-    return 0
 
 
 def _build_adult_bmi_summary(bmi: float) -> dict[str, float | str]:
@@ -1040,6 +966,7 @@ def _build_ai_context(user: User, now: datetime) -> str:
             weight_kg=user.weight,
             activity_level=user.activity_level,
             goal=user.goal,
+            pace=user.pace or 2,
         )
 
     week_activity = _build_week_activity(now)
@@ -1316,14 +1243,17 @@ def _sum_meal_entries(entries: list[MealEntry]) -> dict[str, int]:
     }
 
 
-def _build_macro_targets(weight_kg: float | None, target_kcal: int) -> dict[str, int]:
+def _build_macro_targets(weight_kg: float | None, target_kcal: int, goal: str | None) -> dict[str, int]:
+    """Same split as the onboarding preview: protein per kg by goal, fats at
+    25% of calories, carbs fill the remainder."""
+    protein_per_kg = {"lose": 2.2, "gain": 1.8, "maintain": 2.0}.get(goal or "maintain", 2.0)
     if weight_kg:
-        protein_g = round(weight_kg * 1.8)
-        fat_g = round(weight_kg * 0.9)
+        protein_g = round(weight_kg * protein_per_kg)
     else:
-        protein_g = round(target_kcal * 0.3 / 4)
-        fat_g = round(target_kcal * 0.25 / 9)
-    carbs_g = max(0, round((target_kcal - protein_g * 4 - fat_g * 9) / 4))
+        protein_g = round(target_kcal * 0.30 / 4)
+    fat_kcal = target_kcal * 0.25
+    fat_g = round(fat_kcal / 9)
+    carbs_g = max(0, round((target_kcal - protein_g * 4 - fat_kcal) / 4))
     return {"protein": protein_g, "carbs": carbs_g, "fats": fat_g}
 
 
@@ -1658,6 +1588,7 @@ def _build_dashboard_context() -> dict:
             weight_kg=current_user.weight,
             activity_level=current_user.activity_level,
             goal=current_user.goal,
+            pace=current_user.pace or 2,
         )
 
         if current_user.start_weight is not None and current_user.target_weight is not None:
@@ -1682,7 +1613,7 @@ def _build_dashboard_context() -> dict:
     intake_pct = min(100, round(today_totals["calories"] / target_kcal * 100)) if target_kcal else 0
     intake_remaining = max(0, target_kcal - today_totals["calories"])
 
-    macro_targets = _build_macro_targets(current_user.weight, target_kcal)
+    macro_targets = _build_macro_targets(current_user.weight, target_kcal, current_user.goal)
 
     week_net_labels, week_net_values = _build_week_net(now, target_kcal)
 

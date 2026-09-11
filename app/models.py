@@ -21,6 +21,7 @@ class User(UserMixin, db.Model):
     target_weight = db.Column(db.Float)
     activity_level = db.Column(db.String(50))
     goal = db.Column(db.String(50))
+    pace = db.Column(db.Integer, default=2)  # 1 slow, 2 balanced, 3 aggressive
 
     logs = db.relationship("WeightLog", backref="user", lazy=True, order_by="WeightLog.date")
     scheduled_workouts = db.relationship(

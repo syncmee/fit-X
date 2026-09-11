@@ -306,6 +306,7 @@
   <input type="hidden" id="fieldGender" name="gender" value="male">
   <input type="hidden" id="fieldActivityLevel" name="activity-level" value="moderate">
   <input type="hidden" id="fieldGoal" name="goal" value="lose">
+  <input type="hidden" id="fieldPace" name="pace" value="2">
 
 <!-- Main Onboarding Layout -->
 <main class="pt-16 grid lg:grid-cols-2 min-h-screen">
@@ -862,6 +863,7 @@
     document.getElementById('fieldGender').value = state.sex;
     document.getElementById('fieldActivityLevel').value = state.activityLevel;
     document.getElementById('fieldGoal').value = state.goal;
+    document.getElementById('fieldPace').value = state.pace;
 
     // Calculate dynamic target weight since the UI implies it based on pace and goal
     let targetWeight = parseFloat(state.weight);

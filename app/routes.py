@@ -116,6 +116,7 @@ def onboarding():
         current_user.target_weight = cleaned_data["target_weight"]
         current_user.activity_level = cleaned_data["activity_level"]
         current_user.goal = cleaned_data["goal"]
+        current_user.pace = cleaned_data["pace"]
         current_user.onboarding = True
 
         if not current_user.logs:
