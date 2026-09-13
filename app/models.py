@@ -96,7 +96,7 @@ class MealEntry(db.Model):
     protein = db.Column(db.Integer, nullable=False, default=0)
     carbs = db.Column(db.Integer, nullable=False, default=0)
     fats = db.Column(db.Integer, nullable=False, default=0)
-    logged_at = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
+    logged_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", backref="meal_entries")
@@ -108,7 +108,7 @@ class MealEntry(db.Model):
 class WaterLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     amount_ml = db.Column(db.Integer, nullable=False)
-    logged_at = db.Column(db.DateTime, default=datetime.now, nullable=False, index=True)
+    logged_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", backref="water_logs")
