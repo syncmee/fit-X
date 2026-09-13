@@ -37,7 +37,9 @@ class Config:
     SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
     SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
     SMTP_USER = os.getenv("SMTP_USER", "")
-    SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "")
+    # Google shows app passwords grouped in fours ("abcd efgh ijkl mnop");
+    # accept either form.
+    SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "").replace(" ", "")
     SMTP_FROM = os.getenv("SMTP_FROM", "")
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
     RESEND_FROM = os.getenv("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
