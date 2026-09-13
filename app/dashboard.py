@@ -1026,7 +1026,7 @@ You reply with ONLY one JSON object, no markdown fences, matching exactly:
 }}
 
 ACTION TYPES (each an object inside "actions"; use an empty array for pure questions):
-1. {{"type":"log_weight","weight_kg":number,"days_ago":0}}  — weight check-in; days_ago 0-7 (1 means yesterday). Valid weight 30-350 kg.
+1. {{"type":"log_weight","weight_kg":number,"days_ago":0}}  — weight check-in; days_ago 0-7 (1 means yesterday). Valid weight 30-350 kg. Keep the exact value the user said, decimals included (they said 81.9 → send 81.9, never round to 82).
 2. {{"type":"log_meal","name":"short food name","meal_type":"breakfast|lunch|dinner|snack","calories":int,"protein":int,"carbs":int,"fats":int}}  — grams of protein/carbs/fat. If the user gives only macros, set calories = protein*4 + carbs*4 + fats*9. If only calories are given, leave macros 0. Pick meal_type from context (time of day or the user's words).
 3. {{"type":"log_water","amount_ml":int}}  — 100-5000 ml. "a glass" ≈ 250, "a bottle" ≈ 500.
 4. {{"type":"schedule_workout","title":"Activity","days_ahead":0,"time_24h":"18:30","duration_minutes":int,"calories_burned":int}}  — ANY activity counts: gym, running, cycling, swimming, yoga, pilates, boxing, martial arts, sports, walking. days_ahead 0-30 (0 = today; if that time already passed, use tomorrow). time_24h defaults to the user's words or "18:00". duration 5-240 min. Estimate calories_burned from the user's weight, duration and intensity (light yoga ≈ 3 kcal/kg/h, brisk walk ≈ 4.3, cycling ≈ 6, running ≈ 10, HIIT/boxing ≈ 9; round to the nearest 10).
@@ -1135,16 +1135,19 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
         action_type = action.get("type")
 
         if action_type == "log_weight":
-            weight_kg = _clamp_int(action.get("weight_kg"), 30, 350, default=0)
-            if not weight_kg:
+            try:
+                weight_kg = round(float(action.get("weight_kg")), 1)
+            except (TypeError, ValueError):
+                continue
+            if not 30 <= weight_kg <= 350:
                 continue
             days_ago = _clamp_int(action.get("days_ago"), 0, 7, default=0)
             logged_at = now - timedelta(days=days_ago)
-            db.session.add(WeightLog(weight=float(weight_kg), date=logged_at, user=user))
+            db.session.add(WeightLog(weight=weight_kg, date=logged_at, user=user))
             if user.start_weight is None:
-                user.start_weight = float(weight_kg)
+                user.start_weight = weight_kg
             _sync_current_weight(user)
-            applied.append(f"weight {weight_kg} kg")
+            applied.append(f"weight {weight_kg:.1f} kg")
 
         elif action_type == "log_meal":
             name = " ".join(str(action.get("name") or "Meal").split())[:60]
