@@ -1040,18 +1040,23 @@ RULES:
 - Never wrap the JSON in markdown fences."""
 
 
-def _chat_day_start_utc() -> datetime:
-    # CoachMessage.created_at is stored in UTC, so a chat "day" runs midnight to midnight UTC.
-    now_utc = datetime.utcnow()
-    return now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+def _chat_day_start_utc(user: User) -> datetime:
+    # Chat memory resets at the user's LOCAL midnight (using their stored
+    # browser UTC offset), not the server's — a chat day follows their wall clock.
+    offset = user.tz_offset_minutes or 0
+    local_midnight = (datetime.utcnow() - timedelta(minutes=offset)).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    return local_midnight + timedelta(minutes=offset)
 
 
-def _prune_old_chat_messages(user_id: int) -> None:
-    # Chat memory is per-day: anything from before today is deleted, not just hidden.
+def _prune_old_chat_messages(user: User) -> None:
+    # Chat memory is per-day: anything from before the user's local midnight is
+    # deleted, not just hidden.
     db.session.execute(
         delete(CoachMessage).where(
-            CoachMessage.user_id == user_id,
-            CoachMessage.created_at < _chat_day_start_utc(),
+            CoachMessage.user_id == user.id,
+            CoachMessage.created_at < _chat_day_start_utc(user),
         )
     )
 
@@ -1064,7 +1069,7 @@ def _gemini_generate(user: User, message: str, now: datetime) -> dict:
         select(CoachMessage)
         .where(
             CoachMessage.user_id == user.id,
-            CoachMessage.created_at >= _chat_day_start_utc(),
+            CoachMessage.created_at >= _chat_day_start_utc(user),
         )
         .order_by(CoachMessage.id.desc())
         .limit(AI_HISTORY_LIMIT)
@@ -1665,7 +1670,7 @@ def _build_dashboard_context() -> dict:
         )
     ).scalar_one()
 
-    _prune_old_chat_messages(current_user.id)
+    _prune_old_chat_messages(current_user)
     db.session.commit()
     chat_messages = list(
         reversed(
@@ -1673,7 +1678,7 @@ def _build_dashboard_context() -> dict:
                 select(CoachMessage)
                 .where(
                     CoachMessage.user_id == current_user.id,
-                    CoachMessage.created_at >= _chat_day_start_utc(),
+                    CoachMessage.created_at >= _chat_day_start_utc(current_user),
                 )
                 .order_by(CoachMessage.id.desc())
                 .limit(COACH_CHAT_HISTORY_LIMIT)
