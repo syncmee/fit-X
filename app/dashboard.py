@@ -1955,16 +1955,15 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         horizon = f"starts in ~{round(starts_in_min)} min"
     subject = f"fiT-X · {workout.title} {horizon}"
     dashboard_url = url_for("dashboard.dashboard", _external=True)
-    html = (
-        f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">'
-        f'<p style="color:#888;font-size:12px;letter-spacing:2px;margin:0 0 8px">fiT-X REMINDER</p>'
-        f'<h1 style="font-size:22px;margin:0 0 12px;color:#111">{workout.title}</h1>'
-        f'<p style="color:#444;font-size:15px;margin:0 0 4px">{when} · {workout.duration_minutes} min</p>'
-        f'<p style="color:#444;font-size:15px;margin:0 0 24px">{horizon}.</p>'
-        f'<a href="{dashboard_url}" style="background:linear-gradient(135deg,#fef08a,#4ade80);'
-        f'color:#111;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600">'
-        f"Open fiT-X</a>"
-        f"</div>"
+    html = render_template(
+        "emails/workout_reminder.html",
+        user_name=user.name,
+        user_email=user.email,
+        workout_title=workout.title,
+        when_label=when,
+        duration_minutes=workout.duration_minutes,
+        horizon=horizon,
+        dashboard_url=dashboard_url,
     )
     plain = (
         f"{workout.title}\n{when} · {workout.duration_minutes} min\n{horizon}.\n\nOpen fiT-X: {dashboard_url}"
