@@ -27,7 +27,7 @@ from statistics import NormalDist
 import requests
 from flask import Blueprint, current_app, flash, has_request_context, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from .extensions import db
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
@@ -1039,13 +1039,32 @@ RULES:
 - Never wrap the JSON in markdown fences."""
 
 
+def _chat_day_start_utc() -> datetime:
+    # CoachMessage.created_at is stored in UTC, so a chat "day" runs midnight to midnight UTC.
+    now_utc = datetime.utcnow()
+    return now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def _prune_old_chat_messages(user_id: int) -> None:
+    # Chat memory is per-day: anything from before today is deleted, not just hidden.
+    db.session.execute(
+        delete(CoachMessage).where(
+            CoachMessage.user_id == user_id,
+            CoachMessage.created_at < _chat_day_start_utc(),
+        )
+    )
+
+
 def _gemini_generate(user: User, message: str, now: datetime) -> dict:
     api_key = current_app.config.get("GEMINI_API_KEY", "")
     model = current_app.config.get("GEMINI_MODEL", "gemini-2.5-flash")
 
     history = db.session.execute(
         select(CoachMessage)
-        .where(CoachMessage.user_id == user.id)
+        .where(
+            CoachMessage.user_id == user.id,
+            CoachMessage.created_at >= _chat_day_start_utc(),
+        )
         .order_by(CoachMessage.id.desc())
         .limit(AI_HISTORY_LIMIT)
     ).scalars().all()
@@ -1642,11 +1661,16 @@ def _build_dashboard_context() -> dict:
         )
     ).scalar_one()
 
+    _prune_old_chat_messages(current_user.id)
+    db.session.commit()
     chat_messages = list(
         reversed(
             db.session.execute(
                 select(CoachMessage)
-                .where(CoachMessage.user_id == current_user.id)
+                .where(
+                    CoachMessage.user_id == current_user.id,
+                    CoachMessage.created_at >= _chat_day_start_utc(),
+                )
                 .order_by(CoachMessage.id.desc())
                 .limit(COACH_CHAT_HISTORY_LIMIT)
             ).scalars().all()

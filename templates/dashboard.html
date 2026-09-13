@@ -933,7 +933,7 @@
           {% if message.role == 'user' %}
         <div class="flex gap-2.5 justify-end">
           <div class="max-w-[80%]">
-            <div class="text-right text-[10px] font-mono text-gray-500 mb-1">{{ message.created_at.strftime('%I:%M %p').lstrip('0') }} · You</div>
+            <div class="text-right text-[10px] font-mono text-gray-500 mb-1"><span data-chat-time="{{ message.created_at.isoformat() }}Z">{{ message.created_at.strftime('%I:%M %p').lstrip('0') }}</span> · You</div>
             <div class="grad-bg text-black rounded-lg rounded-tr-sm px-3 py-2.5 text-xs font-medium">{{ message.content }}</div>
           </div>
         </div>
@@ -943,7 +943,7 @@
             <span class="font-mono font-bold text-black text-[10px]">X</span>
           </div>
           <div class="flex-1">
-            <div class="text-[10px] font-mono text-gray-500 mb-1">{{ message.created_at.strftime('%I:%M %p').lstrip('0') }} · {{ coach_mode_label }}</div>
+            <div class="text-[10px] font-mono text-gray-500 mb-1"><span data-chat-time="{{ message.created_at.isoformat() }}Z">{{ message.created_at.strftime('%I:%M %p').lstrip('0') }}</span> · {{ coach_mode_label }}</div>
             <div class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2.5 text-xs text-gray-200 leading-relaxed">{{ message.content }}</div>
           </div>
         </div>
@@ -1331,6 +1331,12 @@
     const chatBody = document.getElementById('chatBody');
     if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
   }
+
+  // Chat timestamps arrive in UTC; render each one in the visitor's own timezone.
+  document.querySelectorAll('[data-chat-time]').forEach(el => {
+    const ts = new Date(el.getAttribute('data-chat-time'));
+    if (!isNaN(ts)) el.textContent = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  });
 
   function toggleFullscreenChat() {
     const chatWindow = document.getElementById('chatWindow');
