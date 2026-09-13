@@ -22,6 +22,7 @@ from datetime import datetime, time, timedelta
 from functools import lru_cache
 from math import log
 from pathlib import Path
+from secrets import compare_digest
 from statistics import NormalDist
 
 import requests
@@ -1863,3 +1864,128 @@ def workout_done(workout_id: int):
     db.session.commit()
     flash(f"{workout.title} marked as done — nice work.", "success")
     return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+
+
+# ============= Workout reminder emails (Resend + external cron) =============
+# An external scheduler (GitHub Actions / Render Cron) GETs /cron/send-reminders
+# every ~15 minutes. Reminders fire REMINDER_WINDOW_MINUTES before the session's
+# wall-clock start; reminder_sent_at keeps it one-shot per workout.
+REMINDER_WINDOW_MINUTES = 45
+
+
+@dashboard_bp.route("/profile/timezone", methods=["POST"])
+@login_required
+def profile_timezone():
+    # Called once per dashboard load; stores the browser's UTC offset so the
+    # reminder cron can convert to the visitor's local clock.
+    data = request.get_json(silent=True) or {}
+    if "offset" in data:
+        current_user.tz_offset_minutes = _clamp_int(data.get("offset"), -840, 840)
+        db.session.commit()
+    return {"ok": True, "tz_offset_minutes": current_user.tz_offset_minutes}
+
+
+@dashboard_bp.route("/settings/reminders", methods=["POST"])
+@login_required
+def settings_reminders():
+    current_user.email_reminders_enabled = request.form.get("enabled") == "true"
+    db.session.commit()
+    return {"enabled": current_user.email_reminders_enabled}
+
+
+@dashboard_bp.route("/cron/send-reminders", methods=["GET"])
+def cron_send_reminders():
+    # GET on purpose: the app-wide CSRF check only guards mutating methods, and
+    # the cron caller has no session — the secret header is the auth.
+    secret = current_app.config.get("CRON_SECRET", "")
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not secret or not compare_digest(provided, secret):
+        return {"error": "unauthorized"}, 403
+    return _send_due_workout_reminders()
+
+
+def _send_due_workout_reminders() -> dict:
+    now_utc = datetime.utcnow()
+    # Loose SQL prefilter so the per-user local window check in Python only sees
+    # a handful of rows. stored times are naive wall clocks, so the upper bound
+    # must cover the largest positive UTC offset (UTC+14) plus the window.
+    candidates = db.session.execute(
+        select(ScheduledWorkout)
+        .join(User, ScheduledWorkout.user_id == User.id)
+        .where(
+            ScheduledWorkout.status == "scheduled",
+            ScheduledWorkout.reminder_sent_at.is_(None),
+            ScheduledWorkout.scheduled_for >= now_utc - timedelta(hours=26),
+            ScheduledWorkout.scheduled_for <= now_utc + timedelta(hours=14) + timedelta(minutes=REMINDER_WINDOW_MINUTES),
+        )
+    ).scalars().all()
+
+    sent, failed = [], 0
+    for workout in candidates:
+        user = workout.user
+        if not user.email_reminders_enabled:
+            continue
+        local_now = now_utc - timedelta(minutes=user.tz_offset_minutes or 0)
+        starts_in_min = (workout.scheduled_for - local_now).total_seconds() / 60
+        if not -15 <= starts_in_min <= REMINDER_WINDOW_MINUTES:
+            continue
+        ok, detail = _send_reminder_email(user, workout, starts_in_min)
+        if ok:
+            workout.reminder_sent_at = now_utc
+            sent.append(
+                {
+                    "workout": workout.title,
+                    "to": user.email,
+                    "starts_in_min": round(starts_in_min),
+                    "detail": detail,
+                }
+            )
+        else:
+            failed += 1
+
+    db.session.commit()
+    return {"checked": len(candidates), "sent": sent, "failed": failed}
+
+
+def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: float) -> tuple[bool, str]:
+    when = workout.scheduled_for.strftime("%a, %d %b · %I:%M %p").lstrip("0")
+    if starts_in_min <= 0:
+        horizon = "starts now"
+    else:
+        horizon = f"starts in ~{round(starts_in_min)} min"
+    subject = f"fiT-X · {workout.title} {horizon}"
+    dashboard_url = url_for("dashboard.dashboard", _external=True)
+    html = (
+        f'<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px">'
+        f'<p style="color:#888;font-size:12px;letter-spacing:2px;margin:0 0 8px">fiT-X REMINDER</p>'
+        f'<h1 style="font-size:22px;margin:0 0 12px;color:#111">{workout.title}</h1>'
+        f'<p style="color:#444;font-size:15px;margin:0 0 4px">{when} · {workout.duration_minutes} min</p>'
+        f'<p style="color:#444;font-size:15px;margin:0 0 24px">{horizon}.</p>'
+        f'<a href="{dashboard_url}" style="background:linear-gradient(135deg,#fef08a,#4ade80);'
+        f'color:#111;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600">'
+        f"Open fiT-X</a>"
+        f"</div>"
+    )
+
+    api_key = current_app.config.get("RESEND_API_KEY", "")
+    if not api_key:
+        current_app.logger.info("[dry-run] reminder '%s' -> %s", subject, user.email)
+        return True, "dry-run (RESEND_API_KEY not set)"
+
+    from_email = current_app.config.get("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
+    try:
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={"from": from_email, "to": [user.email], "subject": subject, "html": html},
+            timeout=15,
+        )
+    except requests.RequestException as exc:
+        current_app.logger.error("Resend request failed: %s", exc)
+        return False, "request error"
+
+    if response.status_code in (200, 201):
+        return True, "sent"
+    # Left unstamped so the next cron run retries.
+    current_app.logger.error("Resend error %s: %s", response.status_code, response.text[:200])
+    return False, f"resend http {response.status_code}"

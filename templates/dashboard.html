@@ -1222,6 +1222,18 @@
           <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold">Email workout reminders</div>
+                <div class="text-xs text-gray-500">Get an email ~45 min before a scheduled session</div>
+              </div>
+            </div>
+            <div class="toggle {% if user.email_reminders_enabled %}active{% endif %}" onclick="toggleEmailReminders(this)"></div>
+          </div>
+          <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
               </div>
               <div>
@@ -1337,6 +1349,24 @@
     const ts = new Date(el.getAttribute('data-chat-time'));
     if (!isNaN(ts)) el.textContent = ts.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   });
+
+  // Report the browser's UTC offset so reminder emails fire at the right local time.
+  fetch('{{ url_for("dashboard.profile_timezone") }}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ offset: new Date().getTimezoneOffset() })
+  }).catch(() => {});
+
+  function toggleEmailReminders(el) {
+    const next = !el.classList.contains('active');
+    fetch('{{ url_for("dashboard.settings_reminders") }}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token() }}' },
+      body: new URLSearchParams({ enabled: next })
+    }).then(r => r.json())
+      .then(d => el.classList.toggle('active', !!d.enabled))
+      .catch(() => el.classList.toggle('active'));
+  }
 
   function toggleFullscreenChat() {
     const chatWindow = document.getElementById('chatWindow');

@@ -216,6 +216,9 @@ All configuration is environment-driven via `.env` (loaded by `python-dotenv`):
 |---|---|---|---|
 | `GEMINI_API_KEY` | for the AI coach | `""` | Google AI Studio key. Leave empty to use the rule-based coach only |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash-lite` | Any Gemini model with `generateContent` support |
+| `RESEND_API_KEY` | for email reminders | `""` | [Resend](https://resend.com) key. Leave empty to run the reminder cron in dry-run mode |
+| `RESEND_FROM` | no | `fiT-X <onboarding@resend.dev>` | From address; use a verified domain for real deliveries |
+| `CRON_SECRET` | for email reminders | `""` | Shared secret required by `GET /cron/send-reminders` (matched by the scheduled GitHub Action) |
 | `SECRET_KEY` | yes in prod | `dev-secret-key-change-me` | Flask session signing key |
 | `DATABASE_URL` | no | SQLite at `instance/userdata.db` | Set to a PostgreSQL URL in production |
 | `FLASK_ENV` | no | `development` | `production` enables secure session cookies |

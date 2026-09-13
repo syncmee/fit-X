@@ -42,7 +42,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         # ALTERs (they no-op once applied).
         for statement in (
             "ALTER TABLE scheduled_workout ADD COLUMN calories_burned INTEGER",
+            "ALTER TABLE scheduled_workout ADD COLUMN reminder_sent_at TIMESTAMP",
             'ALTER TABLE "user" ADD COLUMN pace INTEGER',
+            'ALTER TABLE "user" ADD COLUMN tz_offset_minutes INTEGER',
+            'ALTER TABLE "user" ADD COLUMN email_reminders_enabled BOOLEAN DEFAULT TRUE',
         ):
             try:
                 db.session.execute(db.text(statement))

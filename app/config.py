@@ -30,3 +30,10 @@ class Config:
     # fall back to the built-in rule-based coach.
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    # Workout reminder emails via Resend (https://resend.com). With no API key
+    # the cron endpoint runs in dry-run mode: due reminders are logged, not sent.
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+    RESEND_FROM = os.getenv("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
+    # Shared secret between the scheduler (GitHub Actions / Render Cron) and
+    # POST/GET /cron/send-reminders. Requests without it are rejected.
+    CRON_SECRET = os.getenv("CRON_SECRET", "")

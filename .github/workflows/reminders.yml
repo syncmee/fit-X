@@ -1,0 +1,23 @@
+# Pings fiT-X every 15 minutes so it can email workout reminders.
+# Repo secrets needed:
+#   FITX_APP_URL     e.g. https://fit-x.onrender.com (no trailing slash)
+#   FITX_CRON_SECRET must match the app's CRON_SECRET env var
+name: workout-reminders
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger reminder cron
+        run: |
+          curl -sS -f --max-time 30 \
+            "$FITX_APP_URL/cron/send-reminders" \
+            -H "X-Cron-Secret: $FITX_CRON_SECRET"
+        env:
+          FITX_APP_URL: ${{ secrets.FITX_APP_URL }}
+          FITX_CRON_SECRET: ${{ secrets.FITX_CRON_SECRET }}

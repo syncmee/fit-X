@@ -22,6 +22,10 @@ class User(UserMixin, db.Model):
     activity_level = db.Column(db.String(50))
     goal = db.Column(db.String(50))
     pace = db.Column(db.Integer, default=2)  # 1 slow, 2 balanced, 3 aggressive
+    # Browser-reported UTC offset in minutes (JS getTimezoneOffset, e.g. -330 for
+    # IST). Lets the reminder cron fire at the user's local wall-clock time.
+    tz_offset_minutes = db.Column(db.Integer)
+    email_reminders_enabled = db.Column(db.Boolean, default=True)
 
     logs = db.relationship("WeightLog", backref="user", lazy=True, order_by="WeightLog.date")
     scheduled_workouts = db.relationship(
@@ -65,6 +69,7 @@ class ScheduledWorkout(db.Model):
     status = db.Column(db.String(20), nullable=False, default="scheduled", index=True)
     notes = db.Column(db.Text)
     calories_burned = db.Column(db.Integer)
+    reminder_sent_at = db.Column(db.DateTime)  # set once the reminder email has gone out
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
