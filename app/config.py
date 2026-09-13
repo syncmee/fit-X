@@ -30,8 +30,15 @@ class Config:
     # fall back to the built-in rule-based coach.
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
-    # Workout reminder emails via Resend (https://resend.com). With no API key
-    # the cron endpoint runs in dry-run mode: due reminders are logged, not sent.
+    # Workout reminder emails. Sending priority: Gmail/SMTP -> Resend -> dry-run
+    # (logged, not sent). For Gmail: enable 2-Step Verification on the account,
+    # then create an App Password at https://myaccount.google.com/apppasswords —
+    # the normal login password will NOT work for SMTP.
+    SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+    SMTP_USER = os.getenv("SMTP_USER", "")
+    SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "")
+    SMTP_FROM = os.getenv("SMTP_FROM", "")
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
     RESEND_FROM = os.getenv("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
     # Shared secret between the scheduler (GitHub Actions / Render Cron) and

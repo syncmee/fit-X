@@ -1966,26 +1966,63 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         f"Open fiT-X</a>"
         f"</div>"
     )
+    plain = (
+        f"{workout.title}\n{when} · {workout.duration_minutes} min\n{horizon}.\n\nOpen fiT-X: {dashboard_url}"
+    )
+
+    smtp_user = current_app.config.get("SMTP_USER", "")
+    smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")
+    if smtp_user and smtp_password:
+        return _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
 
     api_key = current_app.config.get("RESEND_API_KEY", "")
-    if not api_key:
-        current_app.logger.info("[dry-run] reminder '%s' -> %s", subject, user.email)
-        return True, "dry-run (RESEND_API_KEY not set)"
+    if api_key:
+        from_email = current_app.config.get("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
+        try:
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={"from": from_email, "to": [user.email], "subject": subject, "html": html},
+                timeout=15,
+            )
+        except requests.RequestException as exc:
+            current_app.logger.error("Resend request failed: %s", exc)
+            return False, "request error"
 
-    from_email = current_app.config.get("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
+        if response.status_code in (200, 201):
+            return True, "sent"
+        # Left unstamped so the next cron run retries.
+        current_app.logger.error("Resend error %s: %s", response.status_code, response.text[:200])
+        return False, f"resend http {response.status_code}"
+
+    current_app.logger.info("[dry-run] reminder '%s' -> %s", subject, user.email)
+    return True, "dry-run (no SMTP or RESEND credentials set)"
+
+
+def _send_via_smtp(
+    user: User, subject: str, plain: str, html: str, smtp_user: str, smtp_password: str
+) -> tuple[bool, str]:
+    from email.message import EmailMessage
+    from email.utils import formataddr
+    import smtplib
+
+    msg = EmailMessage()
+    display_from = current_app.config.get("SMTP_FROM") or smtp_user
+    msg["From"] = formataddr(("fiT-X Coach", display_from))
+    msg["To"] = user.email
+    msg["Subject"] = subject
+    msg.set_content(plain)
+    msg.add_alternative(html, subtype="html")
+
+    host = current_app.config.get("SMTP_HOST", "smtp.gmail.com")
+    port = int(current_app.config.get("SMTP_PORT", "587"))
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={"from": from_email, "to": [user.email], "subject": subject, "html": html},
-            timeout=15,
-        )
-    except requests.RequestException as exc:
-        current_app.logger.error("Resend request failed: %s", exc)
-        return False, "request error"
-
-    if response.status_code in (200, 201):
-        return True, "sent"
-    # Left unstamped so the next cron run retries.
-    current_app.logger.error("Resend error %s: %s", response.status_code, response.text[:200])
-    return False, f"resend http {response.status_code}"
+        with smtplib.SMTP(host, port, timeout=25) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+    except (smtplib.SMTPException, OSError) as exc:
+        # Left unstamped so the next cron run retries.
+        current_app.logger.error("SMTP send to %s failed: %s", user.email, exc)
+        return False, "smtp error"
+    return True, f"sent via {smtp_user}"
