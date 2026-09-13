@@ -632,7 +632,10 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
 
 
 def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
-    scheduled_for, auto_shifted = _extract_schedule_datetime(message, now)
+    # Day words ("today"/"tomorrow") and the passed-time check run on the
+    # user's local clock; the result stays in their wall clock.
+    local_now = _user_local_now(user, now)
+    scheduled_for, auto_shifted = _extract_schedule_datetime(message, local_now)
     title = _extract_workout_title(message)
     duration_minutes = _extract_duration_minutes(message)
     notes = _extract_workout_notes(message, title)
@@ -653,7 +656,7 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
         shift_note = " The requested time had already passed, so I moved it to the next available slot."
 
     reply = (
-        f"Scheduled {title} for {_format_datetime_label(scheduled_for, now)} "
+        f"Scheduled {title} for {_format_datetime_label(scheduled_for, local_now)} "
         f"for {duration_minutes} min.{shift_note}"
     )
     return CoachOutcome(reply=reply, action="workout_scheduled")
@@ -844,7 +847,8 @@ def _extract_time(message: str) -> time | None:
     if "midnight" in message:
         return time(hour=0, minute=0)
 
-    meridiem_match = re.search(r"\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b", message)
+    # "7:30 pm", "7.30 pm" and "7pm" all count — people type dots for colons.
+    meridiem_match = re.search(r"\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b", message)
     if meridiem_match:
         hour = int(meridiem_match.group(1))
         minute = int(meridiem_match.group(2) or 0)
@@ -949,7 +953,14 @@ class CoachAIError(Exception):
     """Raised when the Gemini call fails or returns unusable output."""
 
 
+def _user_local_now(user: User, now: datetime) -> datetime:
+    # scheduled_for wall-clock times and user phrases ("today 7am") belong to
+    # the user's timezone, not the server's. offset = getTimezoneOffset().
+    return now - timedelta(minutes=user.tz_offset_minutes or 0)
+
+
 def _build_ai_context(user: User, now: datetime) -> str:
+    local_now = _user_local_now(user, now)
     today_totals = _sum_meal_entries(_get_meal_entries(now.date(), now.date()))
     calorie_target = DEFAULT_CALORIE_TARGET.copy()
     if (
@@ -977,8 +988,13 @@ def _build_ai_context(user: User, now: datetime) -> str:
 
     return json.dumps(
         {
-            "today": now.strftime("%Y-%m-%d (%A)"),
-            "local_time": now.strftime("%H:%M"),
+            "user_local_today": local_now.strftime("%Y-%m-%d (%A)"),
+            "user_local_time": local_now.strftime("%H:%M"),
+            "timezone_note": (
+                "All dates/times above are the USER'S LOCAL wall clock. Interpret "
+                "'today', 'tomorrow', 'tonight', 'morning' etc. using user_local_today, "
+                "and put scheduled times in this same local wall clock."
+            ),
             "user": {
                 "name": user.name,
                 "weight_kg": user.weight,
@@ -1201,9 +1217,10 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                     scheduled_time = time(hour=max(0, min(23, hour)), minute=max(0, min(59, minute)))
                 except ValueError:
                     scheduled_time = time(hour=18, minute=0)
-                scheduled_for = datetime.combine((now + timedelta(days=days_ahead)).date(), scheduled_time)
-                if scheduled_for <= now:
-                    scheduled_for = datetime.combine((now + timedelta(days=1)).date(), scheduled_time)
+                local_now = _user_local_now(user, now)
+                scheduled_for = datetime.combine((local_now + timedelta(days=days_ahead)).date(), scheduled_time)
+                if scheduled_for <= local_now:
+                    scheduled_for = datetime.combine((local_now + timedelta(days=1)).date(), scheduled_time)
                 db.session.add(
                     ScheduledWorkout(
                         title=title,
