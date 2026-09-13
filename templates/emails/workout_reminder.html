@@ -1,19 +1,340 @@
 <!DOCTYPE html>
-<html lang="en">
-<body style="margin:0;padding:0;background:#f4f4f5;">
-  <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;background:#ffffff;">
-    <p style="color:#888888;font-size:12px;letter-spacing:2px;margin:0 0 8px;">fiT-X REMINDER</p>
-    <h1 style="font-size:22px;margin:0 0 12px;color:#111111;">{{ workout_title }}</h1>
-    <p style="color:#444444;font-size:15px;margin:0 0 4px;">{{ when_label }} · {{ duration_minutes }} min</p>
-    <p style="color:#444444;font-size:15px;margin:0 0 24px;">{{ horizon }}.</p>
-    <a href="{{ dashboard_url }}"
-       style="background:linear-gradient(135deg,#fef08a,#4ade80);color:#111111;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;">
-      Open fiT-X
-    </a>
-    <p style="color:#aaaaaa;font-size:11px;margin:24px 0 0;">
-      You're getting this because email reminders are on for your fiT-X account
-      ({{ user_email }}) — you can switch them off in Settings → Integrations.
-    </p>
-  </div>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<!--
+  ─────────────────────────────────────────────────────────────────
+  fiT-X · WORKOUT REMINDER EMAIL
+  Color tokens match the fiT-X design system (docs/DESIGN_SYSTEM.md):
+    bg      #0A0A0A   page background
+    surface #151515   panel background
+    line    #262626   hairlines, dividers, empty cells
+    text    #F5F5F4   primary text
+    muted   #9CA3AF   secondary text
+    green   #4ADE80   brand / action / logged states
+    yellow  #FEF08A   "today" / time-pressure markers
+  Jinja variables supplied by app/dashboard.py:
+    user_name, user_email, workout_title, when_label, duration_minutes,
+    horizon, start_time, start_weekday, start_date, workout_notes,
+    dashboard_url, week_cells[{num,label,state}], streak_days,
+    streak_today_logged
+  ─────────────────────────────────────────────────────────────────
+-->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="x-apple-disable-message-reformatting">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>{{ workout_title }} · fiT-X</title>
+
+<!--[if mso]>
+<xml>
+  <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+  </o:OfficeDocumentSettings>
+</xml>
+<style> * { font-family: Arial, sans-serif !important; } </style>
+<![endif]-->
+
+<style>
+  /* Enhancements only — every layout-critical style is inline. */
+  body { margin:0; padding:0; width:100%; background-color:#0A0A0A; }
+  table { border-collapse:collapse; }
+  a { text-decoration:none; }
+
+  .btn a:hover   { background-color:#86EFAC !important; }
+  .flink:hover   { color:#4ADE80 !important; }
+
+  @media only screen and (max-width:640px) {
+    .container { width:100% !important; }
+    .px        { padding-left:24px !important; padding-right:24px !important; }
+    .hide-sm   { display:none !important; }
+    .h1        { font-size:30px !important; line-height:38px !important; }
+    .clock     { font-size:46px !important; line-height:50px !important; }
+    .day       { width:14.28% !important; }
+  }
+</style>
+</head>
+
+<body style="margin:0; padding:0; background-color:#0A0A0A; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%;">
+
+<!-- PREHEADER (inbox snippet) -->
+<div style="display:none; font-size:1px; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden; color:#0A0A0A; mso-hide:all;">
+  {{ horizon|capitalize }} — {{ workout_title }} at {{ start_time }}, {{ duration_minutes }} minutes. Your move, {{ user_name }}.&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+</div>
+
+<table role="presentation" width="100%" bgcolor="#0A0A0A" border="0" cellpadding="0" cellspacing="0" style="background-color:#0A0A0A; width:100%;">
+  <tr>
+    <td align="center" style="padding:0; background-color:#0A0A0A;">
+
+      <table role="presentation" class="container" width="600" border="0" cellpadding="0" cellspacing="0" style="width:600px; max-width:600px;">
+
+        <!-- 01 · INDEX TAB -->
+        <tr>
+          <td class="px" style="padding:40px 32px 0; font-size:0; line-height:0;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td width="44" height="4" bgcolor="#4ADE80" style="background-color:#4ADE80; width:44px; height:4px; border-radius:2px; font-size:0; line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 02 · MASTHEAD -->
+        <tr>
+          <td class="px" style="padding:18px 32px 0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="left" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:21px; line-height:26px; font-weight:800; letter-spacing:-0.4px; color:#F5F5F4;">
+                  fi<span style="color:#4ADE80;">T-X</span>
+                </td>
+                <td class="hide-sm" align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:26px; font-weight:700; letter-spacing:2.5px; color:#9CA3AF; white-space:nowrap;">
+                  HEY&nbsp;{{ user_name|upper }}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 03 · HERO -->
+        <tr>
+          <td class="px" style="padding:36px 32px 0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-bottom:16px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11px; line-height:14px; font-weight:700; letter-spacing:3px; color:#4ADE80;">
+                  TRAINING REMINDER
+                </td>
+              </tr>
+              <tr>
+                <td class="h1" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:40px; line-height:47px; font-weight:800; letter-spacing:-1px; color:#F5F5F4;">
+                  {{ workout_title }}<br><span style="color:#FEF08A;">{{ horizon }}</span>.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:18px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:25px; color:#9CA3AF;">
+                  Your fiT-X coach has the block loaded — {{ duration_minutes }} minutes, start to finish. See you there, {{ user_name }}.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 04 · CLOCK -->
+        <tr>
+          <td class="px" style="padding:38px 32px 0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td class="stack" width="288" align="left" valign="top" style="width:288px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;">
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td style="padding-bottom:8px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11px; line-height:14px; font-weight:700; letter-spacing:3px; color:#FEF08A;">
+                        STARTS
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="clock" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:58px; line-height:58px; font-weight:800; letter-spacing:-2px; color:#F5F5F4;">
+                        {{ start_time[:2] }}<span style="color:#FEF08A;">:</span>{{ start_time[3:] }}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td class="stack stack-r" width="248" align="right" valign="bottom" style="width:248px; padding-left:16px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif;">
+                  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="right" style="padding-bottom:5px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:14px; font-weight:700; letter-spacing:2.5px; color:#9CA3AF;">
+                        {{ start_weekday }}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:21px; line-height:26px; font-weight:700; letter-spacing:-0.2px; color:#F5F5F4;">
+                        {{ start_date }}
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 05 · SESSION DETAILS -->
+        <tr>
+          <td class="px" style="padding:34px 32px 0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-bottom:14px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:14px; font-weight:700; letter-spacing:2.5px; color:#9CA3AF;">
+                  SESSION DETAILS
+                </td>
+              </tr>
+              <tr>
+                <td>
+                  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#151515" style="background-color:#151515; border:1px solid #262626; border-radius:14px;">
+
+                    <tr>
+                      <td style="padding:20px 22px 18px;">
+                        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="left" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:22px; font-weight:700; letter-spacing:2px; color:#9CA3AF;">SESSION</td>
+                            <td align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:22px; font-weight:600; color:#F5F5F4;">{{ workout_title }}</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding:16px 22px 18px; border-top:1px solid #262626;">
+                        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="left" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:22px; font-weight:700; letter-spacing:2px; color:#9CA3AF;">WHEN</td>
+                            <td align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:22px; font-weight:600; color:#F5F5F4;">{{ when_label }}</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td style="padding:16px 22px 18px; border-top:1px solid #262626;">
+                        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="left" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:22px; font-weight:700; letter-spacing:2px; color:#9CA3AF;">DURATION</td>
+                            <td align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:22px; font-weight:600; color:#F5F5F4;">{{ duration_minutes }} minutes</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    {% if workout_notes %}
+                    <tr>
+                      <td style="padding:16px 22px 18px; border-top:1px solid #262626;">
+                        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="left" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:22px; font-weight:700; letter-spacing:2px; color:#9CA3AF;">FOCUS</td>
+                            <td align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:22px; font-weight:600; color:#F5F5F4;">{{ workout_notes }}</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    {% endif %}
+
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 06 · STREAK CALENDAR -->
+        <tr>
+          <td class="px" style="padding:40px 32px 0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-bottom:14px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:14px; font-weight:700; letter-spacing:2.5px; color:#9CA3AF;">
+                  YOUR WEEK
+                </td>
+              </tr>
+              <tr>
+                <td style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:26px; line-height:32px; font-weight:800; letter-spacing:-0.5px; color:#F5F5F4;">
+                  {% if streak_days %}<span style="color:#4ADE80;">{{ streak_days }} day{{ 's' if streak_days != 1 }}</span> in a row.{% else %}Log your weight to start a streak.{% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:22px;">
+                  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      {% for cell in week_cells %}
+                      <td class="day" width="76" align="center" valign="top">
+                        <table role="presentation" width="26" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                          <tr>
+                            {% if cell.state == 'done' %}
+                            <td width="26" height="26" align="center" valign="middle" bgcolor="#4ADE80" style="background-color:#4ADE80; width:26px; height:26px; border-radius:6px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11px; line-height:26px; font-weight:800; color:#0A0A0A;">{{ cell.num }}</td>
+                            {% elif cell.state == 'today' %}
+                            <td width="26" height="26" align="center" valign="middle" bgcolor="#FEF08A" style="background-color:#FEF08A; width:26px; height:26px; border-radius:6px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11px; line-height:26px; font-weight:800; color:#0A0A0A;">{{ cell.num }}</td>
+                            {% else %}
+                            <td width="26" height="26" align="center" valign="middle" bgcolor="#262626" style="background-color:#262626; width:26px; height:26px; border-radius:6px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:11px; line-height:26px; font-weight:700; color:#9CA3AF;">{{ cell.num }}</td>
+                            {% endif %}
+                          </tr>
+                          <tr>
+                            <td align="center" style="padding-top:7px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:9px; line-height:12px; font-weight:700; letter-spacing:1.5px; {% if cell.state == 'today' %}color:#FEF08A;{% else %}color:#9CA3AF;{% endif %}">{{ cell.label }}</td>
+                          </tr>
+                        </table>
+                      </td>
+                      {% endfor %}
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-top:16px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:21px; color:#9CA3AF;">
+                  {% if streak_today_logged %}Today's check-in is done — <span style="color:#F5F5F4; font-weight:700;">{{ streak_days }}</span> and counting.{% else %}Show up {{ start_weekday|lower }} and it's <span style="color:#F5F5F4; font-weight:700;">{{ streak_days + 1 }}</span>.{% endif %}
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- 07 · ACTION -->
+        <tr>
+          <td class="px" align="center" style="padding:42px 32px 0;">
+            <table role="presentation" class="btn" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center">
+                  <!--[if mso]>
+                  <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ dashboard_url }}" style="height:54px;v-text-anchor:middle;width:258px;" arcsize="16%" fillcolor="#4ADE80" stroke="f">
+                    <w:anchorlock/>
+                    <center style="color:#0A0A0A;font-family:Arial,sans-serif;font-size:15px;font-weight:bold;letter-spacing:0.2px;">Open today’s session</center>
+                  </v:roundrect>
+                  <![endif]-->
+                  <!--[if !mso]><!-->
+                  <a href="{{ dashboard_url }}" target="_blank" style="display:inline-block; padding:17px 44px; background-color:#4ADE80; border-radius:8px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:15px; line-height:20px; font-weight:800; letter-spacing:0.2px; color:#0A0A0A; text-decoration:none;">Open today’s session</a>
+                  <!--<![endif]-->
+                </td>
+              </tr>
+            </table>
+            <p style="margin:18px 0 0; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:20px;">
+              <a href="{{ dashboard_url }}" target="_blank" class="flink" style="color:#9CA3AF; text-decoration:underline;">Done with it? Mark it complete in fiT-X&nbsp;→</a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- 08 · SIGN-OFF -->
+        <tr>
+          <td class="px" style="padding:38px 32px 0;">
+            <p style="margin:0; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:22px; color:#9CA3AF;">
+              <span style="color:#4ADE80; font-weight:800;">—</span>&nbsp; Streaks aren’t built on motivation. They’re built on {{ start_weekday|capitalize|lower }}s like this one.
+            </p>
+          </td>
+        </tr>
+
+        <!-- 09 · FOOTER -->
+        <tr>
+          <td class="px" style="padding:36px 32px 0; font-size:0; line-height:0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td height="1" bgcolor="#262626" style="background-color:#262626; height:1px; font-size:0; line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td class="px" style="padding:24px 32px 44px;">
+            <p style="margin:0 0 10px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; line-height:19px; color:#9CA3AF;">
+              You’re getting this because email reminders are switched on for {{ user_email }} — you can turn them off in fiT-X under Settings → Integrations.
+            </p>
+            <p style="margin:0 0 18px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; line-height:19px;">
+              <a href="{{ dashboard_url }}" target="_blank" class="flink" style="color:#9CA3AF; text-decoration:underline;">Manage reminders</a>
+            </p>
+            <p style="margin:0; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:16px; color:#9CA3AF;">
+              fiT-X · reminders from your AI coach<br>
+              © 2025 fiT-X
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
 </body>
 </html>

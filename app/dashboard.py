@@ -1955,6 +1955,26 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         horizon = f"starts in ~{round(starts_in_min)} min"
     subject = f"fiT-X · {workout.title} {horizon}"
     dashboard_url = url_for("dashboard.dashboard", _external=True)
+
+    # Week calendar for the email: Mon-Sun of the current week with each day's
+    # weight-log state (done / today / missed / future).
+    today = datetime.now().date()
+    logged_dates = {log.date.date() for log in user.logs if log.date is not None}
+    monday = today - timedelta(days=today.weekday())
+    week_cells = []
+    for offset in range(7):
+        day = monday + timedelta(days=offset)
+        if day == today:
+            state = "today"
+        elif day in logged_dates:
+            state = "done"
+        elif day > today:
+            state = "future"
+        else:
+            state = "missed"
+        week_cells.append({"num": day.day, "label": day.strftime("%a").upper(), "state": state})
+    streak_days, _ = _logging_streak(list(user.logs))
+
     html = render_template(
         "emails/workout_reminder.html",
         user_name=user.name,
@@ -1963,7 +1983,14 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         when_label=when,
         duration_minutes=workout.duration_minutes,
         horizon=horizon,
+        start_time=workout.scheduled_for.strftime("%H:%M"),
+        start_weekday=workout.scheduled_for.strftime("%A").upper(),
+        start_date=f"{workout.scheduled_for.strftime('%B')} {workout.scheduled_for.day}",
+        workout_notes=(workout.notes or "").strip() or None,
         dashboard_url=dashboard_url,
+        week_cells=week_cells,
+        streak_days=streak_days,
+        streak_today_logged=today in logged_dates,
     )
     plain = (
         f"{workout.title}\n{when} · {workout.duration_minutes} min\n{horizon}.\n\nOpen fiT-X: {dashboard_url}"
