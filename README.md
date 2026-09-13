@@ -216,11 +216,9 @@ All configuration is environment-driven via `.env` (loaded by `python-dotenv`):
 |---|---|---|---|
 | `GEMINI_API_KEY` | for the AI coach | `""` | Google AI Studio key. Leave empty to use the rule-based coach only |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash-lite` | Any Gemini model with `generateContent` support |
-| `SMTP_USER` + `SMTP_APP_PASSWORD` | preferred sender | `""` | Gmail (or any SMTP) account for reminder emails. Gmail needs 2-Step Verification + an App Password |
-| `SMTP_HOST` / `SMTP_PORT` | no | `smtp.gmail.com` / `587` | SMTP server; STARTTLS |
-| `SMTP_FROM` | no | SMTP user | Display sender address |
-| `RESEND_API_KEY` | fallback sender | `""` | [Resend](https://resend.com) key. Used only when SMTP is not configured; dry-run if neither is set |
-| `RESEND_FROM` | no | `fiT-X <onboarding@resend.dev>` | From address; use a verified domain for real deliveries |
+| `SMTP_USER` + `SMTP_APP_PASSWORD` | for email reminders | `""` | SMTP account. [Brevo](https://www.brevo.com) works without a domain (verified sender, 300/day free) |
+| `SMTP_HOST` / `SMTP_PORT` | no | `smtp.gmail.com` / `587` | Use `smtp-relay.brevo.com` / `2525` on Render (free tier blocks SMTP ports 25/465/587) |
+| `SMTP_FROM` | no | SMTP user | Verified sender address shown in the From header |
 | `CRON_SECRET` | for email reminders | `""` | Shared secret required by `GET /cron/send-reminders` (matched by the scheduled GitHub Action) |
 | `SECRET_KEY` | yes in prod | `dev-secret-key-change-me` | Flask session signing key |
 | `DATABASE_URL` | no | SQLite at `instance/userdata.db` | Set to a PostgreSQL URL in production |

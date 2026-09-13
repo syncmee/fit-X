@@ -1972,37 +1972,15 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
 
     smtp_user = current_app.config.get("SMTP_USER", "")
     smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")
-    smtp_configured = bool(smtp_user and smtp_password)
-    if smtp_configured:
-        ok, detail = _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
-        if ok:
-            return True, detail
-        # e.g. Render free tier blocks SMTP ports — fall through to Resend.
+    if not (smtp_user and smtp_password):
+        current_app.logger.info("[dry-run] reminder '%s' -> %s", subject, user.email)
+        return True, "dry-run (SMTP not configured)"
 
-    api_key = current_app.config.get("RESEND_API_KEY", "")
-    resend_configured = bool(api_key)
-    if resend_configured:
-        from_email = current_app.config.get("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
-        try:
-            response = requests.post(
-                "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json={"from": from_email, "to": [user.email], "subject": subject, "html": html},
-                timeout=15,
-            )
-        except requests.RequestException as exc:
-            current_app.logger.error("Resend request failed: %s", exc)
-        else:
-            if response.status_code in (200, 201):
-                return True, "sent"
-            current_app.logger.error("Resend error %s: %s", response.status_code, response.text[:200])
-
-    if smtp_configured or resend_configured:
-        # Left unstamped so the next cron run retries.
-        return False, "all configured senders failed"
-
-    current_app.logger.info("[dry-run] reminder '%s' -> %s", subject, user.email)
-    return True, "dry-run (no SMTP or RESEND credentials set)"
+    ok, detail = _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
+    if ok:
+        return True, detail
+    # Left unstamped so the next cron run retries.
+    return False, detail
 
 
 def _send_via_smtp(
