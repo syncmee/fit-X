@@ -1972,11 +1972,16 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
 
     smtp_user = current_app.config.get("SMTP_USER", "")
     smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")
-    if smtp_user and smtp_password:
-        return _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
+    smtp_configured = bool(smtp_user and smtp_password)
+    if smtp_configured:
+        ok, detail = _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
+        if ok:
+            return True, detail
+        # e.g. Render free tier blocks SMTP ports — fall through to Resend.
 
     api_key = current_app.config.get("RESEND_API_KEY", "")
-    if api_key:
+    resend_configured = bool(api_key)
+    if resend_configured:
         from_email = current_app.config.get("RESEND_FROM", "fiT-X <onboarding@resend.dev>")
         try:
             response = requests.post(
@@ -1987,13 +1992,14 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
             )
         except requests.RequestException as exc:
             current_app.logger.error("Resend request failed: %s", exc)
-            return False, "request error"
+        else:
+            if response.status_code in (200, 201):
+                return True, "sent"
+            current_app.logger.error("Resend error %s: %s", response.status_code, response.text[:200])
 
-        if response.status_code in (200, 201):
-            return True, "sent"
+    if smtp_configured or resend_configured:
         # Left unstamped so the next cron run retries.
-        current_app.logger.error("Resend error %s: %s", response.status_code, response.text[:200])
-        return False, f"resend http {response.status_code}"
+        return False, "all configured senders failed"
 
     current_app.logger.info("[dry-run] reminder '%s' -> %s", subject, user.email)
     return True, "dry-run (no SMTP or RESEND credentials set)"
