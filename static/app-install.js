@@ -16,7 +16,6 @@
   window.addEventListener("beforeinstallprompt", function (event) {
     event.preventDefault();
     deferredPrompt = event;
-    showUi();
   });
 
   function isIOSDevice() { return isIOS; }
@@ -37,13 +36,15 @@
   function openPopup() {
     var popup = document.getElementById("installPopup");
     if (!popup) return;
-    var steps = document.getElementById("installStepsIos");
+    var iosSteps = document.getElementById("installStepsIos");
+    var genericSteps = document.getElementById("installStepsGeneric");
     var androidBtn = document.getElementById("installPopupAndroidBtn");
-    if (isIOSDevice() || !chromeCanInstall()) {
-      if (steps) steps.classList.remove("hidden");
-      if (androidBtn) androidBtn.classList.add("hidden");
-    } else if (androidBtn) {
-      androidBtn.classList.remove("hidden");
+    if (isIOSDevice()) {
+      if (iosSteps) iosSteps.classList.remove("hidden");
+    } else if (chromeCanInstall()) {
+      if (androidBtn) androidBtn.classList.remove("hidden");
+    } else if (genericSteps) {
+      genericSteps.classList.remove("hidden");
     }
     popup.classList.remove("hidden");
     popup.classList.add("flex");
@@ -61,8 +62,12 @@
     deferredPrompt.prompt();
     deferredPrompt.userChoice.finally(function () { deferredPrompt = null; });
     closePopup();
+    hideButton();
+  }
+
+  function hideButton() {
     var btn = document.getElementById("installAppBtn");
-    if (btn) btn.classList.add("hidden");
+    if (btn) { btn.classList.add("hidden"); btn.classList.remove("flex"); }
   }
 
   // One-time post-onboarding popup: first mobile dashboard visit, dismissed never returns.
@@ -74,6 +79,10 @@
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/static/sw.js").catch(function () { /* best effort */ });
     }
+
+    // Button shows on every phone that hasn't installed yet — tap opens the
+    // native dialog (Android) or the step-by-step card (iOS / no prompt yet).
+    showUi();
 
     var prompted = false;
     try { prompted = localStorage.getItem("fitxInstallPrompted") === "1"; } catch (e) { /* private mode */ }
@@ -94,7 +103,7 @@
 
     window.addEventListener("appinstalled", function () {
       markPrompted();
-      if (btn) btn.classList.add("hidden");
+      hideButton();
       closePopup();
     });
   });
