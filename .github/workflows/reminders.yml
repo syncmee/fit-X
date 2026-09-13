@@ -1,4 +1,6 @@
-# Pings fiT-X every 15 minutes so it can email workout reminders.
+# Pings fiT-X every 10 minutes so it can email workout reminders.
+# Minutes are offset from the hour on purpose: GitHub Actions schedules are
+# best-effort and runs at :00/:15/:30/:45 get delayed or dropped under load.
 # Repo secrets needed:
 #   FITX_APP_URL     e.g. https://fit-x.onrender.com (no trailing slash)
 #   FITX_CRON_SECRET must match the app's CRON_SECRET env var
@@ -6,7 +8,7 @@ name: workout-reminders
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "7,17,27,37,47,57 * * * *"
   workflow_dispatch: {}
 
 jobs:
@@ -15,7 +17,7 @@ jobs:
     steps:
       - name: Trigger reminder cron
         run: |
-          curl -sS -f --max-time 30 \
+          curl -sS -f --max-time 90 \
             "$FITX_APP_URL/cron/send-reminders" \
             -H "X-Cron-Secret: $FITX_CRON_SECRET"
         env:
