@@ -4,6 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>fiT-X — Dashboard</title>
+<link rel="icon" href="/static/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="fiT-X">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -422,6 +432,11 @@
           <span class="pulse-dot" style="width: 6px; height: 6px;"></span>
           {{ coach_mode_label }} · Coach active
         </div>
+
+        <button id="installAppBtn" class="hidden md:hidden items-center gap-1.5 grad-bg text-black text-[11px] font-semibold px-2.5 py-1.5 rounded-md" title="Add fiT-X to your Home Screen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Install
+        </button>
 
         <button class="relative text-gray-400 hover:text-white transition">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1618,6 +1633,32 @@
   new ApexCharts(document.querySelector('#chart-weekly-minutes'), weeklyMinutesOpts).render();
 
 </script>
+
+<!-- ============= Add to Home Screen (mobile) ============= -->
+<div id="installPopup" class="fixed inset-0 z-[70] hidden items-end justify-center p-4 pb-24 bg-black/60">
+  <div class="w-full max-w-sm glass-strong rounded-2xl border border-white/10 p-5 relative">
+    <button id="installPopupClose" class="absolute top-3 right-3 text-gray-500 hover:text-white transition">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="flex items-center gap-3 mb-3">
+      <img src="/static/branding/logo-64.png" alt="fiT-X" class="w-12 h-12 rounded-xl border border-white/10">
+      <div>
+        <div class="text-sm font-bold text-white">Add fiT-X to your Home Screen</div>
+        <div class="text-[11px] font-mono text-gray-500 mt-0.5">Full-screen app · offline-ready icon</div>
+      </div>
+    </div>
+    <button id="installPopupAndroidBtn" class="hidden w-full grad-bg text-black text-sm font-semibold py-3 rounded-lg mb-2">
+      Install app
+    </button>
+    <div id="installStepsIos" class="hidden text-xs text-gray-400 space-y-2 leading-relaxed">
+      <div class="flex gap-2"><span class="grad-bg text-black font-bold rounded w-5 h-5 flex items-center justify-center flex-shrink-0 text-[11px]">1</span><span>Tap the <strong class="text-white">Share</strong> icon <span class="inline-block align-middle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-white"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></span> in Safari's toolbar</span></div>
+      <div class="flex gap-2"><span class="grad-bg text-black font-bold rounded w-5 h-5 flex items-center justify-center flex-shrink-0 text-[11px]">2</span><span>Scroll and tap <strong class="text-white">Add to Home Screen</strong></span></div>
+      <div class="flex gap-2"><span class="grad-bg text-black font-bold rounded w-5 h-5 flex items-center justify-center flex-shrink-0 text-[11px]">3</span><span>Tap <strong class="text-white">Add</strong> — fiT-X opens like a real app</span></div>
+    </div>
+    <button id="installPopupDismiss" class="w-full text-[11px] font-mono text-gray-500 hover:text-gray-300 py-2 transition">Not now</button>
+  </div>
+</div>
+<script src="/static/app-install.js"></script>
 
 </body>
 </html>
