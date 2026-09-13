@@ -334,7 +334,7 @@
   ::selection { background: rgba(74,222,128,0.3); color: #fff; }
 </style>
 </head>
-<body class="bg-bg text-white antialiased h-screen flex flex-col">
+<body class="bg-bg text-white antialiased h-[100dvh] flex flex-col">
 
 <!-- Flash toasts -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -356,9 +356,6 @@
   <aside class="w-60 flex-shrink-0 bg-bg2 border-r border-white/5 flex-col hidden md:flex">
     <div class="h-16 flex items-center px-5 border-b border-white/5">
       <a href="{{ url_for('main.homepage') }}" class="flex items-center gap-2.5">
-        <div class="relative w-7 h-7 rounded-md grad-bg flex items-center justify-center">
-          <span class="font-mono font-bold text-black text-sm">X</span>
-        </div>
         <span class="font-bold text-lg tracking-tighter-2">fiT<span class="grad-text">-X</span></span>
       </a>
     </div>
@@ -430,10 +427,6 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
 
-        <button onclick="openMealModal()" class="btn-shine relative inline-flex items-center gap-2 text-sm font-semibold text-black grad-bg px-4 py-2 rounded-md hover:opacity-90 transition">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-          Log Food
-        </button>
       </div>
     </header>
 
@@ -444,7 +437,7 @@
       <div id="view-dashboard" class="view-container space-y-5">
 
         <!-- Key Stats -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 items-start">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 items-start">
           <div class="glass rounded-xl p-4 flex items-center gap-4">
             <div class="relative w-14 h-14 flex-shrink-0">
               <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
@@ -730,7 +723,7 @@
       <!-- Activity-agnostic: any session type counts; no gym-only constructs -->
       <div id="view-workouts" class="view-container hidden space-y-5">
 
-        <div class="grid grid-cols-4 md:grid-cols-7 gap-3">
+        <div class="grid grid-cols-5 md:grid-cols-7 gap-2 md:gap-3">
           {% for day in week_strip %}
           <div class="glass rounded-xl p-3 text-center {% if day.state == 'today' %}grad-border{% else %}border border-white/5{% endif %} {% if loop.index > 5 %}hidden md:block{% endif %}">
             <div class="text-[10px] font-mono {% if day.state == 'today' %}text-gray-400{% else %}text-gray-500{% endif %} mb-1">{{ day.day_label }} {{ day.date_label }}</div>
@@ -1459,6 +1452,9 @@
   const WEIGHT_LABELS = {{ weight_labels | tojson }};
   const GOAL_WEIGHT = {{ goal_weight | tojson }};
   const RANGE_SIZES = { '7d': 7, '14d': 14, '1m': 30, 'all': WEIGHT_VALUES.length };
+  // Full "13 Sep" labels collide on phone-width charts, so narrow screens get just the day number.
+  const isNarrow = window.innerWidth < 640;
+  const chartLabels = (labels) => isNarrow ? labels.map(l => String(l).split(' ')[0]) : labels;
 
   function buildWeightOptions(values, labels) {
     const points = GOAL_WEIGHT != null ? values.concat([GOAL_WEIGHT]) : values;
@@ -1471,7 +1467,7 @@
       fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0, stops: [0, 100] } },
       dataLabels: { enabled: false },
       grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4, padding: { left: 10, right: 10 } },
-      xaxis: { categories: labels, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+      xaxis: { categories: chartLabels(labels), labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, hideOverlappingLabels: true }, axisBorder: { show: false }, axisTicks: { show: false } },
       yaxis: { min: Math.min(...points) - pad, max: Math.max(...points) + pad, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val.toFixed(1) + 'kg' } },
       tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, x: { show: false } },
       annotations: GOAL_WEIGHT != null ? { yaxis: [{ y: GOAL_WEIGHT, borderColor: '#fef08a', strokeDashArray: 4, label: { text: 'Goal ' + GOAL_WEIGHT.toFixed(1), style: { color: '#0A0A0A', background: '#fef08a', fontFamily: 'JetBrains Mono', fontSize: '10px', fontWeight: 600 } } }] } : undefined
@@ -1488,7 +1484,7 @@
     });
     btn.className = 'weight-range-btn text-[10px] font-mono text-white grad-bg px-2 py-1 rounded';
     weightChart.updateSeries([{ name: 'Weight', data: WEIGHT_VALUES.slice(-size) }]);
-    weightChart.updateOptions({ xaxis: { categories: WEIGHT_LABELS.slice(-size) } }, false, true);
+    weightChart.updateOptions({ xaxis: { categories: chartLabels(WEIGHT_LABELS.slice(-size)) } }, false, true);
   }
 
   // 2. Weekly Activity — real planned/completed minutes per day
@@ -1562,7 +1558,7 @@
     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0, stops: [0, 100] } },
     dataLabels: { enabled: false },
     grid: { borderColor: 'rgba(255,255,255,0.05)', strokeDashArray: 4, padding: { left: 10, right: 10 } },
-    xaxis: { categories: WEIGHT_LABELS, labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+    xaxis: { categories: chartLabels(WEIGHT_LABELS), labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, hideOverlappingLabels: true }, axisBorder: { show: false }, axisTicks: { show: false } },
     yaxis: { labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val.toFixed(1) + 'kg' } },
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' } },
     legend: { show: false }
