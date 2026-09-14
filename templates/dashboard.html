@@ -1433,6 +1433,14 @@
   // Send the coach message via fetch: echo the user's bubble, show a typing
   // indicator while Gemini works, then reload once the reply is stored.
   (function () {
+    // If we just reloaded after a coach reply, pop the console back open.
+    try {
+      if (sessionStorage.getItem('fitxChatOpen') === '1') {
+        sessionStorage.removeItem('fitxChatOpen');
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow && !chatWindow.classList.contains('active')) toggleChat();
+      }
+    } catch (e) { /* private mode */ }
     const coachForm = document.getElementById('coachForm');
     if (!coachForm) return;
     coachForm.addEventListener('submit', function (event) {
@@ -1480,6 +1488,8 @@
       fetch(coachForm.action, { method: 'POST', body: payload })
         .then(response => {
           if (!response.ok) throw new Error('HTTP ' + response.status);
+          // Reopen the console automatically after the reply reload.
+          try { sessionStorage.setItem('fitxChatOpen', '1'); } catch (e) { /* private mode */ }
           window.location.reload();
         })
         .catch(() => {
