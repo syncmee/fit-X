@@ -1443,6 +1443,10 @@
       const message = (input.value || '').trim();
       if (!message || coachForm.dataset.busy === '1') return;
 
+      // Build the payload BEFORE disabling the input — FormData silently
+      // drops disabled fields, which would send an empty message.
+      const payload = new FormData(coachForm);
+
       coachForm.dataset.busy = '1';
       input.disabled = true;
       sendBtn.disabled = true;
@@ -1464,7 +1468,7 @@
         </div>
         <div class="flex-1">
           <div class="text-[10px] font-mono text-gray-500 mb-1">{{ coach_mode_label }}</div>
-          <div class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2.5 text-xs text-gray-400 leading-relaxed">
+          <div id="coachTypingText" class="bg-white/5 rounded-lg rounded-tl-sm px-3 py-2.5 text-xs text-gray-400 leading-relaxed">
             fiT-X coach is thinking <span class="coach-typing-dots"><span></span><span></span><span></span></span>
           </div>
         </div>`;
@@ -1473,10 +1477,17 @@
       chatBody.scrollTop = chatBody.scrollHeight;
       input.value = '';
 
-      fetch(coachForm.action, { method: 'POST', body: new FormData(coachForm) })
-        .then(() => { window.location.reload(); })
+      fetch(coachForm.action, { method: 'POST', body: payload })
+        .then(response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          window.location.reload();
+        })
         .catch(() => {
-          document.getElementById('coachTyping')?.remove();
+          const text = document.getElementById('coachTypingText');
+          if (text) {
+            text.textContent = "I couldn't reach the server — please send that again.";
+            text.classList.add('text-yellow');
+          }
           coachForm.dataset.busy = '';
           input.disabled = false;
           sendBtn.disabled = false;
