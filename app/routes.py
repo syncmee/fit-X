@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from secrets import token_urlsafe
 from sqlalchemy import func, or_, select
@@ -18,6 +18,13 @@ def _flash_errors(errors: list[str]) -> None:
 @main_bp.route("/")
 def homepage():
     return render_template("homepage.html")
+
+
+@main_bp.route("/google841e75738b84838b.html")
+def google_site_verification():
+    # Search Console ownership-proof file — must stay at the site root,
+    # served verbatim, forever (removing it un-verifies the domain).
+    return send_from_directory(current_app.static_folder, "google841e75738b84838b.html")
 
 
 @main_bp.route("/privacy-policy")
