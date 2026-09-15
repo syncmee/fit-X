@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>fiT-X — Terms and Conditions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0A0A0A',
+          bg2: '#0E0E0E',
+          yellow: '#fef08a',
+          green: '#4ade80',
+        },
+        fontFamily: {
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --bg: #0A0A0A;
+    --bg-2: #0E0E0E;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #F5F5F5;
+    --muted: #9CA3AF;
+    --yellow: #fef08a;
+    --green: #4ade80;
+    --grad: linear-gradient(135deg, #fef08a 0%, #4ade80 100%);
+  }
+
+  * { -webkit-font-smoothing: antialiased; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+  }
+
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .tracking-tighter-2 { letter-spacing: -0.04em; }
+
+  .grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  .grad-bg { background: var(--grad); }
+
+  .glass {
+    background: rgba(20,20,20,0.55);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid var(--border);
+  }
+  .glass-strong {
+    background: rgba(15,15,15,0.75);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--border-strong);
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .toc-link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    color: #9CA3AF;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+  .toc-link:hover {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    border-left: 2px solid rgba(74,222,128,0.5);
+  }
+  .toc-link.active {
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    border-left: 2px solid var(--green);
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+  ::selection { background: rgba(74,222,128,0.3); color: #fff; }
+</style>
+</head>
+<body class="bg-bg text-white antialiased">
+
+<!-- Top Nav -->
+<nav class="sticky top-0 z-50 h-16 glass-strong border-b border-white/5 flex items-center justify-between px-6 lg:px-10">
+  <a href="/" class="flex items-center gap-2.5">
+    <div class="relative w-7 h-7 rounded-md grad-bg flex items-center justify-center">
+      <span class="font-mono font-bold text-black text-sm">X</span>
+    </div>
+    <span class="font-bold text-lg tracking-tighter-2">fiT<span class="grad-text">-X</span></span>
+  </a>
+  
+  <div class="hidden md:flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-gray-500 glass px-3 py-1.5 rounded-md border border-white/5">
+    <span class="w-1.5 h-1.5 rounded-full bg-green"></span>
+    Legal · Terms & Conditions
+  </div>
+
+  <a href="/privacy-policy" class="text-[11px] font-mono uppercase tracking-wider text-gray-500 hover:text-white transition mr-4">Privacy Policy</a>
+  <a href="/" class="text-sm text-gray-400 hover:text-white transition flex items-center gap-2">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    Back to App
+  </a>
+</nav>
+
+<!-- Main Content -->
+<main class="relative min-h-screen">
+  <div class="absolute inset-0 grid-bg pointer-events-none opacity-40"></div>
+
+  <div class="relative z-10 max-w-6xl mx-auto px-6 lg:px-10 py-12 lg:py-20">
+    
+    <!-- Header -->
+    <div class="mb-12 lg:mb-16 max-w-3xl">
+      <div class="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-gray-400 border border-white/10 rounded-full px-3 py-1 mb-6 glass">
+        <span class="w-1.5 h-1.5 rounded-full grad-bg"></span>
+        Effective Date · Nov 14, 2024
+      </div>
+      <h1 class="text-4xl md:text-6xl font-extrabold tracking-tighter-2 leading-[0.95] mb-4">
+        Terms of <span class="grad-text">Service</span>
+      </h1>
+      <p class="text-base md:text-lg text-gray-400 leading-relaxed">
+        The legal agreement between you and fiT-X governing your use of the app, the AI coach, and your subscription. By creating an account, you accept these terms.
+      </p>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-10 lg:gap-16">
+      
+      <!-- Table of Contents -->
+      <aside class="lg:col-span-3 hidden lg:block">
+        <div class="sticky top-24">
+          <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 px-3">Contents</div>
+          <nav class="space-y-1">
+            <a href="#acceptance" class="toc-link active">01 · Acceptance of Terms</a>
+            <a href="#use" class="toc-link">02 · Use of the Service</a>
+            <a href="#ai-disclaimer" class="toc-link">03 · AI Coach Disclaimer</a>
+            <a href="#accounts" class="toc-link">04 · Accounts & Security</a>
+            <a href="#billing" class="toc-link">05 · Subscriptions & Billing</a>
+            <a href="#ip" class="toc-link">06 · Intellectual Property</a>
+            <a href="#termination" class="toc-link">07 · Termination</a>
+            <a href="#liability" class="toc-link">08 · Limitation of Liability</a>
+            <a href="#law" class="toc-link">09 · Governing Law</a>
+          </nav>
+        </div>
+      </aside>
+
+      <!-- Policy Content -->
+      <div class="lg:col-span-9 space-y-8">
+
+        <!-- Section 1 -->
+        <section id="acceptance" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">01</span>
+            Acceptance of Terms
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <p>
+              Welcome to fiT-X. These Terms of Service ("Terms") govern your access to and use of the fiT-X application, website, and AI coaching services (collectively, the "Service"). 
+            </p>
+            <p>
+              By clicking "Start free", creating an account, or using the Service in any way, you agree to be bound by these Terms and our Privacy Policy. If you do not agree with any part of these Terms, you must not use the Service.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 2 -->
+        <section id="use" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">02</span>
+            Use of the Service
+          </h2>
+          <div class="space-y-5 text-sm text-gray-400 leading-relaxed">
+            <div>
+              <h3 class="text-white font-semibold mb-2 text-base flex items-center gap-2">
+                <span class="w-1 h-4 grad-bg rounded-full"></span>
+                Eligibility
+              </h3>
+              <p>You must be at least 18 years old to use fiT-X. By registering, you represent and warrant that you meet this age requirement.</p>
+            </div>
+            <div>
+              <h3 class="text-white font-semibold mb-2 text-base flex items-center gap-2">
+                <span class="w-1 h-4 grad-bg rounded-full"></span>
+                Permitted Use
+              </h3>
+              <p>You may use the Service only for lawful, personal fitness tracking purposes. You agree not to reverse engineer, scrape, or disrupt the backend infrastructure that powers the daily recalculations.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section id="ai-disclaimer" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">03</span>
+            AI Coach Disclaimer
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <div class="bg-yellow/10 border border-yellow/30 rounded-lg p-4 text-yellow/90 font-mono text-xs uppercase tracking-wider mb-4">
+              ⚠ Important: Not Medical Advice
+            </div>
+            <p>
+              The fiT-X AI Coach provides automated recommendations based on mathematical formulas (e.g., Mifflin-St Jeor) and your logged data. It is <strong class="text-white">not</strong> a licensed medical professional, dietitian, or physical therapist.
+            </p>
+            <p>
+              All calorie targets, macro splits, and workout volumes generated by the Service are for informational purposes. Always consult a physician before starting any new diet or exercise program. Stop exercising immediately and seek medical attention if you experience pain, dizziness, or discomfort.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section id="accounts" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">04</span>
+            Accounts & Security
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <p>
+              You are responsible for safeguarding the password you use to access the Service. You are solely responsible for any activity or data logs made under your account.
+            </p>
+            <p>
+              You agree to immediately notify fiT-X of any unauthorized use of your account or any other security breach. We will not be liable for any loss or damage arising from your failure to comply with this section.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 5 -->
+        <section id="billing" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">05</span>
+            Subscriptions & Billing
+          </h2>
+          <div class="space-y-5 text-sm text-gray-400 leading-relaxed">
+            <div>
+              <h3 class="text-white font-semibold mb-2 text-base flex items-center gap-2">
+                <span class="w-1 h-4 grad-bg rounded-full"></span>
+                Free Trial & Auto-Renewal
+              </h3>
+              <p>fiT-X offers a free onboarding and planning phase. Access to continuous AI recalibration requires a paid subscription. Subscriptions automatically renew at the end of each billing cycle (monthly or annually) until canceled.</p>
+            </div>
+            <div>
+              <h3 class="text-white font-semibold mb-2 text-base flex items-center gap-2">
+                <span class="w-1 h-4 grad-bg rounded-full"></span>
+                Cancellations
+              </h3>
+              <p>You can cancel your subscription at any time via the Account Settings. Cancellation stops future billing but does not entitle you to a prorated refund for the current billing period. You will retain access until the end of the paid period.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section id="ip" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">06</span>
+            Intellectual Property
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <p>
+              The Service and its original content (including the fiT-X dashboard UI, charts, AI logic, and visual design) are the exclusive property of fiT-X Labs and are protected by copyright, trademark, and other laws.
+            </p>
+            <p>
+              Your logged data (weights, meals, workouts) remains your intellectual property. By using the Service, you grant fiT-X a limited license to process this data solely to operate the AI coach and display your analytics back to you.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 7 -->
+        <section id="termination" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">07</span>
+            Termination
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <p>
+              We may terminate or suspend your account and access to the Service immediately, without prior notice or liability, if you breach these Terms.
+            </p>
+            <p>
+              Upon termination, your right to use the Service will cease immediately. You may request an export of your data before account deletion; after 30 days, all your logs and AI history will be permanently erased from our active databases.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 8 -->
+        <section id="liability" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">08</span>
+            Limitation of Liability
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <p>
+              You use the fiT-X Service at your own risk. The Service is provided on an "AS IS" and "AS AVAILABLE" basis. To the maximum extent permitted by law, fiT-X shall not be liable for any indirect, incidental, special, or consequential damages resulting from your reliance on the AI coach's targets or your use of the app.
+            </p>
+            <p>
+              Our total liability for any claims arising from these Terms is limited to the amount you have paid us in the past 12 months, or $50 USD, whichever is greater.
+            </p>
+          </div>
+        </section>
+
+        <!-- Section 9 -->
+        <section id="law" class="glass rounded-2xl p-6 lg:p-8 scroll-mt-24">
+          <h2 class="text-2xl font-bold tracking-tighter-2 mb-4 flex items-center gap-3">
+            <span class="font-mono text-sm text-gray-500">09</span>
+            Governing Law
+          </h2>
+          <div class="prose prose-invert max-w-none text-sm text-gray-400 leading-relaxed space-y-4">
+            <p>
+              These Terms shall be governed and construed in accordance with the laws of the State of New York, United States, without regard to its conflict of law provisions.
+            </p>
+            <p>
+              Any disputes arising under these Terms shall be resolved exclusively in the state or federal courts located in New York County, New York.
+            </p>
+            <div class="bg-black/30 rounded-lg p-4 border border-white/5 font-mono text-xs space-y-1 mt-6">
+              <div class="flex"><span class="w-20 text-gray-500">EMAIL:</span> <span class="text-green">legal@fit-x.app</span></div>
+              <div class="flex"><span class="w-20 text-gray-500">ADDRESS:</span> <span>fiT-X Labs, 100 Tech Way, Suite 400, NY 10001</span></div>
+            </div>
+            <p class="text-xs text-gray-600 mt-4">© 2024 fiT-X Labs. Built for people who'd rather train than bookkeep.</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Active ToC link highlighting
+  const sections = document.querySelectorAll('section[id]');
+  const tocLinks = document.querySelectorAll('.toc-link');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.getAttribute('id');
+        tocLinks.forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === `#${id}`) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }, { rootMargin: '0px 0px -70% 0px' });
+
+  sections.forEach(section => observer.observe(section));
+</script>
+
+</body>
+</html>

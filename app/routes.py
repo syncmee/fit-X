@@ -20,6 +20,16 @@ def homepage():
     return render_template("homepage.html")
 
 
+@main_bp.route("/privacy-policy")
+def privacy_policy():
+    return render_template("policy.html")
+
+
+@main_bp.route("/terms-and-conditions")
+def terms_and_conditions():
+    return render_template("terms-condition.html")
+
+
 @main_bp.route("/test")
 def legacy_test_page():
     return redirect(url_for("main.homepage"))
