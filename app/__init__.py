@@ -4,7 +4,7 @@ from flask import Flask
 
 from .config import Config
 from .dashboard import dashboard_bp
-from .extensions import db, login_manager, migrate
+from .extensions import db, login_manager, migrate, oauth
 from .routes import main_bp
 from .security import generate_csrf_token, validate_csrf_request
 
@@ -29,6 +29,18 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     app.before_request(validate_csrf_request)
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
+
+    if oauth is not None:
+        oauth.init_app(app)
+        if app.config.get("GOOGLE_CLIENT_ID"):
+            oauth.register(
+                name="google",
+                client_id=app.config["GOOGLE_CLIENT_ID"],
+                client_secret=app.config["GOOGLE_CLIENT_SECRET"],
+                server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+                client_kwargs={"scope": "openid email profile"},
+                overwrite=True,
+            )
 
     app.register_blueprint(main_bp)
     app.register_blueprint(dashboard_bp)

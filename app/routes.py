@@ -1,9 +1,10 @@
 from flask import Blueprint, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
+from secrets import token_urlsafe
 from sqlalchemy import func, or_, select
 
-from .extensions import db
-from .models import User, WeightLog
+from .extensions import db, oauth
+from .models import GoogleIdentity, User, WeightLog
 from .validation import validate_login_form, validate_onboarding_form, validate_signup_form
 
 main_bp = Blueprint("main", __name__)
@@ -94,6 +95,93 @@ def login():
         return redirect(url_for("dashboard.dashboard"))
 
     return render_template("login.html", active_section=active_section)
+
+
+@main_bp.route("/auth/google")
+def google_login():
+    if current_user.is_authenticated:
+        return redirect(url_for("dashboard.dashboard"))
+    if oauth is None or not current_app.config.get("GOOGLE_CLIENT_ID"):
+        flash("Google sign-in isn't configured yet.", "error")
+        return redirect(url_for("main.login"))
+    redirect_uri = url_for("main.google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@main_bp.route("/auth/google/callback")
+def google_callback():
+    if oauth is None or not current_app.config.get("GOOGLE_CLIENT_ID"):
+        return redirect(url_for("main.login"))
+    try:
+        token = oauth.google.authorize_access_token()
+    except Exception:
+        flash("Google sign-in was cancelled or failed. Try again.", "error")
+        return redirect(url_for("main.login"))
+
+    profile = token.get("userinfo") or {}
+    user = _find_or_create_google_user(profile)
+    if user is None:
+        flash("Your Google account's email isn't verified, so it can't be linked.", "error")
+        return redirect(url_for("main.login"))
+
+    login_user(user, remember=True)
+    if not user.onboarding:
+        return redirect(url_for("main.onboarding"))
+    return redirect(url_for("dashboard.dashboard"))
+
+
+def _find_or_create_google_user(profile: dict) -> User | None:
+    """Match a verified Google profile to a fiT-X account.
+
+    Known Google identity -> that user. Known email (password account) -> link
+    the identity to it, so existing users keep all their data. Otherwise a new
+    account is created and goes through onboarding like everyone else.
+    """
+    google_id = str(profile.get("sub") or "")
+    if not google_id:
+        return None
+
+    identity = db.session.execute(
+        select(GoogleIdentity).where(GoogleIdentity.google_id == google_id)
+    ).scalar_one_or_none()
+    if identity:
+        picture = profile.get("picture") or ""
+        if picture and identity.picture_url != picture:
+            identity.picture_url = picture
+            db.session.commit()
+        return identity.user
+
+    email = (profile.get("email") or "").strip().lower()
+    if not email or not profile.get("email_verified"):
+        return None  # only verified Google emails may claim an account
+
+    user = db.session.execute(
+        select(User).where(func.lower(User.email) == email)
+    ).scalar_one_or_none()
+
+    if user is None:
+        # Brand-new member: unique name derived from the email, onboarding pending.
+        base_name = email.split("@", 1)[0][:70] or "member"
+        name, suffix = base_name, 1
+        while db.session.execute(select(User.id).where(User.name == name)).scalar_one_or_none() is not None:
+            suffix += 1
+            name = f"{base_name}-{suffix}"
+        user = User(name=name, email=email, onboarding=False)
+        # Unusable-by-design password: Google members sign in with Google.
+        user.set_password(token_urlsafe(24))
+        db.session.add(user)
+        db.session.flush()
+
+    db.session.add(
+        GoogleIdentity(
+            google_id=google_id,
+            email=email,
+            picture_url=profile.get("picture") or "",
+            user_id=user.id,
+        )
+    )
+    db.session.commit()
+    return user
 
 
 @main_bp.route("/onboarding", methods=["GET", "POST"])

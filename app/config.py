@@ -41,6 +41,10 @@ class Config:
     # accept either form.
     SMTP_APP_PASSWORD = os.getenv("SMTP_APP_PASSWORD", "").replace(" ", "")
     SMTP_FROM = os.getenv("SMTP_FROM", "")
+    # Google OAuth (sign in with Google). Client creds from Google Cloud
+    # Console; leave empty to hide/disable the Google button flow.
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
     # Shared secret between the scheduler (GitHub Actions / Render Cron) and
     # POST/GET /cron/send-reminders. Requests without it are rejected.
     CRON_SECRET = os.getenv("CRON_SECRET", "")

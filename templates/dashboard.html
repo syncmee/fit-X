@@ -419,8 +419,12 @@
     <!-- Clickable Profile Block -->
     <div class="p-3 border-t border-white/5">
       <div onclick="openSettings()" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer relative group">
-        <div class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center font-mono font-bold text-sm">
+        <div class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center font-mono font-bold text-sm overflow-hidden flex-shrink-0">
+          {% if user_picture %}
+          <img src="{{ user_picture }}" alt="" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+          {% else %}
           {{ user_initials }}
+          {% endif %}
         </div>
         <div class="flex-1 min-w-0">
           <div class="text-sm font-medium truncate">{{ user.name }}</div>

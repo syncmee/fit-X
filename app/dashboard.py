@@ -1744,6 +1744,11 @@ def _build_dashboard_context() -> dict:
     return {
         "user": current_user,
         "user_initials": _user_initials(current_user.name),
+        "user_picture": (
+            current_user.google_identity.picture_url
+            if current_user.google_identity and current_user.google_identity.picture_url
+            else None
+        ),
         "phase_label": phase_label,
         "day_count": day_count,
         "now_label": f"{now.strftime('%a · %b %d · ')}{now.strftime('%I:%M %p').lstrip('0')}",

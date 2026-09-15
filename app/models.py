@@ -117,6 +117,23 @@ class WaterLog(db.Model):
         return f"<WaterLog {self.amount_ml}ml {self.logged_at}>"
 
 
+class GoogleIdentity(db.Model):
+    """Links a Google account to a fiT-X user. Kept in its own table so the
+    existing user table stays untouched; created automatically by create_all()."""
+
+    __tablename__ = "google_identity"
+    id = db.Column(db.Integer, primary_key=True)
+    google_id = db.Column(db.String(64), nullable=False, unique=True, index=True)
+    email = db.Column(db.String(120), nullable=False)
+    picture_url = db.Column(db.String(500))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+
+    user = db.relationship("User", backref=db.backref("google_identity", uselist=False))
+
+    def __repr__(self) -> str:
+        return f"<GoogleIdentity {self.email}>"
+
+
 @login_manager.user_loader
 def load_user(user_id: str):
     try:
