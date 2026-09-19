@@ -969,20 +969,30 @@ def _user_local_now(user: User, now: datetime) -> datetime:
     return now - timedelta(minutes=user.tz_offset_minutes or 0)
 
 
+# The fiT-X "day" rolls over at 4:30 AM local — a 1 AM snack still belongs to
+# yesterday's macros, and daily resets happen while the user sleeps.
+APP_DAY_START = time(hour=4, minute=30)
+_DAY_START_SHIFT = timedelta(hours=4, minutes=30)
+
+
 def _user_utc_day_bounds(user: User, local_now: datetime, day_offset: int = 0) -> tuple[datetime, datetime]:
-    """[start, end) of the user's local day (shifted by day_offset), expressed
+    """[start, end) of the user's fiT-X day (04:30 to 04:30 local), expressed
     in stored-UTC terms so logged_at filters stay timezone-correct."""
     offset = user.tz_offset_minutes or 0
-    local_midnight = (local_now + timedelta(days=day_offset)).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    start = local_midnight + timedelta(minutes=offset)
+    logical_date = (local_now - _DAY_START_SHIFT + timedelta(days=day_offset)).date()
+    start = datetime.combine(logical_date, APP_DAY_START) + timedelta(minutes=offset)
     return start, start + timedelta(days=1)
 
 
+def _user_effective_today(user: User) -> datetime.date:
+    """The calendar date the user is currently 'on' (shifts at 4:30 AM local)."""
+    return (_user_local_now(user, datetime.utcnow()) - _DAY_START_SHIFT).date()
+
+
 def _stored_to_local_date(user: User, dt: datetime):
-    """Local calendar date of a stored-UTC timestamp."""
-    return (dt - timedelta(minutes=user.tz_offset_minutes or 0)).date()
+    """Effective fiT-X calendar date of a stored-UTC timestamp (day shifts at
+    4:30 AM local, so late-night logs count for the previous day)."""
+    return (dt - timedelta(minutes=user.tz_offset_minutes or 0) - _DAY_START_SHIFT).date()
 
 
 def _local_to_utc(user: User, local_dt: datetime) -> datetime:
@@ -1019,11 +1029,12 @@ def _build_ai_context(user: User, now: datetime) -> str:
 
     return json.dumps(
         {
-            "user_local_today": local_now.strftime("%Y-%m-%d (%A)"),
+            "user_local_today": (local_now - _DAY_START_SHIFT).strftime("%Y-%m-%d (%A)"),
             "user_local_time": local_now.strftime("%H:%M"),
             "timezone_note": (
-                "All dates/times above are the USER'S LOCAL wall clock. Interpret "
-                "'today', 'tomorrow', 'tonight', 'morning' etc. using user_local_today, "
+                "All dates/times above are the USER'S LOCAL wall clock, and the fiT-X day "
+                "runs 4:30 AM to 4:30 AM — a log at 1 AM still counts for the previous day. "
+                "Interpret 'today', 'tomorrow', 'tonight', 'morning' etc. using user_local_today, "
                 "and put scheduled times in this same local wall clock."
             ),
             "user": {
@@ -1088,13 +1099,9 @@ RULES:
 
 
 def _chat_day_start_utc(user: User) -> datetime:
-    # Chat memory resets at the user's LOCAL midnight (using their stored
-    # browser UTC offset), not the server's — a chat day follows their wall clock.
-    offset = user.tz_offset_minutes or 0
-    local_midnight = (datetime.utcnow() - timedelta(minutes=offset)).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    return local_midnight + timedelta(minutes=offset)
+    # Chat memory resets with the fiT-X day at 4:30 AM local (see APP_DAY_START),
+    # not the server's midnight.
+    return _user_utc_day_bounds(user, _user_local_now(user, datetime.utcnow()))[0]
 
 
 def _prune_old_chat_messages(user: User) -> None:
@@ -1347,7 +1354,7 @@ def _build_week_net(user: User, local_now: datetime, target_kcal: int) -> tuple[
         per_day[day] = per_day.get(day, 0) + entry.calories
 
     for offset in range(6, -1, -1):
-        day = (local_now - timedelta(days=offset)).date()
+        day = (local_now - _DAY_START_SHIFT - timedelta(days=offset)).date()
         intake = int(per_day.get(day, 0) or 0)
         labels.append(day.strftime("%a")[0])
         nets.append(intake - target_kcal)
@@ -1499,7 +1506,7 @@ def _user_initials(name: str) -> str:
 
 def _logging_streak(logs: list[WeightLog], user: User) -> tuple[int, list[bool]]:
     dates = {_stored_to_local_date(user, log.date) for log in logs if log.date is not None}
-    today = _user_local_now(user, datetime.utcnow()).date()
+    today = _user_effective_today(user)
     if not dates:
         return 0, [False] * 7
 
@@ -1737,7 +1744,7 @@ def _build_dashboard_context() -> dict:
     )
 
     first_log = current_user.logs[0] if current_user.logs else None
-    day_count = (now.date() - _stored_to_local_date(current_user, first_log.date)).days + 1 if first_log and first_log.date else 1
+    day_count = ((now - _DAY_START_SHIFT).date() - _stored_to_local_date(current_user, first_log.date)).days + 1 if first_log and first_log.date else 1
 
     phase_label = GOAL_PHASE_LABELS.get(current_user.goal or "", "Set your goal")
 
@@ -2021,7 +2028,7 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
 
     # Week calendar for the email: Mon-Sun of the user's current local week,
     # with each day's weight-log state (done / today / missed / future).
-    today = _user_local_now(user, datetime.utcnow()).date()
+    today = _user_effective_today(user)
     logged_dates = {_stored_to_local_date(user, log.date) for log in user.logs if log.date is not None}
     monday = today - timedelta(days=today.weekday())
     week_cells = []
