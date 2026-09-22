@@ -24,6 +24,7 @@ from math import log
 from pathlib import Path
 from secrets import compare_digest
 from statistics import NormalDist
+from time import sleep
 
 import requests
 from flask import Blueprint, current_app, flash, has_request_context, redirect, render_template, request, url_for
@@ -970,6 +971,9 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 AI_HISTORY_LIMIT = 6
 AI_TIMEOUT_SECONDS = 45
+# Gemini intermittently stalls or 503s ("high demand"); keep its wait short so
+# the Groq fallback answers in seconds instead of the coach hanging for 45.
+GEMINI_TIMEOUT_SECONDS = 12
 
 
 class CoachAIError(Exception):
@@ -1185,8 +1189,18 @@ def _gemini_generate(user: User, message: str, now: datetime) -> dict:
             GEMINI_API_URL.format(model=model),
             headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
             json=payload,
-            timeout=AI_TIMEOUT_SECONDS,
+            timeout=GEMINI_TIMEOUT_SECONDS,
         )
+        # Google's 503s ("high demand") are usually momentary — one quick
+        # retry rescues them without making the coach hang.
+        if response.status_code == 503:
+            sleep(2)
+            response = requests.post(
+                GEMINI_API_URL.format(model=model),
+                headers={"x-goog-api-key": api_key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=GEMINI_TIMEOUT_SECONDS,
+            )
     except requests.RequestException as exc:
         raise CoachAIError(f"Gemini request failed: {exc}") from exc
 
@@ -1483,7 +1497,7 @@ def _build_weeks_minutes_history(user: User, local_now: datetime, weeks: int = 8
 
     rows = db.session.execute(
         select(ScheduledWorkout.scheduled_for, ScheduledWorkout.duration_minutes, ScheduledWorkout.status).where(
-            ScheduledWorkout.user_id == current_user.id,
+            ScheduledWorkout.user_id == user.id,
             ScheduledWorkout.status == "completed",
         )
     ).all()
