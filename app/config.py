@@ -30,6 +30,10 @@ class Config:
     # fall back to the built-in rule-based coach.
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
     GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    # Secondary AI coach provider (Groq, OpenAI-compatible API). Used when the
+    # Gemini call fails (overloaded model, quota, outage). Leave empty to skip.
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     # Workout reminder emails via SMTP (Brevo relay, Gmail, or any provider).
     # Brevo: verify the sender email, generate an SMTP key at app.brevo.com, and
     # use smtp-relay.brevo.com port 2525 from Render (free Render blocks 587).

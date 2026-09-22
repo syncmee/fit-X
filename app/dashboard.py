@@ -323,22 +323,34 @@ class CoachOutcome:
 
 
 def process_coach_message(user: User, message_text: str, now: datetime | None = None) -> CoachOutcome:
-    """Dispatch to the AI coach when a Gemini key is configured, else to the
-    rule-based parser. The rule parser is always the safety net."""
+    """Dispatch to the AI coach (Gemini first, then Groq as fallback), else to
+    the rule-based parser. The rule parser is always the safety net."""
     now = now or datetime.now()
     cleaned_message = " ".join((message_text or "").split())
 
     if not cleaned_message:
         raise ValueError("Type something for the coach to work with.")
 
-    api_key = current_app.config.get("GEMINI_API_KEY", "")
-    if api_key:
+    ai_attempted = False
+    if current_app.config.get("GEMINI_API_KEY", ""):
+        ai_attempted = True
         try:
             return process_coach_message_ai(user, cleaned_message, now)
         except Exception:
-            current_app.logger.warning("Gemini coach failed; falling back to rules.", exc_info=True)
-            if has_request_context():
-                flash("fiT-X AI could not be reached — used the built-in parser for that message. Check GEMINI_API_KEY.", "error")
+            current_app.logger.warning("Gemini coach failed; trying Groq fallback.", exc_info=True)
+    if current_app.config.get("GROQ_API_KEY", ""):
+        ai_attempted = True
+        try:
+            return process_coach_message_ai(user, cleaned_message, now, provider=_groq_generate)
+        except Exception:
+            current_app.logger.warning("Groq coach failed; falling back to rules.", exc_info=True)
+
+    if ai_attempted and has_request_context():
+        flash(
+            "fiT-X AI could not be reached — used the built-in parser for that message. "
+            "Check GEMINI_API_KEY / GROQ_API_KEY.",
+            "error",
+        )
 
     return process_coach_message_rules(user, cleaned_message, now)
 
@@ -955,6 +967,7 @@ def _format_datetime_label(value: datetime, now: datetime) -> str:
 # ============================================================
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 AI_HISTORY_LIMIT = 6
 AI_TIMEOUT_SECONDS = 45
 
@@ -1115,21 +1128,43 @@ def _prune_old_chat_messages(user: User) -> None:
     )
 
 
+def _ai_recent_history(user: User) -> list[CoachMessage]:
+    """The day's recent chat turns (newest first) shared by all AI providers."""
+    return list(
+        db.session.execute(
+            select(CoachMessage)
+            .where(
+                CoachMessage.user_id == user.id,
+                CoachMessage.created_at >= _chat_day_start_utc(user),
+            )
+            .order_by(CoachMessage.id.desc())
+            .limit(AI_HISTORY_LIMIT)
+        ).scalars().all()
+    )
+
+
+def _parse_coach_json(text: str, provider: str) -> dict:
+    cleaned = (text or "").strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.IGNORECASE)
+    try:
+        parsed = json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        raise CoachAIError(f"{provider} returned non-JSON: {cleaned[:300]}") from exc
+
+    if not isinstance(parsed, dict) or not isinstance(parsed.get("reply"), str):
+        raise CoachAIError(f"{provider} JSON missing reply: {cleaned[:300]}")
+
+    actions = parsed.get("actions", [])
+    return {"reply": parsed["reply"].strip(), "actions": actions if isinstance(actions, list) else []}
+
+
 def _gemini_generate(user: User, message: str, now: datetime) -> dict:
     api_key = current_app.config.get("GEMINI_API_KEY", "")
     model = current_app.config.get("GEMINI_MODEL", "gemini-2.5-flash")
 
-    history = db.session.execute(
-        select(CoachMessage)
-        .where(
-            CoachMessage.user_id == user.id,
-            CoachMessage.created_at >= _chat_day_start_utc(user),
-        )
-        .order_by(CoachMessage.id.desc())
-        .limit(AI_HISTORY_LIMIT)
-    ).scalars().all()
     contents = []
-    for row in reversed(history):
+    for row in reversed(_ai_recent_history(user)):
         contents.append(
             {"role": "user" if row.role == "user" else "model", "parts": [{"text": row.content}]}
         )
@@ -1163,19 +1198,47 @@ def _gemini_generate(user: User, message: str, now: datetime) -> dict:
     except (KeyError, IndexError, ValueError) as exc:
         raise CoachAIError(f"Gemini response shape unexpected: {response.text[:300]}") from exc
 
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = re.sub(r"^```(?:json)?\s*|\s*```$", "", cleaned, flags=re.IGNORECASE)
+    return _parse_coach_json(text, "Gemini")
+
+
+def _groq_generate(user: User, message: str, now: datetime) -> dict:
+    api_key = current_app.config.get("GROQ_API_KEY", "")
+    model = current_app.config.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
+    messages = [{"role": "system", "content": _ai_system_prompt(user, now)}]
+    for row in reversed(_ai_recent_history(user)):
+        messages.append(
+            {"role": "user" if row.role == "user" else "assistant", "content": row.content}
+        )
+    messages.append({"role": "user", "content": message})
+
     try:
-        parsed = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        raise CoachAIError(f"Gemini returned non-JSON: {cleaned[:300]}") from exc
+        response = requests.post(
+            GROQ_API_URL,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": 0.4,
+                # gpt-oss models emit hidden reasoning tokens that count
+                # toward the completion budget, so leave extra headroom.
+                "max_tokens": 1000,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=AI_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException as exc:
+        raise CoachAIError(f"Groq request failed: {exc}") from exc
 
-    if not isinstance(parsed, dict) or not isinstance(parsed.get("reply"), str):
-        raise CoachAIError(f"Gemini JSON missing reply: {cleaned[:300]}")
+    if response.status_code != 200:
+        raise CoachAIError(f"Groq returned {response.status_code}: {response.text[:300]}")
 
-    actions = parsed.get("actions", [])
-    return {"reply": parsed["reply"].strip(), "actions": actions if isinstance(actions, list) else []}
+    try:
+        text = response.json()["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, ValueError) as exc:
+        raise CoachAIError(f"Groq response shape unexpected: {response.text[:300]}") from exc
+
+    return _parse_coach_json(text, "Groq")
 
 
 def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
@@ -1288,8 +1351,11 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
     return applied
 
 
-def process_coach_message_ai(user: User, message_text: str, now: datetime) -> CoachOutcome:
-    result = _gemini_generate(user, message_text, now)
+def process_coach_message_ai(
+    user: User, message_text: str, now: datetime, provider=None
+) -> CoachOutcome:
+    provider = provider or _gemini_generate
+    result = provider(user, message_text, now)
     applied = _apply_ai_actions(user, result["actions"], now)
     db.session.add(CoachMessage(role="user", content=message_text, user=user))
     db.session.add(CoachMessage(role="assistant", content=result["reply"], user=user))
@@ -1384,7 +1450,7 @@ def _build_week_activity(user: User, local_now: datetime) -> dict:
     workouts = db.session.execute(
         select(ScheduledWorkout)
         .where(
-            ScheduledWorkout.user_id == current_user.id,
+            ScheduledWorkout.user_id == user.id,
             ScheduledWorkout.scheduled_for >= week_start,
             ScheduledWorkout.scheduled_for < week_end,
         )

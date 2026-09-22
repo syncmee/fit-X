@@ -216,6 +216,8 @@ All configuration is environment-driven via `.env` (loaded by `python-dotenv`):
 |---|---|---|---|
 | `GEMINI_API_KEY` | for the AI coach | `""` | Google AI Studio key. Leave empty to use the rule-based coach only |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash-lite` | Any Gemini model with `generateContent` support |
+| `GROQ_API_KEY` | no | `""` | [Groq](https://console.groq.com/keys) key used as the AI coach fallback when Gemini fails (overloaded model, quota, outage). Leave empty to skip |
+| `GROQ_MODEL` | no | `openai/gpt-oss-120b` | Any Groq chat model with JSON mode |
 | `SMTP_USER` + `SMTP_APP_PASSWORD` | for email reminders | `""` | SMTP account. [Brevo](https://www.brevo.com) works without a domain (verified sender, 300/day free) |
 | `SMTP_HOST` / `SMTP_PORT` | no | `smtp.gmail.com` / `587` | Use `smtp-relay.brevo.com` / `2525` on Render (free tier blocks SMTP ports 25/465/587) |
 | `SMTP_FROM` | no | SMTP user | Verified sender address shown in the From header |
