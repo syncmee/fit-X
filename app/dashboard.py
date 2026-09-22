@@ -1109,7 +1109,9 @@ ACTION TYPES (each an object inside "actions"; use an empty array for pure quest
 
 RULES:
 - The app already computes the user's official daily calorie target (daily_calorie_target in the context). Treat it as the single source of truth for intake advice — never present a different daily number as the plan. If the user asks for more aggressive or faster pacing, explain the current target and why it is conservative; suggest talking to a professional for anything beyond it.
-- The user may phrase anything casually ("had 2 rotis and dal", "did 40 min zone 2", "leg day tomorrow 7am"). Interpret sensibly and fill every field; if a required value is genuinely unknown or implausible, do NOT invent it — ask one short question in "reply" with empty actions.
+- The user may phrase anything casually ("had 2 rotis and dal", "did 40 min zone 2", "leg day tomorrow 7am"). Interpret sensibly and fill every field.
+- For any food you can recognize, ESTIMATE the calories and macros yourself from your nutrition knowledge ("7 steamed chicken momos" ≈ 40 kcal / 3g protein each, "1 plain dosa", "a bowl of dal") and log it — never ask the user for calories or macros on recognizable food. Note the estimate briefly in the reply (e.g. "Logged 7 steamed momos, roughly 380 kcal"). Only ask a clarifying question when you genuinely cannot tell what or how much they ate.
+- The user may give partial numbers ("300 kcal rotis", "20g protein shake") — use what they gave and estimate only the missing pieces.
 - For progress questions ("how am i doing", "what did I eat today"), answer from the context data above with empty actions.
 - Reply in the language the user writes in.
 - Never wrap the JSON in markdown fences."""
