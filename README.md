@@ -5,13 +5,13 @@
 **An AI-coached fitness tracker that understands natural language.**
 
 Log meals, weight, water, and any workout — gym, running, yoga, boxing, pilates — by typing
-plain sentences. fiT-X parses them with Google Gemini, keeps the score, and shows it all in a
-dark, app-like dashboard.
+plain sentences. fiT-X parses them with Google Gemini (Groq stands by as an automatic
+fallback), keeps the score, and shows it all in a dark, app-like dashboard.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-D71F00?style=flat&logo=python&logoColor=white)](https://www.sqlalchemy.org/)
-[![Google Gemini](https://img.shields.io/badge/AI-Gemini-8E75B2?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
+[![Google Gemini](https://img.shields.io/badge/AI-Gemini_·_Groq_fallback-8E75B2?style=flat&logo=google&logoColor=white)](https://ai.google.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/UI-Tailwind-38BDF8?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![Deployed on Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat&logo=render&logoColor=black)](https://render.com/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-4ade80?style=flat)](#contributing)
@@ -126,7 +126,7 @@ date*. Yoga, running, combat sports, pilates, and weightlifting all count equall
 ## Architecture
 
 Single-process, server-rendered Flask — no SPA, no build step. The browser talks to Flask;
-Flask talks to Gemini and to SQLAlchemy.
+Flask talks to Gemini (Groq as fallback), SQLAlchemy, and the health-math CSVs.
 
 ```mermaid
 flowchart LR
@@ -148,13 +148,15 @@ flowchart LR
     end
 
     GEMINI["Google Gemini API<br/>(generateContent, JSON mode)"]
+    GROQ["Groq API (fallback)<br/>(chat/completions, JSON mode)"]
     CSV[("app/data/bmiagerev.csv<br/>CDC BMI-for-age reference")]
 
     UI -->|form posts + CSRF token| BP1
     UI -->|form posts + CSRF token| BP2
     BP1 --> VAL
     BP2 --> CORE
-    CORE --> GEMINI
+    CORE -->|primary, 12s timeout| GEMINI
+    CORE -.->|on Gemini failure| GROQ
     CORE --> CSV
     BP1 --> MODELS
     BP2 --> MODELS
@@ -172,7 +174,7 @@ math (EER calorie targets, BMI), the AI coach, and its routes. `app/routes.py` s
 |---|---|
 | `app/__init__.py` | App factory: extensions, CSRF hook, blueprints, schema bootstrap |
 | `app/routes.py` | Homepage, sign in/up, onboarding, logout |
-| `app/dashboard.py` | Dashboard context, BMI/EER math, AI coach (Gemini) + rule fallback, meal/water/workout routes |
+| `app/dashboard.py` | Dashboard context, BMI/EER math, AI coach (Gemini → Groq fallback) + rule fallback, meal/water/workout routes |
 | `app/models.py` | `User`, `WeightLog`, `MealEntry`, `WaterLog`, `ScheduledWorkout`, `CoachMessage` |
 | `app/security.py` | Session-based CSRF tokens (`secrets.compare_digest`) |
 | `app/validation.py` | Signup / login / onboarding form validation |
@@ -214,7 +216,7 @@ All configuration is environment-driven via `.env` (loaded by `python-dotenv`):
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `GEMINI_API_KEY` | for the AI coach | `""` | Google AI Studio key. Leave empty to use the rule-based coach only |
+| `GEMINI_API_KEY` | for the AI coach | `""` | Google AI Studio key. Primary coach provider — leave empty to fall back to Groq (if set) or the rule-based coach |
 | `GEMINI_MODEL` | no | `gemini-3.5-flash-lite` | Any Gemini model with `generateContent` support |
 | `GROQ_API_KEY` | no | `""` | [Groq](https://console.groq.com/keys) key used as the AI coach fallback when Gemini fails (overloaded model, quota, outage). Leave empty to skip |
 | `GROQ_MODEL` | no | `openai/gpt-oss-120b` | Any Groq chat model with JSON mode |
@@ -282,8 +284,10 @@ All endpoints are server-rendered form posts (no JSON API), protected by session
 
 ### The coach contract
 
-`POST /coach/message` sends the user's text to Gemini with a system prompt containing the
-user's live profile and today's totals. The model must answer in strict JSON:
+`POST /coach/message` sends the user's text to the AI coach with a system prompt containing the
+user's live profile and today's totals. Providers are tried in order — **Gemini** (12 s timeout,
+one quick retry on a 503), then **Groq** if configured, then the built-in rule-based parser —
+and each attempt uses the same contract. The model must answer in strict JSON:
 
 ```json
 {
@@ -311,8 +315,10 @@ Supported action types and fields:
 | `complete_workout` | `title`, `days_ago`, `duration_minutes`, `calories_burned` | Burn estimated from weight × duration × intensity |
 
 All action values are clamped server-side before touching the database, unknown action types
-are skipped, and the model is instructed to *ask* rather than invent when required values are
-missing.
+are skipped, and the model estimates calories/macros/burn from its own nutrition knowledge for
+any recognizable food or activity (noting the estimate in the reply) — it only asks a
+clarifying question when the food or portion is genuinely unclear. Numbers the user provides
+always win over estimates.
 
 ### Health math (offline, no API)
 
@@ -327,10 +333,12 @@ missing.
 ## Deployment
 
 The app ships with a `Procfile` for [Render](https://render.com) (works on any host that
-understands Procfiles):
+understands Procfiles). Two workers × four threads keep page loads responsive while coach
+calls wait on the AI providers, and the raised worker timeout accommodates the coach's
+provider failover:
 
 ```bash
-web: gunicorn main:app --bind 0.0.0.0:$PORT
+web: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
 ```
 
 1. Create a Render Web Service from this repo
@@ -363,5 +371,5 @@ Issues and PRs are welcome. Please keep the existing architecture in mind:
 ---
 
 <div align="center">
-<sub>Built with Flask, Gemini, and a dark theme · fiT-X</sub>
+<sub>Built with Flask, Gemini, Groq, and a dark theme · fiT-X</sub>
 </div>
