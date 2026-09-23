@@ -402,7 +402,7 @@
         <!-- Email -->
         <div>
           <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Email</label>
-          <input type="email" name="email" placeholder="marcus@fit-x.app" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono" autocomplete="email" required readonly>
+          <input type="email" name="email" placeholder="marcus@fit-x.app" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono" autocomplete="off" required>
         </div>
 
         <!-- Password -->
@@ -412,7 +412,7 @@
             <a href="#" id="forgotLink" class="text-[10px] font-mono text-gray-500 hover:text-green transition">Forgot?</a>
           </div>
           <div class="relative">
-            <input id="passwordInput" name="password" minlength="8" type="password" placeholder="••••••••••••" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-10" autocomplete="current-password" required readonly>
+            <input id="passwordInput" name="password" minlength="8" type="password" placeholder="••••••••••••" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-10" autocomplete="new-password" required>
             <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
@@ -471,6 +471,32 @@
 
   // ===================== AUTH UI LOGIC =====================
 
+  // Saved-password autofill stays suppressed until the user interacts with the
+  // form: at render the fields carry hints that stop iOS dropping credentials
+  // into them on page load ("new-password" suppresses saved passwords, "off"
+  // blocks contact autofill), and the real hints are restored on the first
+  // tap/focus so QuickType then offers the saved password. The fields stay
+  // editable throughout — if a browser ignores the hints, the worst case is
+  // the old autofill behavior, never a locked field.
+  let authFieldsRevealed = false;
+  function syncPasswordAutocomplete() {
+    const pw = document.getElementById('passwordInput');
+    const action = document.getElementById('authAction');
+    const isSignup = action && action.value === 'signup';
+    pw.setAttribute('autocomplete', (authFieldsRevealed && !isSignup) ? 'current-password' : 'new-password');
+  }
+  function revealAutofill() {
+    if (authFieldsRevealed) return;
+    authFieldsRevealed = true;
+    const emailInput = document.querySelector('#authForm input[name=email]');
+    if (emailInput) emailInput.setAttribute('autocomplete', 'email');
+    syncPasswordAutocomplete();
+  }
+  const authForm = document.getElementById('authForm');
+  authForm.addEventListener('pointerdown', revealAutofill, { capture: true, once: true });
+  authForm.addEventListener('touchstart', revealAutofill, { capture: true, once: true, passive: true });
+  authForm.addEventListener('focusin', revealAutofill, { once: true });
+
   // Tab switching logic
   function switchTab(tab) {
     const tabSignin = document.getElementById('tab-signin');
@@ -491,9 +517,9 @@
       formSub.textContent = 'Welcome back. Log in to resume your plan.';
       btnText.textContent = 'Sign in';
       forgotLink.classList.remove('hidden');
-      passwordInput.setAttribute('autocomplete', 'current-password');
 
       if (authAction) authAction.value = 'login';
+      syncPasswordAutocomplete();
     } else {
       tabSignin.classList.remove('active');
       tabSignup.classList.add('active');
@@ -502,9 +528,9 @@
       formSub.textContent = '90 seconds to onboard. First plan in minutes.';
       btnText.textContent = 'Start free';
       forgotLink.classList.add('hidden');
-      passwordInput.setAttribute('autocomplete', 'new-password');
 
       if (authAction) authAction.value = 'signup';
+      syncPasswordAutocomplete();
     }
   }
 
@@ -520,20 +546,6 @@
     const input = document.getElementById('passwordInput');
     input.type = input.type === 'password' ? 'text' : 'password';
   }
-
-  // The email/password fields render readonly so iOS AutoFill can't drop the
-  // saved credentials into the form on page load. The first interaction with
-  // the form unlocks them — tapping a field then still offers the saved
-  // password through the QuickType bar.
-  const authForm = document.getElementById('authForm');
-  const unlockAuthFields = function () {
-    authForm.querySelectorAll('input[readonly]').forEach(function (input) {
-      input.readOnly = false;
-    });
-  };
-  authForm.addEventListener('pointerdown', unlockAuthFields, { capture: true, once: true });
-  authForm.addEventListener('touchstart', unlockAuthFields, { capture: true, once: true, passive: true });
-  authForm.addEventListener('focusin', unlockAuthFields, { once: true });
 
   // Form submit handler — shows the loading screen, lets one frame paint, then submits
   function handleAuth(e) {
