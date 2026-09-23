@@ -19,6 +19,7 @@ Claude Code Setup — Existing Flask Fitness App.md
 htmlcov/
 .idea/
 test_onboarding.py
+.flask_dev.log
 
 # Brag skill (launch-video generator) and its outputs
 .zcode/
