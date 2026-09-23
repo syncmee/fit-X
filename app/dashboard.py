@@ -33,6 +33,7 @@ from sqlalchemy import delete, func, select
 
 from .extensions import db
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
+from .plans import build_plan
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -2107,6 +2108,7 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         horizon = f"starts in ~{round(starts_in_min)} min"
     subject = f"fiT-X · {workout.title} {horizon}"
     dashboard_url = url_for("dashboard.dashboard", _external=True)
+    plan = build_plan(workout.title)
 
     # Week calendar for the email: Mon-Sun of the user's current local week,
     # with each day's weight-log state (done / today / missed / future).
@@ -2140,6 +2142,8 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         start_date=f"{workout.scheduled_for.strftime('%B')} {workout.scheduled_for.day}",
         workout_notes=(workout.notes or "").strip() or None,
         dashboard_url=dashboard_url,
+        plan_blocks=plan["blocks"] if plan else None,
+        plan_name=plan["name"] if plan else None,
         week_cells=week_cells,
         streak_days=streak_days,
         streak_today_logged=today in logged_dates,
@@ -2147,6 +2151,12 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
     plain = (
         f"{workout.title}\n{when} · {workout.duration_minutes} min\n{horizon}.\n\nOpen fiT-X: {dashboard_url}"
     )
+    if plan:
+        lines = [f"\n{plan['name'].upper()} PLAN"]
+        for block in plan["blocks"]:
+            lines.append(f"\n{block['block']} — {block['focus']}")
+            lines.extend(f"  - {e['name']} · {e['dose']}" for e in block["exercises"])
+        plain += "\n".join(lines)
 
     smtp_user = current_app.config.get("SMTP_USER", "")
     smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")

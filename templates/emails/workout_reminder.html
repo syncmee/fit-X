@@ -225,7 +225,43 @@
           </td>
         </tr>
 
-        <!-- 06 · STREAK CALENDAR -->
+        <!-- 06 · SESSION PLAN -->
+        {% if plan_blocks %}
+        {% for b in plan_blocks %}
+        <tr>
+          <td class="px" style="padding:{% if loop.first %}40{% else %}26{% endif %}px 32px 0;">
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="padding-bottom:4px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:10px; line-height:14px; font-weight:700; letter-spacing:2.5px; color:#4ADE80;">
+                  {{ b.block|upper }}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:10px; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; line-height:17px; color:#9CA3AF;">
+                  {{ b.focus }}
+                </td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#151515" style="background-color:#151515; border:1px solid #262626; border-radius:14px;">
+              {% for e in b.exercises %}
+              <tr>
+                <td style="padding:13px 22px; {% if not loop.first %}border-top:1px solid #262626;{% endif %}">
+                  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td align="left" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; line-height:21px; font-weight:600; color:#F5F5F4;">{{ e.name }}</td>
+                      <td align="right" style="font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; line-height:21px; font-weight:700; letter-spacing:0.4px; color:#4ADE80; white-space:nowrap;">{{ e.dose }}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              {% endfor %}
+            </table>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+        <!-- 07 · STREAK CALENDAR -->
         <tr>
           <td class="px" style="padding:40px 32px 0;">
             <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -274,7 +310,7 @@
           </td>
         </tr>
 
-        <!-- 07 · ACTION -->
+        <!-- 08 · ACTION -->
         <tr>
           <td class="px" align="center" style="padding:42px 32px 0;">
             <table role="presentation" class="btn" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
@@ -298,7 +334,7 @@
           </td>
         </tr>
 
-        <!-- 08 · SIGN-OFF -->
+        <!-- 09 · SIGN-OFF -->
         <tr>
           <td class="px" style="padding:38px 32px 0;">
             <p style="margin:0; font-family:'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; line-height:22px; color:#9CA3AF;">
@@ -307,7 +343,7 @@
           </td>
         </tr>
 
-        <!-- 09 · FOOTER -->
+        <!-- 10 · FOOTER -->
         <tr>
           <td class="px" style="padding:36px 32px 0; font-size:0; line-height:0;">
             <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">

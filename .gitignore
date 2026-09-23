@@ -25,3 +25,6 @@ test_onboarding.py
 .zcode/
 skills-lock.json
 brag-output*/
+# Generated artifacts: email previews and prototype output (both regenerable)
+previews/
+plan_prototype_output.json
