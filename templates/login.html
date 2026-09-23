@@ -402,7 +402,7 @@
         <!-- Email -->
         <div>
           <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Email</label>
-          <input type="email" name="email" placeholder="marcus@fit-x.app" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono" autocomplete="email" required>
+          <input type="email" name="email" placeholder="marcus@fit-x.app" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono" autocomplete="email" required readonly>
         </div>
 
         <!-- Password -->
@@ -412,7 +412,7 @@
             <a href="#" id="forgotLink" class="text-[10px] font-mono text-gray-500 hover:text-green transition">Forgot?</a>
           </div>
           <div class="relative">
-            <input id="passwordInput" name="password" minlength="8" type="password" placeholder="••••••••••••" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-10" autocomplete="current-password" required>
+            <input id="passwordInput" name="password" minlength="8" type="password" placeholder="••••••••••••" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-10" autocomplete="current-password" required readonly>
             <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white transition">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
@@ -521,33 +521,53 @@
     input.type = input.type === 'password' ? 'text' : 'password';
   }
 
-  // Form submit handler — shows loading screen then lets the browser submit the form naturally
+  // The email/password fields render readonly so iOS AutoFill can't drop the
+  // saved credentials into the form on page load. The first interaction with
+  // the form unlocks them — tapping a field then still offers the saved
+  // password through the QuickType bar.
+  const authForm = document.getElementById('authForm');
+  const unlockAuthFields = function () {
+    authForm.querySelectorAll('input[readonly]').forEach(function (input) {
+      input.readOnly = false;
+    });
+  };
+  authForm.addEventListener('pointerdown', unlockAuthFields, { capture: true, once: true });
+  authForm.addEventListener('touchstart', unlockAuthFields, { capture: true, once: true, passive: true });
+  authForm.addEventListener('focusin', unlockAuthFields, { once: true });
+
+  // Form submit handler — shows the loading screen, lets one frame paint, then submits
   function handleAuth(e) {
+    e.preventDefault();
+    const form = e.target;
+    if (form.dataset.submitting) return;
+    form.dataset.submitting = '1';
+
     const actionInput = document.getElementById('authAction');
     const isSignup = actionInput && actionInput.value === 'signup';
-
-    // Update the hidden action field so the backend knows which path to take
-    if (actionInput) {
-      // already set by switchTab()
-    }
-
-    // Show the loader overlay again for authentication
     const loader = document.getElementById('appLoader');
     const loaderText = document.getElementById('loaderText');
     const submitBtn = document.getElementById('submitBtn');
-    
+
     // Disable button to prevent double-clicks
     submitBtn.disabled = true;
-    
+
     // Update text and show loader
     loaderText.textContent = isSignup ? 'Creating your account...' : 'Authenticating...';
+
+    // Dismiss the keyboard so the fixed overlay isn't offset by it on iOS
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+
     loader.style.display = 'flex';
-    
-    // Force reflow to ensure display:block takes effect before removing fade-out
-    void loader.offsetWidth; 
+    // Force reflow to ensure display:flex takes effect before removing fade-out
+    void loader.offsetWidth;
     loader.classList.remove('fade-out');
 
-    // Allow the native form submission to proceed (browser will show loader until next page loads)
+    // iOS (standalone especially) freezes the last painted frame as soon as a
+    // navigation starts, so DOM changes made inside the submit event never
+    // show. Hold the navigation briefly so the overlay actually paints, then
+    // submit programmatically (skips re-validation, which already passed,
+    // and doesn't re-trigger onsubmit). A plain timer — rAF can be throttled.
+    setTimeout(function () { form.submit(); }, 80);
   }
 </script>
 
