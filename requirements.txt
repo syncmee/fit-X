@@ -5,6 +5,9 @@ gunicorn==23.0.0
 Flask-Migrate==4.0.7
 flask_login
 flask_sqlalchemy
+# 2.1 switched the default Postgres driver from psycopg2 to psycopg3 — pin to
+# the 2.0 series the app runs on until the driver is migrated.
+SQLAlchemy>=2.0.16,<2.1
 psycopg2==2.9.9
 python-dotenv==1.0.1
 reportlab==4.2.4
