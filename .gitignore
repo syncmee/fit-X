@@ -28,3 +28,8 @@ brag-output*/
 # Generated artifacts: email previews and prototype output (both regenerable)
 previews/
 plan_prototype_output.json
+
+# One-off test/email scripts (recreate when needed, never commit)
+/_email_plan_check.py
+/_composer_email_test.py
+/_prod_email_push.py
