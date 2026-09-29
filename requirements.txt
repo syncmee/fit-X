@@ -13,4 +13,5 @@ python-dotenv==1.0.1
 reportlab==4.2.4
 pdfcrowd==6.2.0
 Authlib==1.3.2
+pywebpush==2.5.0
 

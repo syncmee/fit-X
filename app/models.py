@@ -30,6 +30,12 @@ class User(UserMixin, db.Model):
     email_reminders_enabled = db.Column(db.Boolean, default=True)
 
     logs = db.relationship("WeightLog", backref="user", lazy=True, order_by="WeightLog.date")
+    push_subscriptions = db.relationship(
+        "PushSubscription",
+        backref="user",
+        lazy=True,
+        cascade="all, delete-orphan",
+    )
     scheduled_workouts = db.relationship(
         "ScheduledWorkout",
         backref="user",
@@ -119,6 +125,23 @@ class WaterLog(db.Model):
         return f"<WaterLog {self.amount_ml}ml {self.logged_at}>"
 
 
+class PushSubscription(db.Model):
+    """A browser push subscription (one per device where the user enabled
+    notifications). endpoint is the unique push-service URL; p256dh/auth are
+    the per-subscription encryption keys."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+    endpoint = db.Column(db.String(500), nullable=False, unique=True)
+    p256dh = db.Column(db.String(120), nullable=False)
+    auth = db.Column(db.String(60), nullable=False)
+    user_agent = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<PushSubscription user={self.user_id} {self.endpoint[:40]}...>"
+
+
 class GoogleIdentity(db.Model):
     """Links a Google account to a fiT-X user. Kept in its own table so the
     existing user table stays untouched; created automatically by create_all()."""
@@ -151,6 +174,7 @@ _LOCAL_NOW_COLUMNS = {
     CoachMessage: "created_at",
     MealEntry: "logged_at",
     WaterLog: "logged_at",
+    PushSubscription: "created_at",
 }
 
 

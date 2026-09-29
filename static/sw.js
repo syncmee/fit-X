@@ -82,3 +82,43 @@ self.addEventListener("fetch", (event) => {
     }),
   );
 });
+
+// Workout reminder pushes from the reminder cron. iOS requires a visible
+// notification for every push, so always show one.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (err) {
+    data = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "fiT-X", {
+      body: data.body || "",
+      icon: "/static/android-chrome-192x192.png",
+      badge: "/static/android-chrome-192x192.png",
+      tag: data.tag || "fitx-reminder",
+      data: { url: data.url || "/dashboard" },
+    }),
+  );
+});
+
+// Tapping the notification opens (or focuses) the app at the payload URL.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/dashboard";
+  const fullUrl = new URL(target, self.location.origin).href;
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (client.url.startsWith(self.location.origin)) {
+            client.focus();
+            return client.navigate(fullUrl);
+          }
+        }
+        return clients.openWindow(fullUrl);
+      }),
+  );
+});

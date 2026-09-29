@@ -35,7 +35,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import delete, func, select
 
 from .extensions import db
-from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
+from .models import CoachMessage, MealEntry, PushSubscription, ScheduledWorkout, User, WaterLog, WeightLog
 from .plans import build_plan
 from .timeutil import (
     APP_DAY_START,
@@ -1904,6 +1904,9 @@ def _build_dashboard_context() -> dict:
         "chat_messages": chat_messages,
         "coach_examples": COACH_QUICK_STARTS,
         "coach_mode_label": "fiT-X AI",
+        # Push notifications (bell dropdown); empty key = feature disabled
+        "push_public_key": current_app.config.get("VAPID_PUBLIC_KEY", ""),
+        "push_configured": bool(current_app.config.get("VAPID_PUBLIC_KEY")),
     }
 
 
@@ -2049,6 +2052,62 @@ def settings_reminders():
     return {"enabled": current_user.email_reminders_enabled}
 
 
+MAX_PUSH_SUBSCRIPTIONS_PER_USER = 5
+
+
+@dashboard_bp.route("/push/subscribe", methods=["POST"])
+@login_required
+def push_subscribe():
+    # Stores a browser push subscription (one row per device). Upserts on the
+    # endpoint — a device re-subscribing replaces its row — and caps rows per
+    # user so abandoned devices eventually age out.
+    if not current_app.config.get("VAPID_PUBLIC_KEY"):
+        return {"ok": False, "error": "push not configured"}, 503
+    data = request.get_json(silent=True) or {}
+    endpoint = str(data.get("endpoint") or "")[:500]
+    keys = data.get("keys") or {}
+    p256dh = str(keys.get("p256dh") or "")
+    auth = str(keys.get("auth") or "")
+    if not (endpoint.startswith("https://") and p256dh and auth):
+        return {"ok": False, "error": "invalid subscription"}, 400
+
+    sub = db.session.execute(
+        select(PushSubscription).where(PushSubscription.endpoint == endpoint)
+    ).scalar_one_or_none()
+    if sub is None:
+        existing = db.session.scalars(
+            select(PushSubscription)
+            .where(PushSubscription.user_id == current_user.id)
+            .order_by(PushSubscription.created_at.asc())
+        ).all()
+        while len(existing) >= MAX_PUSH_SUBSCRIPTIONS_PER_USER:
+            db.session.delete(existing.pop(0))
+        sub = PushSubscription(user=current_user)
+        db.session.add(sub)
+    sub.endpoint = endpoint
+    sub.p256dh = p256dh
+    sub.auth = auth
+    sub.user_agent = (request.user_agent.string or "")[:200]
+    db.session.commit()
+    return {"ok": True}
+
+
+@dashboard_bp.route("/push/unsubscribe", methods=["POST"])
+@login_required
+def push_unsubscribe():
+    data = request.get_json(silent=True) or {}
+    endpoint = str(data.get("endpoint") or "")
+    if endpoint:
+        db.session.execute(
+            delete(PushSubscription).where(
+                PushSubscription.user_id == current_user.id,
+                PushSubscription.endpoint == endpoint,
+            )
+        )
+        db.session.commit()
+    return {"ok": True}
+
+
 @dashboard_bp.route("/cron/send-reminders", methods=["GET"])
 def cron_send_reminders():
     # GET on purpose: the app-wide CSRF check only guards mutating methods, and
@@ -2079,28 +2138,88 @@ def _send_due_workout_reminders() -> dict:
     sent, failed = [], 0
     for workout in candidates:
         user = workout.user
-        if not user.email_reminders_enabled:
-            continue
         local_now = to_user_clock(user, now_utc)
         starts_in_min = (workout.scheduled_for - local_now).total_seconds() / 60
         if not -15 <= starts_in_min <= REMINDER_WINDOW_MINUTES:
             continue
-        ok, detail = _send_reminder_email(user, workout, starts_in_min)
-        if ok:
-            workout.reminder_sent_at = local_now
-            sent.append(
-                {
-                    "workout": workout.title,
-                    "to": user.email,
-                    "starts_in_min": round(starts_in_min),
-                    "detail": detail,
-                }
+
+        delivered = []
+        if user.email_reminders_enabled:
+            ok, detail = _send_reminder_email(user, workout, starts_in_min)
+            if ok:
+                delivered.append(
+                    {
+                        "workout": workout.title,
+                        "to": user.email,
+                        "starts_in_min": round(starts_in_min),
+                        "detail": detail,
+                    }
+                )
+            else:
+                failed += 1
+
+        if user.push_subscriptions:
+            push_ok = _send_web_push(
+                user,
+                title=f"fiT-X · {workout.title}",
+                body="Starts now" if starts_in_min <= 0 else f"Starts in ~{round(starts_in_min)} min",
+                url="/dashboard",
             )
-        else:
-            failed += 1
+            if push_ok:
+                delivered.append(
+                    {
+                        "workout": workout.title,
+                        "to": "push",
+                        "starts_in_min": round(starts_in_min),
+                        "detail": "web push",
+                    }
+                )
+
+        if delivered:
+            # Any successful channel stamps the workout: the cron rechecks
+            # every 10 minutes and must not resend.
+            workout.reminder_sent_at = local_now
+            sent.extend(delivered)
 
     db.session.commit()
     return {"checked": len(candidates), "sent": sent, "failed": failed}
+
+
+def _send_web_push(user: User, *, title: str, body: str, url: str = "/dashboard") -> bool:
+    """Fire a web push to every subscribed device. Returns True when at least
+    one device accepted. Dead subscriptions (404/410 — expired or permission
+    revoked) are removed so they never retry."""
+    private_key = current_app.config.get("VAPID_PRIVATE_KEY", "")
+    if not (private_key and user.push_subscriptions):
+        return False
+    claims = {"sub": current_app.config.get("VAPID_CONTACT", "mailto:admin@fitx.app")}
+    sent_any = False
+    try:
+        from pywebpush import webpush
+
+        for sub in user.push_subscriptions:
+            try:
+                webpush(
+                    subscription_info={
+                        "endpoint": sub.endpoint,
+                        "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
+                    },
+                    data=json.dumps({"title": title, "body": body, "url": url}),
+                    vapid_private_key=private_key,
+                    vapid_claims=claims,
+                )
+                sent_any = True
+            except Exception as exc:
+                # 404/410 = expired or revoked; anything else (network error,
+                # malformed endpoint) just skips this device.
+                status = getattr(getattr(exc, "response", None), "status_code", None)
+                if status in (404, 410):
+                    db.session.delete(sub)
+                else:
+                    current_app.logger.warning("web push to user %s failed: %s", user.id, exc)
+    except ImportError:
+        current_app.logger.warning("pywebpush unavailable; push skipped")
+    return sent_any
 
 
 def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: float) -> tuple[bool, str]:

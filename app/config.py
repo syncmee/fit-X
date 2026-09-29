@@ -58,3 +58,10 @@ class Config:
     # Shared secret between the scheduler (GitHub Actions / Render Cron) and
     # POST/GET /cron/send-reminders. Requests without it are rejected.
     CRON_SECRET = os.getenv("CRON_SECRET", "")
+    # Web push (workout reminders): VAPID identity. Generate once with
+    # cryptography (P-256, base64url raw scalars). Empty = push disabled and
+    # the dashboard hides its enable button.
+    VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+    VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+    # Contact required in VAPID claims; falls back to the SMTP sender.
+    VAPID_CONTACT = os.getenv("VAPID_CONTACT", "mailto:coach.fitx.app@gmail.com")

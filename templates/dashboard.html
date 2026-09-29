@@ -459,9 +459,21 @@
         </button>
 
         <!-- Phones have no sidebar profile block, so the avatar opens Settings here -->
-        <button class="relative text-gray-400 hover:text-white transition" aria-label="Notifications" title="Notifications">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </button>
+        <div class="relative" id="notifWrap">
+          <button id="notifBell" class="relative text-gray-400 hover:text-white transition" aria-label="Notifications" title="Notifications" onclick="toggleNotifPanel(event)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notifDot" class="hidden absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-green"></span>
+          </button>
+          <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 z-50">
+            <div class="glass rounded-xl border border-white/10 p-4 space-y-3 shadow-2xl">
+              <div class="flex items-center justify-between">
+                <div class="text-sm font-semibold">Notifications</div>
+                <button onclick="toggleNotifPanel(event)" class="text-gray-500 hover:text-white text-xl leading-none" aria-label="Close">&times;</button>
+              </div>
+              <div id="pushCard" class="rounded-lg bg-white/5 p-3 border border-white/5 text-xs text-gray-400">Loading…</div>
+            </div>
+          </div>
+        </div>
 
         <button onclick="openSettings()" class="md:hidden flex-shrink-0" aria-label="Open Settings" title="Settings">
           <span class="w-9 h-9 rounded-full bg-gray-700 flex items-center justify-center font-mono font-bold text-sm overflow-hidden border border-white/10">
@@ -1410,6 +1422,120 @@
     }).then(r => r.json())
       .then(d => el.classList.toggle('active', !!d.enabled))
       .catch(() => el.classList.toggle('active'));
+  }
+
+  // ============= Push notifications (bell panel) =============
+  const PUSH_PUBLIC_KEY = {{ push_public_key | tojson }};
+  const PUSH_CSRF = '{{ csrf_token() }}';
+  const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+  function toggleNotifPanel(ev) {
+    if (ev) ev.stopPropagation();
+    const panel = document.getElementById('notifPanel');
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) refreshPushUI();
+  }
+
+  document.addEventListener('click', (ev) => {
+    const wrap = document.getElementById('notifWrap');
+    if (wrap && !wrap.contains(ev.target)) document.getElementById('notifPanel').classList.add('hidden');
+  });
+
+  async function getPushSubscription() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    const reg = await navigator.serviceWorker.ready;
+    return reg.pushManager.getSubscription();
+  }
+
+  function urlB64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+  }
+
+  async function refreshPushUI() {
+    const card = document.getElementById('pushCard');
+    const dot = document.getElementById('notifDot');
+    if (!PUSH_PUBLIC_KEY) {
+      card.innerHTML = 'Push notifications aren\\u2019t set up on the server yet.';
+      dot.classList.add('hidden');
+      return;
+    }
+    if (isIOSDevice && !isStandalone) {
+      card.innerHTML =
+        '<div class="text-white font-semibold mb-1">Get reminders on iPhone</div>' +
+        '<ol class="list-decimal ml-4 space-y-1">' +
+        '<li>Tap the <span class="text-white">Share</span> button in Safari</li>' +
+        '<li>Choose <span class="text-white">Add to Home Screen</span></li>' +
+        '<li>Open fiT-X from the new icon and tap Enable</li></ol>';
+      dot.classList.remove('hidden');
+      return;
+    }
+    if (!('PushManager' in window) || !('Notification' in window)) {
+      card.innerHTML = 'This browser doesn\\u2019t support push notifications.';
+      dot.classList.add('hidden');
+      return;
+    }
+    let sub = null;
+    try { sub = await getPushSubscription(); } catch (err) { /* ignore */ }
+    if (sub) {
+      card.innerHTML =
+        '<div class="flex items-center justify-between">' +
+        '<div><div class="text-white font-semibold mb-0.5">Reminders are on</div>' +
+        '<div class="text-gray-500">We\\u2019ll ping you ~45 min before a scheduled session.</div></div></div>' +
+        '<button onclick="disablePush()" class="mt-2 w-full text-[11px] font-mono text-gray-400 border border-white/10 px-2 py-1.5 rounded hover:bg-white/5 transition">Turn off</button>';
+      dot.classList.add('hidden');
+      return;
+    }
+    if (Notification.permission === 'denied') {
+      card.innerHTML = 'Notifications are blocked for this site. Allow them in your browser\\u2019s site settings, then try again.';
+      dot.classList.add('hidden');
+      return;
+    }
+    card.innerHTML =
+      '<div class="text-white font-semibold mb-0.5">Workout reminders</div>' +
+      '<div class="mb-2">Get a ping ~45 min before a scheduled session \\u2014 right on this device.</div>' +
+      '<button onclick="enablePush(this)" class="w-full grad-bg text-black text-xs font-bold px-3 py-2 rounded-lg hover:opacity-90 transition">Enable notifications</button>';
+    dot.classList.remove('hidden');
+  }
+
+  async function enablePush(btn) {
+    if (btn) { btn.disabled = true; btn.textContent = 'Asking…'; }
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') { await refreshPushUI(); return; }
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8Array(PUSH_PUBLIC_KEY),
+      });
+      const res = await fetch('{{ url_for("dashboard.push_subscribe") }}', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': PUSH_CSRF, 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      if (!res.ok) await sub.unsubscribe().catch(() => {});
+    } catch (err) { /* panel state reflects reality on refresh */ }
+    await refreshPushUI();
+  }
+
+  async function disablePush() {
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('{{ url_for("dashboard.push_unsubscribe") }}', {
+          method: 'POST',
+          headers: { 'X-CSRFToken': PUSH_CSRF, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe().catch(() => {});
+      }
+    } catch (err) { /* ignore */ }
+    await refreshPushUI();
   }
 
   function toggleFullscreenChat() {
