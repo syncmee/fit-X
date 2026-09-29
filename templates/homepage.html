@@ -4,6 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>fiT-X — Premium AI coaching in your pocket</title>
+{% set seo_description = "fiT-X is an AI-coached fitness tracker: log meals, workouts, water and weight in plain language, with daily calorie targets, gym plans and streaks." %}
+{% set seo_title = "fiT-X — Premium AI coaching in your pocket" %}
+{% set seo_path = "/" %}
+{% include "seo_meta.html" %}
 <meta name="google-site-verification" content="YvyRv-trMgXgZ_1u2ymNwU7azKwdJRsldf5fVZw1heE" />
 <link rel="icon" href="/static/favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
@@ -17,8 +21,11 @@
 <meta name="apple-mobile-web-app-title" content="fiT-X">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+<link rel="preconnect" href="https://cdn.apexcharts.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
+<script type="application/ld+json">{{ seo_jsonld_graph | tojson }}</script>
 <script src="https://cdn.apexcharts.com"></script>
 <script>
   tailwind.config = {
@@ -756,7 +763,7 @@
       <!-- LOSE -->
       <article class="reveal group relative glass rounded-2xl overflow-hidden hover:border-white/20 transition">
         <div class="absolute inset-0 opacity-30 pointer-events-none">
-          <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1200&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125">
+          <img src="https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=1200&auto=format&fit=crop" alt="Goal picker feature — fiT-X builds a training plan around your goal in 90 seconds" loading="lazy" decoding="async" class="w-full h-full object-cover grayscale contrast-125">
           <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/40"></div>
         </div>
         <div class="relative p-6 min-h-[480px] flex flex-col">
@@ -808,7 +815,7 @@
       <!-- GAIN -->
       <article class="reveal group relative glass rounded-2xl overflow-hidden hover:border-white/20 transition" style="transition-delay: 0.1s;">
         <div class="absolute inset-0 opacity-30 pointer-events-none">
-          <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=1200&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125">
+          <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?q=80&w=1200&auto=format&fit=crop" alt="Cut phase plan — training supported by a calorie deficit" loading="lazy" decoding="async" class="w-full h-full object-cover grayscale contrast-125">
           <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/40"></div>
         </div>
         <div class="relative p-6 min-h-[480px] flex flex-col">
@@ -866,7 +873,7 @@
       <!-- MAINTAIN -->
       <article class="reveal group relative glass rounded-2xl overflow-hidden hover:border-white/20 transition" style="transition-delay: 0.2s;">
         <div class="absolute inset-0 opacity-30 pointer-events-none">
-          <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125">
+          <img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?q=80&w=1200&auto=format&fit=crop" alt="Lean bulk plan — training supported by a calorie surplus" loading="lazy" decoding="async" class="w-full h-full object-cover grayscale contrast-125">
           <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/80 to-bg/40"></div>
         </div>
         <div class="relative p-6 min-h-[480px] flex flex-col">
@@ -1220,7 +1227,7 @@
       <!-- Story 1: Marcus -->
       <article class="reveal glass rounded-2xl overflow-hidden hover:border-white/20 transition">
         <div class="relative h-44 overflow-hidden">
-          <img src="https://images.unsplash.com/photo-1534258936925-c58bed479fcb?q=80&w=1200&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125 opacity-60">
+          <img src="https://images.unsplash.com/photo-1534258936925-c58bed479fcb?q=80&w=1200&auto=format&fit=crop" alt="Real dashboard charts — weight and calorie trends from logged data" loading="lazy" decoding="async" class="w-full h-full object-cover grayscale contrast-125 opacity-60">
           <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent"></div>
           <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div>
@@ -1271,7 +1278,7 @@
       <!-- Story 2: Aisha -->
       <article class="reveal glass rounded-2xl overflow-hidden hover:border-white/20 transition" style="transition-delay: 0.1s;">
         <div class="relative h-44 overflow-hidden">
-          <img src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?q=80&w=1200&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125 opacity-60">
+          <img src="https://images.unsplash.com/photo-1518310383802-640c2de311b2?q=80&w=1200&auto=format&fit=crop" alt="Activity tracking — every logged session feeds the weekly minutes chart" loading="lazy" decoding="async" class="w-full h-full object-cover grayscale contrast-125 opacity-60">
           <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent"></div>
           <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div>
@@ -1322,7 +1329,7 @@
       <!-- Story 3: Daniel -->
       <article class="reveal glass rounded-2xl overflow-hidden hover:border-white/20 transition" style="transition-delay: 0.2s;">
         <div class="relative h-44 overflow-hidden">
-          <img src="https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?q=80&w=1200&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125 opacity-60">
+          <img src="https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?q=80&w=1200&auto=format&fit=crop" alt="Progress tracking — streaks and adherence built from daily logs" loading="lazy" decoding="async" class="w-full h-full object-cover grayscale contrast-125 opacity-60">
           <div class="absolute inset-0 bg-gradient-to-t from-bg via-bg/40 to-transparent"></div>
           <div class="absolute bottom-3 left-4 right-4 flex items-end justify-between">
             <div>
@@ -1422,7 +1429,7 @@
 <section class="relative py-32 lg:py-40 overflow-hidden">
   <!-- Background image with heavy grade -->
   <div class="absolute inset-0">
-    <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=2400&auto=format&fit=crop" alt="" class="w-full h-full object-cover grayscale contrast-125 opacity-30">
+    <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=2400&auto=format&fit=crop" alt="" loading="lazy" decoding="async" aria-hidden="true" class="w-full h-full object-cover grayscale contrast-125 opacity-30">
     <div class="absolute inset-0 bg-gradient-to-b from-bg via-bg/85 to-bg"></div>
     <div class="absolute inset-0 grid-bg opacity-40"></div>
     <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] grad-soft rounded-full blur-[140px] opacity-40"></div>

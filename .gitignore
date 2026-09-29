@@ -33,3 +33,6 @@ plan_prototype_output.json
 /_email_plan_check.py
 /_composer_email_test.py
 /_prod_email_push.py
+
+# SEO audit raw page snapshots (reports are committed, fetches are regenerable)
+fitness-app-b0wl.onrender.com-audit/pages/

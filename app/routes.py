@@ -1,13 +1,41 @@
-from flask import Blueprint, current_app, flash, redirect, render_template, request, send_from_directory, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, send_from_directory, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from secrets import token_urlsafe
 from sqlalchemy import func, or_, select
 
 from .extensions import db, oauth
 from .models import GoogleIdentity, User, WeightLog
+from .seo import LLMS_TXT, ROBOTS_TXT, SITEMAP_LASTMOD, SITEMAP_PAGES, SITE_URL
 from .validation import validate_login_form, validate_onboarding_form, validate_signup_form
 
 main_bp = Blueprint("main", __name__)
+
+
+@main_bp.route("/robots.txt")
+def robots_txt():
+    # Plain text on purpose: crawlers expect text/plain at the root.
+    return Response(ROBOTS_TXT, mimetype="text/plain")
+
+
+@main_bp.route("/sitemap.xml")
+def sitemap_xml():
+    urls = "\n".join(
+        f"    <url>\n        <loc>{SITE_URL}{path}</loc>\n"
+        f"        <lastmod>{SITEMAP_LASTMOD}</lastmod>\n    </url>"
+        for path in SITEMAP_PAGES
+    )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{urls}\n</urlset>\n"
+    )
+    return Response(xml, mimetype="application/xml")
+
+
+@main_bp.route("/llms.txt")
+def llms_txt():
+    # Optional AI-discovery file (no Google Search effect; may help other agents).
+    return Response(LLMS_TXT, mimetype="text/plain")
 
 
 def _flash_errors(errors: list[str]) -> None:

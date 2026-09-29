@@ -1,0 +1,49 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://fitness-app-b0wl.onrender.com/#organization",
+      "name": "fiT-X",
+      "url": "https://fitness-app-b0wl.onrender.com/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://fitness-app-b0wl.onrender.com/static/android-chrome-512x512.png"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://fitness-app-b0wl.onrender.com/#website",
+      "url": "https://fitness-app-b0wl.onrender.com/",
+      "name": "fiT-X",
+      "publisher": { "@id": "https://fitness-app-b0wl.onrender.com/#organization" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://fitness-app-b0wl.onrender.com/#app",
+      "name": "fiT-X",
+      "url": "https://fitness-app-b0wl.onrender.com/",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Web",
+      "browserRequirements": "Requires JavaScript",
+      "description": "AI-coached fitness tracker: log meals, workouts, water and weight in plain language, with daily calorie targets, gym session plans and streaks.",
+      "featureList": [
+        "Natural-language meal, workout, water and weight logging",
+        "AI coach (Gemini with Groq fallback) with rule-based safety net",
+        "Daily calorie targets from Mifflin-St Jeor + goal pacing",
+        "Gym session plans composed from the workout title's muscle groups",
+        "Streaks, activity heatmap, weight trend and weekly net-calorie charts",
+        "Workout reminder emails timed to the user's local timezone"
+      ],
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "publisher": { "@id": "https://fitness-app-b0wl.onrender.com/#organization" }
+    }
+  ]
+}

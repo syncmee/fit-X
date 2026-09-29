@@ -1,7 +1,7 @@
 from datetime import timedelta
 from pathlib import Path
 
-from flask import Flask
+from flask import Flask, current_app
 from sqlalchemy import select
 
 from .config import Config
@@ -10,6 +10,25 @@ from .extensions import db, login_manager, migrate, oauth
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
 from .routes import main_bp
 from .security import generate_csrf_token, validate_csrf_request
+from .seo import JSONLD_GRAPH, SITE_URL
+
+
+def add_security_headers(response):
+    """Baseline hardening without touching rendering. HSTS is prod-only so
+    local http:// development doesn't get pinned to https in the browser."""
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    if not current_app.config["DEBUG"]:
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
+
+
+def inject_seo_globals():
+    """Canonical origin + homepage JSON-LD graph for the templates' <head>."""
+    return {"site_url": SITE_URL, "seo_jsonld_graph": JSONLD_GRAPH}
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -31,7 +50,9 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         migrate.init_app(app, db)
 
     app.before_request(validate_csrf_request)
+    app.after_request(add_security_headers)
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
+    app.context_processor(inject_seo_globals)
 
     if oauth is not None:
         oauth.init_app(app)

@@ -224,6 +224,7 @@ All configuration is environment-driven via `.env` (loaded by `python-dotenv`):
 | `SMTP_HOST` / `SMTP_PORT` | no | `smtp.gmail.com` / `587` | Use `smtp-relay.brevo.com` / `2525` on Render (free tier blocks SMTP ports 25/465/587) |
 | `SMTP_FROM` | no | SMTP user | Verified sender address shown in the From header |
 | `CRON_SECRET` | for email reminders | `""` | Shared secret required by `GET /cron/send-reminders` (matched by the scheduled GitHub Action) |
+| `SITE_URL` | no | `https://fitness-app-b0wl.onrender.com` | Canonical origin for SEO: canonical links, Open Graph, JSON-LD, sitemap. Set it when a custom domain takes over |
 | `SECRET_KEY` | yes in prod | `dev-secret-key-change-me` | Flask session signing key |
 | `DATABASE_URL` | no | SQLite at `instance/userdata.db` | Set to a PostgreSQL URL in production |
 | `FLASK_ENV` | no | `development` | `production` enables secure session cookies |

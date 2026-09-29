@@ -21,6 +21,12 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
     SQLALCHEMY_DATABASE_URI = _database_url or f"sqlite:///{DEFAULT_SQLITE_PATH.as_posix()}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # SEO canonical origin (see app/seo.py) — set SITE_URL when a custom domain
+    # takes over; canonical/OG/schema URLs and the sitemap all build from it.
+    SITE_URL = os.getenv("SITE_URL", "https://fitness-app-b0wl.onrender.com").rstrip("/")
+    # Static assets change rarely; let browsers cache them instead of
+    # revalidating on every visit. sw.js update checks cap at 24h regardless.
+    SEND_FILE_MAX_AGE_DEFAULT = 60 * 60 * 24 * 30
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
     SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV", "development").lower() == "production"
