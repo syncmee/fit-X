@@ -1460,7 +1460,7 @@
     const card = document.getElementById('pushCard');
     const dot = document.getElementById('notifDot');
     if (!PUSH_PUBLIC_KEY) {
-      card.innerHTML = 'Push notifications aren\\u2019t set up on the server yet.';
+      card.innerHTML = "Push notifications aren't set up on the server yet.";
       dot.classList.add('hidden');
       return;
     }
@@ -1475,7 +1475,7 @@
       return;
     }
     if (!('PushManager' in window) || !('Notification' in window)) {
-      card.innerHTML = 'This browser doesn\\u2019t support push notifications.';
+      card.innerHTML = "This browser doesn't support push notifications.";
       dot.classList.add('hidden');
       return;
     }
@@ -1485,13 +1485,13 @@
       card.innerHTML =
         '<div class="flex items-center justify-between">' +
         '<div><div class="text-white font-semibold mb-0.5">Reminders are on</div>' +
-        '<div class="text-gray-500">We\\u2019ll ping you ~45 min before a scheduled session.</div></div></div>' +
+        '<div class="text-gray-500">We will ping you ~45 min before a scheduled session.</div></div></div>' +
         '<button onclick="disablePush()" class="mt-2 w-full text-[11px] font-mono text-gray-400 border border-white/10 px-2 py-1.5 rounded hover:bg-white/5 transition">Turn off</button>';
       dot.classList.add('hidden');
       return;
     }
     if (Notification.permission === 'denied') {
-      card.innerHTML = 'Notifications are blocked for this site. Allow them in your browser\\u2019s site settings, then try again.';
+      card.innerHTML = "Notifications are blocked for this site. Allow them in your browser's site settings, then try again.";
       dot.classList.add('hidden');
       return;
     }
