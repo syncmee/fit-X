@@ -63,14 +63,17 @@
   }
 
   document.addEventListener("DOMContentLoaded", function () {
-    var btn = document.getElementById("installAppBtn");
-    var popup = document.getElementById("installPopup");
-    if (!btn && !popup) return;
-
+    // Register on every page that loads this script — the worker's offline
+    // fallback and asset caching apply site-wide, not just where the
+    // install button lives.
     if ("serviceWorker" in navigator) {
       // Root scope so the worker controls the whole app, not just /static/.
       navigator.serviceWorker.register("/sw.js").catch(function () { /* best effort */ });
     }
+
+    var btn = document.getElementById("installAppBtn");
+    var popup = document.getElementById("installPopup");
+    if (!btn && !popup) return;
 
     showButton();
     if (popup) setTimeout(openPopup, 1200);
