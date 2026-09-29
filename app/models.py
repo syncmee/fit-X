@@ -1,9 +1,10 @@
-from datetime import datetime
-
 from flask_login import UserMixin
+from sqlalchemy import event
+from sqlalchemy.orm import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .extensions import db, login_manager
+from .timeutil import user_now
 
 
 class User(UserMixin, db.Model):
@@ -23,7 +24,8 @@ class User(UserMixin, db.Model):
     goal = db.Column(db.String(50))
     pace = db.Column(db.Integer, default=2)  # 1 slow, 2 balanced, 3 aggressive
     # Browser-reported UTC offset in minutes (JS getTimezoneOffset, e.g. -330 for
-    # IST). Lets the reminder cron fire at the user's local wall-clock time.
+    # IST). Lets every stored timestamp and the reminder cron use the user's
+    # local wall clock.
     tz_offset_minutes = db.Column(db.Integer)
     email_reminders_enabled = db.Column(db.Boolean, default=True)
 
@@ -54,7 +56,7 @@ class User(UserMixin, db.Model):
 class WeightLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     weight = db.Column(db.Float, nullable=False)
-    date = db.Column(db.DateTime, default=datetime.utcnow)
+    date = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     def __repr__(self) -> str:
@@ -70,7 +72,7 @@ class ScheduledWorkout(db.Model):
     notes = db.Column(db.Text)
     calories_burned = db.Column(db.Integer)
     reminder_sent_at = db.Column(db.DateTime)  # set once the reminder email has gone out
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     def __repr__(self) -> str:
@@ -81,7 +83,7 @@ class CoachMessage(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     role = db.Column(db.String(20), nullable=False)
     content = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     def __repr__(self) -> str:
@@ -96,7 +98,7 @@ class MealEntry(db.Model):
     protein = db.Column(db.Integer, nullable=False, default=0)
     carbs = db.Column(db.Integer, nullable=False, default=0)
     fats = db.Column(db.Integer, nullable=False, default=0)
-    logged_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    logged_at = db.Column(db.DateTime, nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", backref="meal_entries")
@@ -108,7 +110,7 @@ class MealEntry(db.Model):
 class WaterLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     amount_ml = db.Column(db.Integer, nullable=False)
-    logged_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False, index=True)
+    logged_at = db.Column(db.DateTime, nullable=False, index=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
 
     user = db.relationship("User", backref="water_logs")
@@ -140,3 +142,24 @@ def load_user(user_id: str):
         return db.session.get(User, int(user_id))
     except (TypeError, ValueError):
         return None
+
+
+# Columns stamped with the user's wall clock when a write leaves them empty.
+_LOCAL_NOW_COLUMNS = {
+    WeightLog: "date",
+    ScheduledWorkout: "created_at",
+    CoachMessage: "created_at",
+    MealEntry: "logged_at",
+    WaterLog: "logged_at",
+}
+
+
+@event.listens_for(Session, "before_flush")
+def _stamp_user_local_times(session, flush_context, instances):
+    """Every stored datetime is the user's wall clock (app/timeutil.py). Rows
+    inserted without an explicit timestamp get one here, so no code path can
+    fall back to server/UTC time by accident."""
+    for obj in session.new:
+        field = _LOCAL_NOW_COLUMNS.get(type(obj))
+        if field is not None and getattr(obj, field) is None:
+            setattr(obj, field, user_now(getattr(obj, "user", None)))

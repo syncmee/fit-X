@@ -888,6 +888,14 @@
     twInput.value = targetWeight;
     document.getElementById('onboardingForm').appendChild(twInput);
 
+    // Report this device's UTC offset so the first weight log is stamped in
+    // the user's own wall clock (JS getTimezoneOffset convention, e.g. -330 for IST).
+    const tzInput = document.createElement('input');
+    tzInput.type = 'hidden';
+    tzInput.name = 'tz_offset';
+    tzInput.value = new Date().getTimezoneOffset();
+    document.getElementById('onboardingForm').appendChild(tzInput);
+
     // Submit the form
     document.getElementById('onboardingForm').submit();
   }

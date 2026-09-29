@@ -9,6 +9,9 @@ This module owns:
 - The dashboard blueprint routes (/dashboard, /coach/message, /meals/*,
   /water/add, /workouts/<id>/done).
 
+Time conventions (everything is stored as the user's wall clock) live in
+app/timeutil.py.
+
 Nothing else in the app should import health or coach helpers directly; if a
 feature needs them, expose it through this module.
 """
@@ -34,6 +37,15 @@ from sqlalchemy import delete, func, select
 from .extensions import db
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
 from .plans import build_plan
+from .timeutil import (
+    APP_DAY_START,
+    DAY_START_SHIFT,
+    day_bounds,
+    effective_date,
+    effective_today,
+    to_user_clock,
+    user_now,
+)
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -366,7 +378,7 @@ def process_coach_message_rules(user: User, message_text: str, now: datetime | N
 
     normalized = cleaned_message.lower()
 
-    db.session.add(CoachMessage(role="user", content=cleaned_message, user=user))
+    db.session.add(CoachMessage(role="user", content=cleaned_message, user=user, created_at=to_user_clock(user, now)))
 
     if _looks_like_help(normalized):
         outcome = CoachOutcome(
@@ -403,7 +415,7 @@ def process_coach_message_rules(user: User, message_text: str, now: datetime | N
             action="fallback",
         )
 
-    db.session.add(CoachMessage(role="assistant", content=outcome.reply, user=user))
+    db.session.add(CoachMessage(role="assistant", content=outcome.reply, user=user, created_at=to_user_clock(user, now)))
     return outcome
 
 
@@ -462,7 +474,7 @@ def _looks_like_progress_lookup(message: str) -> bool:
 
 
 def _log_weight(user: User, message: str, now: datetime) -> CoachOutcome:
-    local_now = _user_local_now(user, now)
+    local_now = to_user_clock(user, now)
     weight_kg, source_unit = _extract_weight_value(message)
     logged_at = _extract_log_datetime(message, local_now)
 
@@ -476,7 +488,7 @@ def _log_weight(user: User, message: str, now: datetime) -> CoachOutcome:
         .limit(1)
     ).scalar_one_or_none()
 
-    db.session.add(WeightLog(weight=weight_kg, date=_local_to_utc(user, logged_at), user=user))
+    db.session.add(WeightLog(weight=weight_kg, date=logged_at, user=user))
 
     if user.start_weight is None:
         user.start_weight = weight_kg
@@ -506,7 +518,7 @@ def _log_weight(user: User, message: str, now: datetime) -> CoachOutcome:
 
 def _log_water(user: User, message: str, now: datetime) -> CoachOutcome:
     lower = message.lower()
-    local_now = _user_local_now(user, now)
+    local_now = to_user_clock(user, now)
     amount_ml = None
 
     ml_match = re.search(r"\b(\d{2,5})\s*(?:ml|millilitres?|milliliters?)\b", lower)
@@ -520,10 +532,10 @@ def _log_water(user: User, message: str, now: datetime) -> CoachOutcome:
     if amount_ml is None or amount_ml <= 0:
         raise ValueError("Add an amount, for example 'Log 500 ml water'.")
 
-    db.session.add(WaterLog(amount_ml=amount_ml, logged_at=datetime.utcnow(), user=user))
+    db.session.add(WaterLog(amount_ml=amount_ml, logged_at=local_now, user=user))
     db.session.flush()
 
-    day_start, day_end = _user_utc_day_bounds(user, local_now)
+    day_start, day_end = day_bounds(local_now)
     today_total = (
         db.session.execute(
             select(func.coalesce(func.sum(WaterLog.amount_ml), 0)).where(
@@ -599,7 +611,7 @@ def _parse_meal(message: str, now: datetime) -> dict | None:
 
 
 def _log_meal(user: User, message: str, now: datetime) -> CoachOutcome:
-    local_now = _user_local_now(user, now)
+    local_now = to_user_clock(user, now)
     parsed = _parse_meal(message, local_now)
     if parsed is None:
         return CoachOutcome(
@@ -610,10 +622,10 @@ def _log_meal(user: User, message: str, now: datetime) -> CoachOutcome:
             action="meal_logged",
         )
 
-    db.session.add(MealEntry(logged_at=datetime.utcnow(), user=user, **parsed))
+    db.session.add(MealEntry(logged_at=local_now, user=user, **parsed))
     db.session.flush()
 
-    day_start, day_end = _user_utc_day_bounds(user, local_now)
+    day_start, day_end = day_bounds(local_now)
     today_totals = _sum_meal_entries(_get_meal_entries_between(user, day_start, day_end))
     macro_text = f"{parsed['protein']}P/{parsed['carbs']}C/{parsed['fats']}F"
     reply = (
@@ -624,7 +636,7 @@ def _log_meal(user: User, message: str, now: datetime) -> CoachOutcome:
 
 
 def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOutcome:
-    local_now = _user_local_now(user, now)
+    local_now = to_user_clock(user, now)
     completed_at = _extract_log_datetime(message, local_now)
     if completed_at > local_now:
         completed_at = local_now
@@ -640,6 +652,7 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
             notes=_extract_workout_notes(message, title),
             status="completed",
             user=user,
+            created_at=local_now,
         )
     )
     db.session.flush()
@@ -655,7 +668,7 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
 def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
     # Day words ("today"/"tomorrow") and the passed-time check run on the
     # user's local clock; the result stays in their wall clock.
-    local_now = _user_local_now(user, now)
+    local_now = to_user_clock(user, now)
     scheduled_for, auto_shifted = _extract_schedule_datetime(message, local_now)
     title = _extract_workout_title(message)
     duration_minutes = _extract_duration_minutes(message)
@@ -669,6 +682,7 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
             notes=notes,
             status="scheduled",
             user=user,
+            created_at=local_now,
         )
     )
 
@@ -684,7 +698,7 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
 
 
 def _build_schedule_lookup(user: User, now: datetime) -> CoachOutcome:
-    now = _user_local_now(user, now)
+    now = to_user_clock(user, now)
     upcoming = db.session.execute(
         select(ScheduledWorkout)
         .where(
@@ -713,7 +727,7 @@ def _build_schedule_lookup(user: User, now: datetime) -> CoachOutcome:
 
 
 def _build_progress_lookup(user: User, now: datetime) -> CoachOutcome:
-    now = _user_local_now(user, now)
+    now = to_user_clock(user, now)
     recent_logs = db.session.execute(
         select(WeightLog)
         .where(WeightLog.user_id == user.id)
@@ -732,7 +746,7 @@ def _build_progress_lookup(user: User, now: datetime) -> CoachOutcome:
     ).scalar_one_or_none()
 
     meal_totals = _sum_meal_entries(_get_meal_entries_between(
-        user, *_user_utc_day_bounds(user, now)))
+        user, *day_bounds(now)))
 
     if not recent_logs and next_workout is None and meal_totals["calories"] == 0:
         return CoachOutcome(
@@ -748,7 +762,7 @@ def _build_progress_lookup(user: User, now: datetime) -> CoachOutcome:
         parts.append(f"Today: {meal_totals['calories']} kcal logged")
     if recent_logs:
         latest = recent_logs[0]
-        parts.append(f"Latest weight: {latest.weight:.1f} kg on {_format_date_label(_stored_to_local_date(user, latest.date), now)}")
+        parts.append(f"Latest weight: {latest.weight:.1f} kg on {_format_date_label(effective_date(latest.date), now)}")
         if len(recent_logs) > 1:
             delta = round(latest.weight - recent_logs[1].weight, 1)
             if delta < 0:
@@ -981,45 +995,9 @@ class CoachAIError(Exception):
     """Raised when the Gemini call fails or returns unusable output."""
 
 
-def _user_local_now(user: User, now: datetime) -> datetime:
-    # scheduled_for wall-clock times and user phrases ("today 7am") belong to
-    # the user's timezone, not the server's. offset = getTimezoneOffset().
-    return now - timedelta(minutes=user.tz_offset_minutes or 0)
-
-
-# The fiT-X "day" rolls over at 4:30 AM local — a 1 AM snack still belongs to
-# yesterday's macros, and daily resets happen while the user sleeps.
-APP_DAY_START = time(hour=4, minute=30)
-_DAY_START_SHIFT = timedelta(hours=4, minutes=30)
-
-
-def _user_utc_day_bounds(user: User, local_now: datetime, day_offset: int = 0) -> tuple[datetime, datetime]:
-    """[start, end) of the user's fiT-X day (04:30 to 04:30 local), expressed
-    in stored-UTC terms so logged_at filters stay timezone-correct."""
-    offset = user.tz_offset_minutes or 0
-    logical_date = (local_now - _DAY_START_SHIFT + timedelta(days=day_offset)).date()
-    start = datetime.combine(logical_date, APP_DAY_START) + timedelta(minutes=offset)
-    return start, start + timedelta(days=1)
-
-
-def _user_effective_today(user: User) -> datetime.date:
-    """The calendar date the user is currently 'on' (shifts at 4:30 AM local)."""
-    return (_user_local_now(user, datetime.utcnow()) - _DAY_START_SHIFT).date()
-
-
-def _stored_to_local_date(user: User, dt: datetime):
-    """Effective fiT-X calendar date of a stored-UTC timestamp (day shifts at
-    4:30 AM local, so late-night logs count for the previous day)."""
-    return (dt - timedelta(minutes=user.tz_offset_minutes or 0) - _DAY_START_SHIFT).date()
-
-
-def _local_to_utc(user: User, local_dt: datetime) -> datetime:
-    return local_dt + timedelta(minutes=user.tz_offset_minutes or 0)
-
-
 def _build_ai_context(user: User, now: datetime) -> str:
-    local_now = _user_local_now(user, now)
-    today_start, today_end = _user_utc_day_bounds(user, local_now)
+    local_now = to_user_clock(user, now)
+    today_start, today_end = day_bounds(local_now)
     today_totals = _sum_meal_entries(_get_meal_entries_between(user, today_start, today_end))
     calorie_target = DEFAULT_CALORIE_TARGET.copy()
     if (
@@ -1047,7 +1025,7 @@ def _build_ai_context(user: User, now: datetime) -> str:
 
     return json.dumps(
         {
-            "user_local_today": (local_now - _DAY_START_SHIFT).strftime("%Y-%m-%d (%A)"),
+            "user_local_today": (local_now - DAY_START_SHIFT).strftime("%Y-%m-%d (%A)"),
             "user_local_time": local_now.strftime("%H:%M"),
             "timezone_note": (
                 "All dates/times above are the USER'S LOCAL wall clock, and the fiT-X day "
@@ -1118,19 +1096,19 @@ RULES:
 - Never wrap the JSON in markdown fences."""
 
 
-def _chat_day_start_utc(user: User) -> datetime:
+def _chat_day_start(user: User) -> datetime:
     # Chat memory resets with the fiT-X day at 4:30 AM local (see APP_DAY_START),
-    # not the server's midnight.
-    return _user_utc_day_bounds(user, _user_local_now(user, datetime.utcnow()))[0]
+    # not the calendar midnight.
+    return day_bounds(user_now(user))[0]
 
 
 def _prune_old_chat_messages(user: User) -> None:
-    # Chat memory is per-day: anything from before the user's local midnight is
+    # Chat memory is per-fiT-X-day: anything from before 4:30 AM local is
     # deleted, not just hidden.
     db.session.execute(
         delete(CoachMessage).where(
             CoachMessage.user_id == user.id,
-            CoachMessage.created_at < _chat_day_start_utc(user),
+            CoachMessage.created_at < _chat_day_start(user),
         )
     )
 
@@ -1142,7 +1120,7 @@ def _ai_recent_history(user: User) -> list[CoachMessage]:
             select(CoachMessage)
             .where(
                 CoachMessage.user_id == user.id,
-                CoachMessage.created_at >= _chat_day_start_utc(user),
+                CoachMessage.created_at >= _chat_day_start(user),
             )
             .order_by(CoachMessage.id.desc())
             .limit(AI_HISTORY_LIMIT)
@@ -1281,7 +1259,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
             if not 30 <= weight_kg <= 350:
                 continue
             days_ago = _clamp_int(action.get("days_ago"), 0, 7, default=0)
-            logged_at = datetime.utcnow() - timedelta(days=days_ago)
+            logged_at = to_user_clock(user, now) - timedelta(days=days_ago)
             db.session.add(WeightLog(weight=weight_kg, date=logged_at, user=user))
             if user.start_weight is None:
                 user.start_weight = weight_kg
@@ -1292,7 +1270,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
             name = " ".join(str(action.get("name") or "Meal").split())[:60]
             meal_type = str(action.get("meal_type") or "").lower()
             if meal_type not in MEAL_TYPE_ORDER:
-                meal_type = _default_meal_type(_user_local_now(user, now))
+                meal_type = _default_meal_type(to_user_clock(user, now))
             protein = _clamp_int(action.get("protein"), 0, 500)
             carbs = _clamp_int(action.get("carbs"), 0, 800)
             fats = _clamp_int(action.get("fats"), 0, 300)
@@ -1309,7 +1287,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                     protein=protein,
                     carbs=carbs,
                     fats=fats,
-                    logged_at=datetime.utcnow(),
+                    logged_at=to_user_clock(user, now),
                     user=user,
                 )
             )
@@ -1319,7 +1297,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
             amount_ml = _clamp_int(action.get("amount_ml"), 100, 5000, default=0)
             if not amount_ml:
                 continue
-            db.session.add(WaterLog(amount_ml=amount_ml, logged_at=datetime.utcnow(), user=user))
+            db.session.add(WaterLog(amount_ml=amount_ml, logged_at=to_user_clock(user, now), user=user))
             applied.append(f"{amount_ml} ml water")
 
         elif action_type in {"schedule_workout", "complete_workout"}:
@@ -1335,7 +1313,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                     scheduled_time = time(hour=max(0, min(23, hour)), minute=max(0, min(59, minute)))
                 except ValueError:
                     scheduled_time = time(hour=18, minute=0)
-                local_now = _user_local_now(user, now)
+                local_now = to_user_clock(user, now)
                 scheduled_for = datetime.combine((local_now + timedelta(days=days_ahead)).date(), scheduled_time)
                 if scheduled_for <= local_now:
                     scheduled_for = datetime.combine((local_now + timedelta(days=1)).date(), scheduled_time)
@@ -1347,15 +1325,16 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                         calories_burned=calories_burned,
                         status="scheduled",
                         user=user,
+                        created_at=local_now,
                     )
                 )
                 applied.append(f"scheduled {title}")
             else:
                 days_ago = _clamp_int(action.get("days_ago"), 0, 7, default=0)
-                # scheduled_for holds the user's local wall clock everywhere
-                # else; keep this path consistent or the row lands in the
-                # wrong week/recent windows for non-UTC users.
-                completed_at = _user_local_now(user, now) - timedelta(days=days_ago)
+                # scheduled_for is the user's wall clock like every stored
+                # datetime; deriving it from the UTC instant would land the
+                # row in the wrong week/recent windows for non-UTC users.
+                completed_at = to_user_clock(user, now) - timedelta(days=days_ago)
                 db.session.add(
                     ScheduledWorkout(
                         title=title,
@@ -1364,6 +1343,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                         calories_burned=calories_burned,
                         status="completed",
                         user=user,
+                        created_at=to_user_clock(user, now),
                     )
                 )
                 applied.append(f"completed {title}")
@@ -1377,8 +1357,8 @@ def process_coach_message_ai(
     provider = provider or _gemini_generate
     result = provider(user, message_text, now)
     applied = _apply_ai_actions(user, result["actions"], now)
-    db.session.add(CoachMessage(role="user", content=message_text, user=user))
-    db.session.add(CoachMessage(role="assistant", content=result["reply"], user=user))
+    db.session.add(CoachMessage(role="user", content=message_text, user=user, created_at=to_user_clock(user, now)))
+    db.session.add(CoachMessage(role="assistant", content=result["reply"], user=user, created_at=to_user_clock(user, now)))
     return CoachOutcome(reply=result["reply"], action="ai")
 
 
@@ -1390,8 +1370,8 @@ MEAL_TYPE_ORDER = ("breakfast", "lunch", "dinner", "snack")
 
 
 def _get_meal_entries_between(user: User, start: datetime, end: datetime) -> list[MealEntry]:
-    """Meals whose logged_at (stored UTC) falls inside the user-local window
-    [start, end) — pass bounds from _user_utc_day_bounds."""
+    """Meals whose logged_at (user wall clock) falls inside the fiT-X-day
+    window [start, end) — pass bounds from day_bounds()."""
     return list(
         db.session.execute(
             select(MealEntry)
@@ -1432,15 +1412,15 @@ def _build_week_net(user: User, local_now: datetime, target_kcal: int) -> tuple[
     """Net calories for the current Monday–Sunday week. Days run on the fiT-X
     clock (they roll over at 04:30 local), and days after today stay None so
     the chart never renders a bar for a future date."""
-    today = (local_now - _DAY_START_SHIFT).date()
+    today = effective_date(local_now)
     week_start = today - timedelta(days=today.weekday())
 
-    # [start, end) of the week in stored-UTC terms: Monday 04:30 local.
-    span_start = datetime.combine(week_start, APP_DAY_START) + timedelta(minutes=user.tz_offset_minutes or 0)
+    # [start, end) of the week on the fiT-X clock: Monday 04:30 local.
+    span_start = datetime.combine(week_start, APP_DAY_START)
     span_end = span_start + timedelta(days=7)
     per_day: dict = {}
     for entry in _get_meal_entries_between(user, span_start, span_end):
-        day = _stored_to_local_date(user, entry.logged_at)
+        day = effective_date(entry.logged_at)
         per_day[day] = per_day.get(day, 0) + entry.calories
 
     labels = ["M", "T", "W", "T", "F", "S", "S"]
@@ -1455,7 +1435,7 @@ def _build_week_net(user: User, local_now: datetime, target_kcal: int) -> tuple[
 
 
 def _get_water_today_liters(user: User, local_now: datetime) -> float:
-    start, end = _user_utc_day_bounds(user, local_now)
+    start, end = day_bounds(local_now)
     total_ml = (
         db.session.execute(
             select(func.coalesce(func.sum(WaterLog.amount_ml), 0)).where(
@@ -1470,7 +1450,10 @@ def _get_water_today_liters(user: User, local_now: datetime) -> float:
 
 
 def _build_week_activity(user: User, local_now: datetime) -> dict:
-    week_start = (local_now - timedelta(days=local_now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    # Weeks run on the fiT-X clock too: Monday 04:30 to Monday 04:30, matching
+    # the net-calorie chart, so a 1 AM Monday session counts as Sunday.
+    today = effective_date(local_now)
+    week_start = datetime.combine(today - timedelta(days=today.weekday()), APP_DAY_START)
     week_end = week_start + timedelta(days=7)
 
     workouts = db.session.execute(
@@ -1484,7 +1467,7 @@ def _build_week_activity(user: User, local_now: datetime) -> dict:
 
     minutes_by_day = {i: 0 for i in range(7)}
     for workout in workouts:
-        minutes_by_day[workout.scheduled_for.weekday()] += workout.duration_minutes or 0
+        minutes_by_day[effective_date(workout.scheduled_for).weekday()] += workout.duration_minutes or 0
 
     labels = ["M", "T", "W", "T", "F", "S", "S"]
     minutes = [minutes_by_day[i] for i in range(7)]
@@ -1505,7 +1488,8 @@ def _build_week_activity(user: User, local_now: datetime) -> dict:
 
 
 def _build_weeks_minutes_history(user: User, local_now: datetime, weeks: int = 8) -> tuple[list[str], list[int]]:
-    this_week_monday = (local_now - timedelta(days=local_now.weekday())).date()
+    today = effective_date(local_now)
+    this_week_monday = today - timedelta(days=today.weekday())
 
     rows = db.session.execute(
         select(ScheduledWorkout.scheduled_for, ScheduledWorkout.duration_minutes, ScheduledWorkout.status).where(
@@ -1518,7 +1502,8 @@ def _build_weeks_minutes_history(user: User, local_now: datetime, weeks: int = 8
     for scheduled_for, duration, _status in rows:
         if scheduled_for is None:
             continue
-        week_index = (this_week_monday - (scheduled_for.date() - timedelta(days=scheduled_for.weekday()))).days // 7
+        day = effective_date(scheduled_for)
+        week_index = (this_week_monday - (day - timedelta(days=day.weekday()))).days // 7
         if 0 <= week_index < weeks:
             per_week[week_index] = per_week.get(week_index, 0) + (duration or 0)
 
@@ -1529,23 +1514,24 @@ def _build_weeks_minutes_history(user: User, local_now: datetime, weeks: int = 8
 
 def _build_heatmap_levels(user: User, local_now: datetime, days: int = 84) -> list[int]:
     weight_dates = {
-        _stored_to_local_date(user, row[0])
+        effective_date(row[0])
         for row in db.session.execute(
             select(WeightLog.date).where(WeightLog.user_id == user.id)
         ).all()
         if row[0] is not None
     }
     meal_dates = {
-        _stored_to_local_date(user, row[0])
+        effective_date(row[0])
         for row in db.session.execute(
             select(MealEntry.logged_at).where(MealEntry.user_id == user.id)
         ).all()
         if row[0] is not None
     }
 
+    today = effective_date(local_now)
     levels: list[int] = []
     for offset in range(days - 1, -1, -1):
-        day = (local_now - timedelta(days=offset)).date()
+        day = today - timedelta(days=offset)
         level = 0
         if day in meal_dates:
             level += 1
@@ -1597,8 +1583,8 @@ def _user_initials(name: str) -> str:
 
 
 def _logging_streak(logs: list[WeightLog], user: User) -> tuple[int, list[bool]]:
-    dates = {_stored_to_local_date(user, log.date) for log in logs if log.date is not None}
-    today = _user_effective_today(user)
+    dates = {effective_date(log.date) for log in logs if log.date is not None}
+    today = effective_today(user)
     if not dates:
         return 0, [False] * 7
 
@@ -1717,7 +1703,9 @@ def _build_weight_data() -> dict:
     trend_avg = round(sum(log.weight for log in recent) / len(recent), 1) if recent else None
 
     values = [round(log.weight, 1) for log in logs[-WEIGHT_SERIES_LIMIT:]]
-    labels = [log.date.strftime("%d %b") if log.date else "" for log in logs[-WEIGHT_SERIES_LIMIT:]]
+    # Label by fiT-X day (04:30 shift) so a 1 AM weigh-in shows yesterday,
+    # matching the streak and heatmap.
+    labels = [effective_date(log.date).strftime("%d %b") if log.date else "" for log in logs[-WEIGHT_SERIES_LIMIT:]]
     if len(values) == 1:
         values = values * 2
         labels = [labels[0], "Now"]
@@ -1735,9 +1723,9 @@ def _build_weight_data() -> dict:
 
 
 def _build_dashboard_context() -> dict:
-    # _user_local_now expects a UTC instant; datetime.now() would double-shift
-    # by the server's own timezone on any host not running UTC.
-    now = _user_local_now(current_user, datetime.utcnow())  # user's wall clock from here on
+    # Every stored datetime is the user's wall clock; `now` is the same clock.
+    # Never pass datetime.now() into the time helpers — they expect UTC.
+    now = user_now(current_user)
     calorie_target = DEFAULT_CALORIE_TARGET.copy()
     bmi_summary = DEFAULT_BMI_SUMMARY.copy()
     goal_progress = 0
@@ -1783,7 +1771,7 @@ def _build_dashboard_context() -> dict:
     target_kcal = calorie_target["target"]
 
     # --- Food / hydration (today, user's local day) ---
-    today_start, today_end = _user_utc_day_bounds(current_user, now)
+    today_start, today_end = day_bounds(now)
     today_meals = _get_meal_entries_between(current_user, today_start, today_end)
     meals_by_type: dict[str, list[MealEntry]] = {meal_type: [] for meal_type in MEAL_TYPE_ORDER}
     for entry in today_meals:
@@ -1833,7 +1821,7 @@ def _build_dashboard_context() -> dict:
                 select(CoachMessage)
                 .where(
                     CoachMessage.user_id == current_user.id,
-                    CoachMessage.created_at >= _chat_day_start_utc(current_user),
+                    CoachMessage.created_at >= _chat_day_start(current_user),
                 )
                 .order_by(CoachMessage.id.desc())
                 .limit(COACH_CHAT_HISTORY_LIMIT)
@@ -1842,7 +1830,7 @@ def _build_dashboard_context() -> dict:
     )
 
     first_log = current_user.logs[0] if current_user.logs else None
-    day_count = ((now - _DAY_START_SHIFT).date() - _stored_to_local_date(current_user, first_log.date)).days + 1 if first_log and first_log.date else 1
+    day_count = (effective_date(now) - effective_date(first_log.date)).days + 1 if first_log and first_log.date else 1
 
     phase_label = GOAL_PHASE_LABELS.get(current_user.goal or "", "Set your goal")
 
@@ -1960,7 +1948,7 @@ def meals_add():
     name = " ".join((request.form.get("name") or "").split())[:60]
     meal_type = request.form.get("meal_type", "meal")
     if meal_type not in MEAL_TYPE_ORDER:
-        meal_type = _default_meal_type(_user_local_now(current_user, datetime.utcnow()))
+        meal_type = _default_meal_type(user_now(current_user))
 
     calories = _parse_nonnegative_int(request.form.get("calories"), default=0, maximum=10000)
     protein = _parse_nonnegative_int(request.form.get("protein"), maximum=1000)
@@ -2026,8 +2014,8 @@ def workout_done(workout_id: int):
         return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
     workout.status = "completed"
-    if workout.scheduled_for > _user_local_now(workout.user, datetime.utcnow()) + timedelta(minutes=5):
-        workout.scheduled_for = _user_local_now(workout.user, datetime.utcnow())
+    if workout.scheduled_for > user_now(workout.user) + timedelta(minutes=5):
+        workout.scheduled_for = user_now(workout.user)
 
     db.session.commit()
     flash(f"{workout.title} marked as done — nice work.", "success")
@@ -2075,8 +2063,8 @@ def cron_send_reminders():
 def _send_due_workout_reminders() -> dict:
     now_utc = datetime.utcnow()
     # Loose SQL prefilter so the per-user local window check in Python only sees
-    # a handful of rows. stored times are naive wall clocks, so the upper bound
-    # must cover the largest positive UTC offset (UTC+14) plus the window.
+    # a handful of rows. Stored times are the user's wall clocks, so the bounds
+    # must cover the largest UTC offsets (±14h) plus the window.
     candidates = db.session.execute(
         select(ScheduledWorkout)
         .join(User, ScheduledWorkout.user_id == User.id)
@@ -2093,13 +2081,13 @@ def _send_due_workout_reminders() -> dict:
         user = workout.user
         if not user.email_reminders_enabled:
             continue
-        local_now = now_utc - timedelta(minutes=user.tz_offset_minutes or 0)
+        local_now = to_user_clock(user, now_utc)
         starts_in_min = (workout.scheduled_for - local_now).total_seconds() / 60
         if not -15 <= starts_in_min <= REMINDER_WINDOW_MINUTES:
             continue
         ok, detail = _send_reminder_email(user, workout, starts_in_min)
         if ok:
-            workout.reminder_sent_at = now_utc
+            workout.reminder_sent_at = local_now
             sent.append(
                 {
                     "workout": workout.title,
@@ -2127,8 +2115,8 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
 
     # Week calendar for the email: Mon-Sun of the user's current local week,
     # with each day's weight-log state (done / today / missed / future).
-    today = _user_effective_today(user)
-    logged_dates = {_stored_to_local_date(user, log.date) for log in user.logs if log.date is not None}
+    today = effective_today(user)
+    logged_dates = {effective_date(log.date) for log in user.logs if log.date is not None}
     monday = today - timedelta(days=today.weekday())
     week_cells = []
     for offset in range(7):

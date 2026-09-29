@@ -224,6 +224,15 @@ def onboarding():
         current_user.pace = cleaned_data["pace"]
         current_user.onboarding = True
 
+        # Capture the zone before the first weight log is stamped, so it lands
+        # on the right fiT-X day even if the dashboard never loaded first.
+        try:
+            offset = int(request.form.get("tz_offset", ""))
+        except ValueError:
+            offset = None
+        if offset is not None and current_user.tz_offset_minutes is None and -840 <= offset <= 840:
+            current_user.tz_offset_minutes = offset
+
         if not current_user.logs:
             db.session.add(WeightLog(weight=cleaned_data["weight"], user=current_user))
 
