@@ -48,6 +48,18 @@ def homepage():
     return render_template("homepage.html")
 
 
+@main_bp.route("/sw.js")
+def service_worker():
+    # Served from the site root so the worker's scope is "/" — from /static/
+    # it would only ever control /static/ and never the app pages. no-cache
+    # so SW updates land immediately instead of waiting out the 24h cap.
+    response = send_from_directory(current_app.static_folder, "sw.js")
+    response.headers["Content-Type"] = "application/javascript"
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @main_bp.route("/google841e75738b84838b.html")
 def google_site_verification():
     # Search Console ownership-proof file — must stay at the site root,

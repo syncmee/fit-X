@@ -68,7 +68,8 @@
     if (!btn && !popup) return;
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/static/sw.js").catch(function () { /* best effort */ });
+      // Root scope so the worker controls the whole app, not just /static/.
+      navigator.serviceWorker.register("/sw.js").catch(function () { /* best effort */ });
     }
 
     showButton();

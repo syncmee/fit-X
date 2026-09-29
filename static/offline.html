@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>fiT-X — You're offline</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0A0A0A;
+    color: #fff;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+    padding: 24px;
+  }
+  .accent { width: 72px; height: 6px; background: #4ADE80; border-radius: 3px; margin: 0 auto 28px; }
+  h1 { font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+  p { color: #9CA3AF; font-size: 15px; line-height: 1.6; max-width: 420px; margin: 0 auto 28px; }
+  button {
+    background: #4ADE80;
+    color: #0A0A0A;
+    border: 0;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 12px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="accent"></div>
+  <h1>You're offline</h1>
+  <p>fiT-X needs a connection to sync your logs and coach replies. Your data is safe — check your network and try again.</p>
+  <button onclick="location.reload()">Retry</button>
+</main>
+</body>
+</html>
