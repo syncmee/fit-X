@@ -2164,6 +2164,7 @@ def _send_due_workout_reminders() -> dict:
                 title=f"fiT-X · {workout.title}",
                 body="Starts now" if starts_in_min <= 0 else f"Starts in ~{round(starts_in_min)} min",
                 url="/dashboard",
+                tag=f"workout-{workout.id}",
             )
             if push_ok:
                 delivered.append(
@@ -2231,10 +2232,12 @@ def _vapid_auth_header(endpoint: str, private_key: str) -> str:
     return f"vapid t={header}.{payload}.{sig}, k={pub_b64}"
 
 
-def _send_web_push(user: User, *, title: str, body: str, url: str = "/dashboard") -> bool:
+def _send_web_push(user: User, *, title: str, body: str, url: str = "/dashboard", tag: str | None = None) -> bool:
     """Fire a web push to every subscribed device. Returns True when at least
     one device accepted. Dead subscriptions (404/410 — expired or permission
-    revoked) are removed so they never retry."""
+    revoked) are removed so they never retry. The notification tag scopes
+    replacement on a device: same tag = replaces (one reminder per workout),
+    different tags stack side by side."""
     private_key = current_app.config.get("VAPID_PRIVATE_KEY", "")
     if not (private_key and user.push_subscriptions):
         return False
@@ -2244,9 +2247,12 @@ def _send_web_push(user: User, *, title: str, body: str, url: str = "/dashboard"
 
         for sub in user.push_subscriptions:
             try:
+                payload = {"title": title, "body": body, "url": url}
+                if tag:
+                    payload["tag"] = tag
                 wp = WebPusher({"endpoint": sub.endpoint, "keys": {"p256dh": sub.p256dh, "auth": sub.auth}})
                 resp = wp.send(
-                    json.dumps({"title": title, "body": body, "url": url}),
+                    json.dumps(payload),
                     headers={
                         "Authorization": _vapid_auth_header(sub.endpoint, private_key),
                         "TTL": "600",
