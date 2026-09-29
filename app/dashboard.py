@@ -2185,6 +2185,52 @@ def _send_due_workout_reminders() -> dict:
     return {"checked": len(candidates), "sent": sent, "failed": failed}
 
 
+def _vapid_auth_header(endpoint: str, private_key: str) -> str:
+    """Build the VAPID Authorization header for a push endpoint.
+
+    py_vapid's signer emits tokens that Apple (403 BadJwtToken) and Windows
+    (401) reject while Google's legacy endpoint tolerates them, so the ES256
+    JWS is built here directly: header {typ, alg}, payload {aud, exp, sub},
+    raw r||s signature over "header.payload"."""
+    import base64
+    from urllib.parse import urlparse
+
+    from cryptography.hazmat.primitives import hashes, serialization
+    from cryptography.hazmat.primitives.asymmetric import ec
+    from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
+
+    if private_key.startswith("-----BEGIN"):
+        priv = serialization.load_pem_private_key(private_key.encode(), password=None)
+    else:
+        pad = "=" * (-len(private_key) % 4)
+        raw = base64.urlsafe_b64decode(private_key + pad)
+        priv = ec.derive_private_key(int.from_bytes(raw, "big"), ec.SECP256R1())
+    pub_b64 = base64.urlsafe_b64encode(
+        priv.public_key().public_bytes(
+            serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint
+        )
+    ).rstrip(b"=").decode()
+
+    parsed = urlparse(endpoint)
+    header = base64.urlsafe_b64encode(
+        json.dumps({"typ": "JWT", "alg": "ES256"}, separators=(",", ":")).encode()
+    ).rstrip(b"=").decode()
+    payload = base64.urlsafe_b64encode(
+        json.dumps(
+            {
+                "aud": f"{parsed.scheme}://{parsed.netloc}",
+                "exp": int(datetime.utcnow().timestamp()) + 12 * 3600,
+                "sub": current_app.config.get("VAPID_CONTACT", "mailto:admin@fitx.app"),
+            },
+            separators=(",", ":"),
+        ).encode()
+    ).rstrip(b"=").decode()
+    der_sig = priv.sign(f"{header}.{payload}".encode(), ec.ECDSA(hashes.SHA256()))
+    r, s = decode_dss_signature(der_sig)
+    sig = base64.urlsafe_b64encode(r.to_bytes(32, "big") + s.to_bytes(32, "big")).rstrip(b"=").decode()
+    return f"vapid t={header}.{payload}.{sig}, k={pub_b64}"
+
+
 def _send_web_push(user: User, *, title: str, body: str, url: str = "/dashboard") -> bool:
     """Fire a web push to every subscribed device. Returns True when at least
     one device accepted. Dead subscriptions (404/410 — expired or permission
@@ -2192,23 +2238,31 @@ def _send_web_push(user: User, *, title: str, body: str, url: str = "/dashboard"
     private_key = current_app.config.get("VAPID_PRIVATE_KEY", "")
     if not (private_key and user.push_subscriptions):
         return False
-    claims = {"sub": current_app.config.get("VAPID_CONTACT", "mailto:admin@fitx.app")}
     sent_any = False
     try:
-        from pywebpush import webpush
+        from pywebpush import WebPusher
 
         for sub in user.push_subscriptions:
             try:
-                webpush(
-                    subscription_info={
-                        "endpoint": sub.endpoint,
-                        "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
+                wp = WebPusher({"endpoint": sub.endpoint, "keys": {"p256dh": sub.p256dh, "auth": sub.auth}})
+                resp = wp.send(
+                    json.dumps({"title": title, "body": body, "url": url}),
+                    headers={
+                        "Authorization": _vapid_auth_header(sub.endpoint, private_key),
+                        "TTL": "600",
                     },
-                    data=json.dumps({"title": title, "body": body, "url": url}),
-                    vapid_private_key=private_key,
-                    vapid_claims=claims,
                 )
-                sent_any = True
+                if resp.status_code in (404, 410):
+                    db.session.delete(sub)
+                elif not 200 <= resp.status_code < 300:
+                    current_app.logger.warning(
+                        "web push to user %s failed: %s %s",
+                        user.id,
+                        resp.status_code,
+                        resp.text[:120],
+                    )
+                else:
+                    sent_any = True
             except Exception as exc:
                 # 404/410 = expired or revoked; anything else (network error,
                 # malformed endpoint) just skips this device.
