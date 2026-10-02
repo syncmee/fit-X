@@ -49,6 +49,19 @@ from .timeutil import (
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
+
+@dashboard_bp.before_request
+def require_completed_onboarding():
+    # Someone who closed the browser mid-onboarding still authenticates on
+    # their next visit (remembered/restored session, PWA start_url is
+    # /dashboard) — send them back to finish the form instead of serving a
+    # dashboard full of null-profile defaults. Anonymous users fall through to
+    # each view's @login_required; /cron/send-reminders authenticates by
+    # secret header and has no session, so it passes the same check.
+    if current_user.is_authenticated and not current_user.onboarding:
+        return redirect(url_for("main.onboarding"))
+    return None
+
 # ============================================================
 # Health math (BMI + calorie targets)
 # ============================================================
@@ -1465,16 +1478,20 @@ def _build_week_activity(user: User, local_now: datetime) -> dict:
         )
     ).scalars().all()
 
+    # Stats count only sessions the user actually did — a scheduled workout
+    # isn't effort yet, so it must not log minutes or calories.
+    completed = [w for w in workouts if w.status == "completed"]
+
     minutes_by_day = {i: 0 for i in range(7)}
-    for workout in workouts:
+    for workout in completed:
         minutes_by_day[effective_date(workout.scheduled_for).weekday()] += workout.duration_minutes or 0
 
     labels = ["M", "T", "W", "T", "F", "S", "S"]
     minutes = [minutes_by_day[i] for i in range(7)]
     total_minutes = sum(minutes)
-    done_count = sum(1 for w in workouts if w.status == "completed")
+    done_count = len(completed)
     session_count = len(workouts)
-    total_burned = sum(w.calories_burned or 0 for w in workouts if w.status == "completed")
+    total_burned = sum(w.calories_burned or 0 for w in completed)
 
     return {
         "labels": labels,
@@ -1482,7 +1499,7 @@ def _build_week_activity(user: User, local_now: datetime) -> dict:
         "total_minutes": total_minutes,
         "session_count": session_count,
         "done_count": done_count,
-        "avg_duration": round(total_minutes / session_count) if session_count else 0,
+        "avg_duration": round(total_minutes / done_count) if done_count else 0,
         "total_burned": total_burned,
     }
 

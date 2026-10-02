@@ -85,6 +85,10 @@ def legacy_test_page():
 @main_bp.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
+        # A remembered/restored session must not skip onboarding — finishing it
+        # is the only thing standing between the user and a null profile.
+        if not current_user.onboarding:
+            return redirect(url_for("main.onboarding"))
         return redirect(url_for("dashboard.dashboard"))
 
     active_section = "signin"
@@ -157,6 +161,8 @@ def login():
 @main_bp.route("/auth/google")
 def google_login():
     if current_user.is_authenticated:
+        if not current_user.onboarding:
+            return redirect(url_for("main.onboarding"))
         return redirect(url_for("dashboard.dashboard"))
     if oauth is None or not current_app.config.get("GOOGLE_CLIENT_ID"):
         flash("Google sign-in isn't configured yet.", "error")
