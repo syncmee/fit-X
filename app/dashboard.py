@@ -27,7 +27,7 @@ from math import log
 from pathlib import Path
 from secrets import compare_digest
 from statistics import NormalDist
-from time import sleep
+from time import monotonic, sleep
 
 import requests
 from flask import Blueprint, current_app, flash, has_request_context, redirect, render_template, request, url_for
@@ -35,7 +35,19 @@ from flask_login import current_user, login_required
 from sqlalchemy import delete, func, select
 
 from .extensions import db
-from .models import CoachMessage, MealEntry, PushSubscription, ScheduledWorkout, User, WaterLog, WeightLog
+from .challenges import _day_qualifies, challenge_visible_to, run_daily_maintenance, update_challenges
+from .models import (
+    Challenge,
+    CoachMessage,
+    Food,
+    MealEntry,
+    PushSubscription,
+    ScheduledWorkout,
+    User,
+    UserChallenge,
+    WaterLog,
+    WeightLog,
+)
 from .plans import build_plan
 from .timeutil import (
     APP_DAY_START,
@@ -60,6 +72,24 @@ def require_completed_onboarding():
     # secret header and has no session, so it passes the same check.
     if current_user.is_authenticated and not current_user.onboarding:
         return redirect(url_for("main.onboarding"))
+    return None
+
+
+# Throttle window for last_active_at refreshes — one write per user per 5
+# minutes of activity, which is plenty for the admin DAU/WAU stats.
+_LAST_ACTIVE_INTERVAL = timedelta(minutes=5)
+
+
+@dashboard_bp.before_request
+def touch_last_active():
+    """Keep User.last_active_at fresh for the admin panel's DAU/WAU stats.
+    User wall clock (app/timeutil.py), refreshed at most every 5 minutes."""
+    if current_user.is_authenticated:
+        now = user_now(current_user)
+        last = current_user.last_active_at
+        if last is None or (now - last) >= _LAST_ACTIVE_INTERVAL:
+            current_user.last_active_at = now
+            db.session.commit()
     return None
 
 # ============================================================
@@ -361,15 +391,36 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
     ai_attempted = False
     if current_app.config.get("GEMINI_API_KEY", ""):
         ai_attempted = True
+        started = monotonic()
         try:
-            return process_coach_message_ai(user, cleaned_message, now)
-        except Exception:
+            return process_coach_message_ai(user, cleaned_message, now, provider_name="gemini")
+        except Exception as exc:
+            # Drop any partial writes from the failed attempt so the fallback
+            # starts from a clean session; keep the attempt as telemetry
+            # (committed immediately so later rollbacks can't drop it).
+            db.session.rollback()
+            db.session.add(CoachMessage(
+                role="error", content=str(exc)[:200], user=user,
+                created_at=to_user_clock(user, now), provider="gemini",
+                latency_ms=int((monotonic() - started) * 1000), had_error=True,
+            ))
+            db.session.commit()
             current_app.logger.warning("Gemini coach failed; trying Groq fallback.", exc_info=True)
     if current_app.config.get("GROQ_API_KEY", ""):
         ai_attempted = True
+        started = monotonic()
         try:
-            return process_coach_message_ai(user, cleaned_message, now, provider=_groq_generate)
-        except Exception:
+            return process_coach_message_ai(
+                user, cleaned_message, now, provider=_groq_generate, provider_name="groq"
+            )
+        except Exception as exc:
+            db.session.rollback()
+            db.session.add(CoachMessage(
+                role="error", content=str(exc)[:200], user=user,
+                created_at=to_user_clock(user, now), provider="groq",
+                latency_ms=int((monotonic() - started) * 1000), had_error=True,
+            ))
+            db.session.commit()
             current_app.logger.warning("Groq coach failed; falling back to rules.", exc_info=True)
 
     if ai_attempted and has_request_context():
@@ -397,12 +448,16 @@ def process_coach_message_rules(user: User, message_text: str, now: datetime | N
         outcome = CoachOutcome(
             reply=(
                 "I can log food with calories and macros, log weight, track water, schedule or complete "
-                "workouts, and report your progress. Try: "
+                "workouts, join challenges, and report your progress. Try: "
                 + "; ".join(COACH_QUICK_STARTS)
                 + "."
             ),
             action="help",
         )
+    elif _looks_like_challenge_join(normalized):
+        outcome = _join_challenge_rule(user, normalized, now)
+    elif _looks_like_challenge_lookup(normalized):
+        outcome = _build_challenge_lookup(user, now)
     elif _looks_like_schedule_lookup(normalized):
         outcome = _build_schedule_lookup(user, now)
     elif _looks_like_progress_lookup(normalized):
@@ -428,7 +483,8 @@ def process_coach_message_rules(user: User, message_text: str, now: datetime | N
             action="fallback",
         )
 
-    db.session.add(CoachMessage(role="assistant", content=outcome.reply, user=user, created_at=to_user_clock(user, now)))
+    db.session.add(CoachMessage(role="assistant", content=outcome.reply, user=user,
+                                created_at=to_user_clock(user, now), provider="rules"))
     return outcome
 
 
@@ -507,6 +563,7 @@ def _log_weight(user: User, message: str, now: datetime) -> CoachOutcome:
         user.start_weight = weight_kg
 
     _sync_current_weight(user)
+    challenge_notes = update_challenges(user, {"kind": "weight", "at": logged_at})
 
     delta_text = ""
     if previous_latest is not None:
@@ -526,6 +583,8 @@ def _log_weight(user: User, message: str, now: datetime) -> CoachOutcome:
         f"Logged {weight_kg:.1f} kg for {_format_date_label(logged_at, local_now)}."
         f"{delta_text}{unit_note} Your weight chart is updated."
     )
+    if challenge_notes:
+        reply += " " + " · ".join(challenge_notes) + "."
     return CoachOutcome(reply=reply, action="weight_logged")
 
 
@@ -645,6 +704,9 @@ def _log_meal(user: User, message: str, now: datetime) -> CoachOutcome:
         f"Logged {parsed['name']} ({parsed['meal_type']}) — {parsed['calories']} kcal · {macro_text}. "
         f"Today: {today_totals['calories']} kcal."
     )
+    challenge_notes = update_challenges(user, {"kind": "meal", "at": local_now})
+    if challenge_notes:
+        reply += " " + " · ".join(challenge_notes) + "."
     return CoachOutcome(reply=reply, action="meal_logged")
 
 
@@ -670,11 +732,17 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
     )
     db.session.flush()
 
+    challenge_notes = update_challenges(user, {
+        "kind": "workout", "at": completed_at, "title": title, "calories_burned": None,
+    })
+
     week_stats = _build_week_activity(user, local_now)
     reply = (
         f"Logged {title} ({duration_minutes} min) as completed. "
         f"This week: {week_stats['done_count']} session(s) done, {week_stats['total_minutes']} min total."
     )
+    if challenge_notes:
+        reply += " " + " · ".join(challenge_notes) + "."
     return CoachOutcome(reply=reply, action="workout_logged")
 
 
@@ -788,6 +856,82 @@ def _build_progress_lookup(user: User, now: datetime) -> CoachOutcome:
         parts.append(f"Next workout: {next_workout.title} at {_format_datetime_label(next_workout.scheduled_for, now)}")
 
     return CoachOutcome(reply=". ".join(parts) + ".", action="progress_lookup")
+
+
+def _looks_like_challenge_join(message: str) -> bool:
+    return re.search(r"\b(join|sign me up for|put me in)\b", message) is not None
+
+
+def _looks_like_challenge_lookup(message: str) -> bool:
+    return re.search(r"\bchallenge", message) is not None
+
+
+def _match_challenge_title(message: str) -> Challenge | None:
+    """Active challenge whose title words appear in the message; the most
+    word matches wins."""
+    best, best_score = None, 0
+    for c in db.session.scalars(
+        select(Challenge).where(Challenge.status == "active")
+    ).all():
+        words = [w for w in re.split(r"[^a-z0-9]+", c.title.lower()) if len(w) > 2]
+        score = sum(1 for w in words if w in message)
+        if score > best_score:
+            best, best_score = c, score
+    return best
+
+
+def _join_challenge_rule(user: User, message: str, now: datetime) -> CoachOutcome:
+    challenge = _match_challenge_title(message)
+    if challenge is None:
+        return _build_challenge_lookup(user, now)
+    exists = db.session.scalar(
+        select(UserChallenge.id).where(
+            UserChallenge.user_id == user.id,
+            UserChallenge.challenge_id == challenge.id,
+        )
+    )
+    if exists:
+        return CoachOutcome(
+            reply=f"You're already in {challenge.title} — keep logging to move the needle.",
+            action="challenge",
+        )
+    db.session.add(UserChallenge(user_id=user.id, challenge_id=challenge.id))
+    return CoachOutcome(
+        reply=f"Joined {challenge.title}! Every qualifying log counts from now on.",
+        action="challenge_joined",
+    )
+
+
+def _build_challenge_lookup(user: User, now: datetime) -> CoachOutcome:
+    active = db.session.scalars(
+        select(Challenge).where(Challenge.status == "active").order_by(Challenge.title)
+    ).all()
+    mine = {
+        uc.challenge_id: uc
+        for uc in db.session.scalars(
+            select(UserChallenge).where(
+                UserChallenge.user_id == user.id, UserChallenge.status == "active",
+            )
+        ).all()
+    }
+    if not active:
+        return CoachOutcome(
+            reply="There are no open challenges right now — check the Challenges page soon.",
+            action="challenge",
+        )
+    lines = []
+    for c in active:
+        uc = mine.get(c.id)
+        if uc is not None:
+            lines.append(
+                f"{c.title} — joined, progress {uc.progress_value:g}/{c.target_value:g}, streak {uc.current_streak}"
+            )
+        else:
+            lines.append(f"{c.title} — {c.description or c.type}")
+    return CoachOutcome(
+        reply="Open challenges: " + " · ".join(lines) + ". Say 'join <name>' and you're in.",
+        action="challenge",
+    )
 
 
 def _extract_weight_value(message: str) -> tuple[float, str]:
@@ -1008,7 +1152,68 @@ class CoachAIError(Exception):
     """Raised when the Gemini call fails or returns unusable output."""
 
 
-def _build_ai_context(user: User, now: datetime) -> str:
+def _food_db_matches(message_text: str, limit: int = 8) -> list[dict]:
+    """Food-database rows whose names (or their head before a comma —
+    'Dal' from 'Dal, cooked') appear in the user's message, longest match
+    first. The AI prefers these exact values over its own estimates."""
+    if not message_text:
+        return []
+    msg = message_text.lower()
+    matches = []
+    foods = db.session.scalars(select(Food).order_by(Food.name)).all()
+    for food in sorted(foods, key=lambda f: len(f.name), reverse=True):
+        keys = [food.name.lower()]
+        head = keys[0].split(",")[0].strip()
+        if head and head not in keys:
+            keys.append(head)
+        if any(k in msg for k in keys):
+            matches.append({
+                "name": food.name,
+                "serving": food.serving,
+                "calories": food.calories,
+                "protein_g": food.protein,
+                "carbs_g": food.carbs,
+                "fats_g": food.fats,
+            })
+            if len(matches) >= limit:
+                break
+    return matches
+
+
+def _challenges_context(user: User) -> list[dict]:
+    """Active challenges with the user's participation state, so the coach
+    can suggest and join them."""
+    out = []
+    joined = {
+        uc.challenge_id: uc
+        for uc in db.session.scalars(
+            select(UserChallenge).where(
+                UserChallenge.user_id == user.id, UserChallenge.status == "active",
+            )
+        ).all()
+    }
+    for c in db.session.scalars(
+        select(Challenge).where(Challenge.status == "active").order_by(Challenge.title)
+    ).all():
+        if not challenge_visible_to(c, user):
+            continue
+        uc = joined.get(c.id)
+        out.append({
+            "title": c.title,
+            "type": c.type,
+            "metric": c.metric,
+            "target": c.target_value,
+            "daily_target": c.daily_target,
+            "joined": uc is not None,
+            "progress": (uc.progress_value if uc else None),
+            "current_streak": (uc.current_streak if uc else None),
+        })
+        if len(out) >= 10:
+            break
+    return out
+
+
+def _build_ai_context(user: User, now: datetime, message_text: str = "") -> str:
     local_now = to_user_clock(user, now)
     today_start, today_end = day_bounds(local_now)
     today_totals = _sum_meal_entries(_get_meal_entries_between(user, today_start, today_end))
@@ -1032,13 +1237,12 @@ def _build_ai_context(user: User, now: datetime) -> str:
         )
 
     week_activity = _build_week_activity(user, local_now)
-    upcoming = _get_upcoming_workouts(local_now)
+    upcoming = _get_upcoming_workouts(user, local_now)
     next_workout = upcoming[0] if upcoming else None
     water_l = _get_water_today_liters(user, local_now)
 
-    return json.dumps(
-        {
-            "user_local_today": (local_now - DAY_START_SHIFT).strftime("%Y-%m-%d (%A)"),
+    context = {
+        "user_local_today": (local_now - DAY_START_SHIFT).strftime("%Y-%m-%d (%A)"),
             "user_local_time": local_now.strftime("%H:%M"),
             "timezone_note": (
                 "All dates/times above are the USER'S LOCAL wall clock, and the fiT-X day "
@@ -1076,15 +1280,18 @@ def _build_ai_context(user: User, now: datetime) -> str:
                 if next_workout
                 else None
             ),
-        },
-        ensure_ascii=False,
-    )
+            "active_challenges": _challenges_context(user),
+        }
+    food_matches = _food_db_matches(message_text)
+    if food_matches:
+        context["food_database_matches"] = food_matches
+    return json.dumps(context, ensure_ascii=False)
 
 
-def _ai_system_prompt(user: User, now: datetime) -> str:
+def _ai_system_prompt(user: User, now: datetime, message_text: str = "") -> str:
     return f"""You are fiT-X, the AI coach inside a fitness web app. You understand natural language in any phrasing and turn it into structured logging actions for the user's account.
 
-Current date and time on the user's device: {_build_ai_context(user, now)}
+Current date and time on the user's device: {_build_ai_context(user, now, message_text)}
 
 You reply with ONLY one JSON object, no markdown fences, matching exactly:
 {{
@@ -1098,6 +1305,7 @@ ACTION TYPES (each an object inside "actions"; use an empty array for pure quest
 3. {{"type":"log_water","amount_ml":int}}  — 100-5000 ml. "a glass" ≈ 250, "a bottle" ≈ 500.
 4. {{"type":"schedule_workout","title":"Activity","days_ahead":0,"time_24h":"18:30","duration_minutes":int,"calories_burned":int}}  — ANY activity counts: gym, running, cycling, swimming, yoga, pilates, boxing, martial arts, sports, walking. days_ahead 0-30 (0 = today; if that time already passed, use tomorrow). time_24h defaults to the user's words or "18:00". duration 5-240 min. Estimate calories_burned from the user's weight, duration and intensity (light yoga ≈ 3 kcal/kg/h, brisk walk ≈ 4.3, cycling ≈ 6, running ≈ 10, HIIT/boxing ≈ 9; round to the nearest 10).
 5. {{"type":"complete_workout","title":"Activity","days_ago":0,"duration_minutes":int,"calories_burned":int}}  — the user already finished it. days_ago 0-7. Estimate burn the same way.
+6. {{"type":"join_challenge","challenge_title":"exact title from active_challenges"}}  — the user wants to join one of the app's active challenges (not a workout). Only for titles in the active_challenges list, and only ones with "joined": false. If they are already joined, just say so with empty actions.
 
 RULES:
 - The app already computes the user's official daily calorie target (daily_calorie_target in the context). Treat it as the single source of truth for intake advice — never present a different daily number as the plan. If the user asks for more aggressive or faster pacing, explain the current target and why it is conservative; suggest talking to a professional for anything beyond it.
@@ -1105,6 +1313,8 @@ RULES:
 - For any food you can recognize, ESTIMATE the calories and macros yourself from your nutrition knowledge ("7 steamed chicken momos" ≈ 40 kcal / 3g protein each, "1 plain dosa", "a bowl of dal") and log it — never ask the user for calories or macros on recognizable food. Note the estimate briefly in the reply (e.g. "Logged 7 steamed momos, roughly 380 kcal"). Only ask a clarifying question when you genuinely cannot tell what or how much they ate.
 - The user may give partial numbers ("300 kcal rotis", "20g protein shake") — use what they gave and estimate only the missing pieces.
 - For progress questions ("how am i doing", "what did I eat today"), answer from the context data above with empty actions.
+- food_database_matches lists entries from the app's curated food database whose names appear in the user's message. When logging one of those foods, base calories/macros on the listed per-serving values scaled to the portion the user describes ("2 rotis" with a 1-roti serving → double it). These values override your own estimates.
+- active_challenges lists the app's open challenges with the user's participation state. If the user asks which challenge to do or for a recommendation, suggest one from that list that fits their goal and this week's activity, and mention their progress if already joined. Use the join_challenge action only when they clearly want to join.
 - Reply in the language the user writes in.
 - Never wrap the JSON in markdown fences."""
 
@@ -1134,6 +1344,7 @@ def _ai_recent_history(user: User) -> list[CoachMessage]:
             .where(
                 CoachMessage.user_id == user.id,
                 CoachMessage.created_at >= _chat_day_start(user),
+                CoachMessage.role != "error",  # failed AI attempts are telemetry only
             )
             .order_by(CoachMessage.id.desc())
             .limit(AI_HISTORY_LIMIT)
@@ -1169,7 +1380,7 @@ def _gemini_generate(user: User, message: str, now: datetime) -> dict:
     contents.append({"role": "user", "parts": [{"text": message}]})
 
     payload = {
-        "system_instruction": {"parts": [{"text": _ai_system_prompt(user, now)}]},
+        "system_instruction": {"parts": [{"text": _ai_system_prompt(user, now, message)}]},
         "contents": contents,
         "generationConfig": {
             "temperature": 0.4,
@@ -1206,14 +1417,20 @@ def _gemini_generate(user: User, message: str, now: datetime) -> dict:
     except (KeyError, IndexError, ValueError) as exc:
         raise CoachAIError(f"Gemini response shape unexpected: {response.text[:300]}") from exc
 
-    return _parse_coach_json(text, "Gemini")
+    result = _parse_coach_json(text, "Gemini")
+    usage = response.json().get("usageMetadata") or {}
+    result["usage"] = {
+        "prompt": usage.get("promptTokenCount"),
+        "completion": usage.get("candidatesTokenCount"),
+    }
+    return result
 
 
 def _groq_generate(user: User, message: str, now: datetime) -> dict:
     api_key = current_app.config.get("GROQ_API_KEY", "")
     model = current_app.config.get("GROQ_MODEL", "openai/gpt-oss-120b")
 
-    messages = [{"role": "system", "content": _ai_system_prompt(user, now)}]
+    messages = [{"role": "system", "content": _ai_system_prompt(user, now, message)}]
     for row in reversed(_ai_recent_history(user)):
         messages.append(
             {"role": "user" if row.role == "user" else "assistant", "content": row.content}
@@ -1246,7 +1463,13 @@ def _groq_generate(user: User, message: str, now: datetime) -> dict:
     except (KeyError, IndexError, ValueError) as exc:
         raise CoachAIError(f"Groq response shape unexpected: {response.text[:300]}") from exc
 
-    return _parse_coach_json(text, "Groq")
+    result = _parse_coach_json(text, "Groq")
+    usage = response.json().get("usage") or {}
+    result["usage"] = {
+        "prompt": usage.get("prompt_tokens"),
+        "completion": usage.get("completion_tokens"),
+    }
+    return result
 
 
 def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
@@ -1257,8 +1480,9 @@ def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
     return max(minimum, min(parsed, maximum))
 
 
-def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
+def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[str], list[str]]:
     applied: list[str] = []
+    challenge_notes: list[str] = []
     for action in actions[:6]:
         if not isinstance(action, dict):
             continue
@@ -1277,6 +1501,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
             if user.start_weight is None:
                 user.start_weight = weight_kg
             _sync_current_weight(user)
+            challenge_notes.extend(update_challenges(user, {"kind": "weight", "at": logged_at}))
             applied.append(f"weight {weight_kg:.1f} kg")
 
         elif action_type == "log_meal":
@@ -1304,6 +1529,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                     user=user,
                 )
             )
+            challenge_notes.extend(update_challenges(user, {"kind": "meal", "at": to_user_clock(user, now)}))
             applied.append(f"{name} ({calories} kcal)")
 
         elif action_type == "log_water":
@@ -1359,20 +1585,72 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> list[str]:
                         created_at=to_user_clock(user, now),
                     )
                 )
+                challenge_notes.extend(update_challenges(user, {
+                    "kind": "workout", "at": completed_at,
+                    "title": title, "calories_burned": calories_burned,
+                }))
                 applied.append(f"completed {title}")
 
-    return applied
+        elif action_type == "join_challenge":
+            title = " ".join(str(action.get("challenge_title") or "").split())
+            challenge = None
+            if title:
+                challenge = db.session.scalar(
+                    select(Challenge).where(
+                        func.lower(Challenge.title) == title.lower(),
+                        Challenge.status == "active",
+                    )
+                ) or db.session.scalar(
+                    select(Challenge)
+                    .where(
+                        Challenge.title.ilike(f"%{title}%"),
+                        Challenge.status == "active",
+                    )
+                    .limit(1)
+                )
+            if challenge is None:
+                applied.append(f"no open challenge named {title!r}")
+                continue
+            already = db.session.scalar(
+                select(UserChallenge.id).where(
+                    UserChallenge.user_id == user.id,
+                    UserChallenge.challenge_id == challenge.id,
+                )
+            )
+            if already:
+                applied.append(f"already in {challenge.title}")
+                continue
+            db.session.add(UserChallenge(user_id=user.id, challenge_id=challenge.id))
+            applied.append(f"joined {challenge.title}")
+
+    return applied, challenge_notes
 
 
 def process_coach_message_ai(
-    user: User, message_text: str, now: datetime, provider=None
+    user: User, message_text: str, now: datetime, provider=None, provider_name: str = "gemini"
 ) -> CoachOutcome:
     provider = provider or _gemini_generate
+    started = monotonic()
     result = provider(user, message_text, now)
-    applied = _apply_ai_actions(user, result["actions"], now)
+    latency_ms = int((monotonic() - started) * 1000)
+    applied, challenge_notes = _apply_ai_actions(user, result["actions"], now)
+    reply = result["reply"]
+    if challenge_notes:
+        reply += " " + " · ".join(challenge_notes) + "."
+    usage = result.get("usage") or {}
     db.session.add(CoachMessage(role="user", content=message_text, user=user, created_at=to_user_clock(user, now)))
-    db.session.add(CoachMessage(role="assistant", content=result["reply"], user=user, created_at=to_user_clock(user, now)))
-    return CoachOutcome(reply=result["reply"], action="ai")
+    db.session.add(CoachMessage(
+        role="assistant",
+        content=reply,
+        user=user,
+        created_at=to_user_clock(user, now),
+        provider=provider_name,
+        latency_ms=latency_ms,
+        had_error=False,
+        prompt_tokens=usage.get("prompt"),
+        completion_tokens=usage.get("completion"),
+    ))
+    return CoachOutcome(reply=reply, action="ai")
 
 
 # ============================================================
@@ -1615,7 +1893,7 @@ def _logging_streak(logs: list[WeightLog], user: User) -> tuple[int, list[bool]]
     return streak, week
 
 
-def _get_upcoming_workouts(now: datetime) -> list[ScheduledWorkout]:
+def _get_upcoming_workouts(user: User, now: datetime) -> list[ScheduledWorkout]:
     # A session stays listed for a day past its slot. Without the grace window
     # a not-yet-completed session vanishes the minute its start time passes —
     # it leaves Upcoming (scheduled_for >= now) but Recent Sessions only shows
@@ -1624,7 +1902,7 @@ def _get_upcoming_workouts(now: datetime) -> list[ScheduledWorkout]:
         db.session.execute(
             select(ScheduledWorkout)
             .where(
-                ScheduledWorkout.user_id == current_user.id,
+                ScheduledWorkout.user_id == user.id,
                 ScheduledWorkout.status == "scheduled",
                 ScheduledWorkout.scheduled_for >= now - timedelta(hours=24),
             )
@@ -1815,7 +2093,7 @@ def _build_dashboard_context() -> dict:
     streak, streak_week = _logging_streak(list(current_user.logs), current_user)
 
     # --- Workouts ---
-    upcoming_workouts = _get_upcoming_workouts(now)
+    upcoming_workouts = _get_upcoming_workouts(current_user, now)
     next_workout = upcoming_workouts[0] if upcoming_workouts else None
     recent_completed = _get_recent_completed(now)
     week_activity = _build_week_activity(current_user, now)
@@ -1839,6 +2117,7 @@ def _build_dashboard_context() -> dict:
                 .where(
                     CoachMessage.user_id == current_user.id,
                     CoachMessage.created_at >= _chat_day_start(current_user),
+                    CoachMessage.role != "error",  # telemetry rows stay out of the chat feed
                 )
                 .order_by(CoachMessage.id.desc())
                 .limit(COACH_CHAT_HISTORY_LIMIT)
@@ -1993,8 +2272,9 @@ def meals_add():
             user=current_user,
         )
     )
+    challenge_notes = update_challenges(current_user, {"kind": "meal", "at": user_now(current_user)})
     db.session.commit()
-    flash(f"Logged {name} — {calories} kcal.", "success")
+    flash(f"Logged {name} — {calories} kcal." + (" " + " · ".join(challenge_notes) + "." if challenge_notes else ""), "success")
     return redirect(url_for("dashboard.dashboard", _anchor="nutrition"))
 
 
@@ -2032,13 +2312,27 @@ def workout_done(workout_id: int):
     if workout is None or workout.user_id != current_user.id:
         flash("That workout does not exist.", "error")
         return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+    # Double-submit guard: a second click must not double-count challenges.
+    if workout.status == "completed":
+        flash("That workout was already marked as done.", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
     workout.status = "completed"
     if workout.scheduled_for > user_now(workout.user) + timedelta(minutes=5):
         workout.scheduled_for = user_now(workout.user)
 
+    challenge_notes = update_challenges(current_user, {
+        "kind": "workout",
+        "at": workout.scheduled_for,
+        "title": workout.title,
+        "calories_burned": workout.calories_burned,
+    })
     db.session.commit()
-    flash(f"{workout.title} marked as done — nice work.", "success")
+    flash(
+        f"{workout.title} marked as done — nice work."
+        + (" " + " · ".join(challenge_notes) + "." if challenge_notes else ""),
+        "success",
+    )
     return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
 
@@ -2133,7 +2427,107 @@ def cron_send_reminders():
     provided = request.headers.get("X-Cron-Secret", "")
     if not secret or not compare_digest(provided, secret):
         return {"error": "unauthorized"}, 403
-    return _send_due_workout_reminders()
+    result = _send_due_workout_reminders()
+    result["challenge_reminders"] = send_due_challenge_reminders()
+    return result
+
+
+@dashboard_bp.route("/cron/daily-challenges", methods=["GET"])
+def cron_daily_challenges():
+    """Daily maintenance: activate scheduled challenges, end expired ones,
+    reset broken streaks, fail expired rolling windows."""
+    secret = current_app.config.get("CRON_SECRET", "")
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not secret or not compare_digest(provided, secret):
+        return {"error": "unauthorized"}, 403
+    return run_daily_maintenance()
+
+
+# ============= Challenge reminders (Step 8) =============
+# Rides the same 10-minute cron as workout reminders. Nudges go out in the
+# user's local evening (18:00–21:59) once per participation per ~20h.
+CHALLENGE_REMINDER_MIN_HOUR = 18
+CHALLENGE_REMINDER_MAX_HOUR = 22
+CHALLENGE_REMINDER_THROTTLE = timedelta(hours=20)
+
+
+def send_due_challenge_reminders() -> dict:
+    """Nudge users who joined a challenge but haven't logged a qualifying
+    entry for it today (their fiT-X day)."""
+    sent, failed = [], 0
+    participations = db.session.scalars(
+        select(UserChallenge)
+        .join(User, UserChallenge.user_id == User.id)
+        .where(
+            UserChallenge.status == "active",
+            Challenge.status == "active",
+            User.status == "active",
+        )
+    ).all()
+
+    for uc in participations:
+        user = uc.user
+        challenge = uc.challenge
+        if user is None or challenge is None:
+            continue
+        local_now = user_now(user)
+        if not CHALLENGE_REMINDER_MIN_HOUR <= local_now.hour < CHALLENGE_REMINDER_MAX_HOUR:
+            continue
+        if uc.last_reminded_at and local_now - uc.last_reminded_at < CHALLENGE_REMINDER_THROTTLE:
+            continue
+        today = effective_today(user)
+        if any(
+            _day_qualifies(d.value, challenge.daily_target)
+            for d in uc.day_logs if d.date == today
+        ):
+            continue  # already logged for this challenge today
+
+        delivered = []
+        if user.push_subscriptions:
+            if _send_web_push(
+                user,
+                title=f"fiT-X · {challenge.title}",
+                body="You haven't logged today — keep the streak alive!",
+                url="/challenges",
+                tag=f"challenge-{challenge.id}-{today.isoformat()}",
+            ):
+                delivered.append("push")
+        if user.email_reminders_enabled:
+            ok, _detail = _send_challenge_reminder_email(user, challenge)
+            if ok:
+                delivered.append("email")
+
+        if delivered:
+            uc.last_reminded_at = local_now
+            sent.append({"user": user.email, "challenge": challenge.title, "via": delivered})
+        else:
+            failed += 1
+
+    db.session.commit()
+    return {"reminded": len(sent), "skipped": failed, "detail": sent}
+
+
+def _send_challenge_reminder_email(user: User, challenge: Challenge) -> tuple[bool, str]:
+    smtp_user = current_app.config.get("SMTP_USER", "")
+    smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")
+    if not smtp_user:
+        return False, "smtp not configured"
+    dashboard_url = url_for("dashboard.dashboard", _external=True)
+    subject = f"fiT-X · {challenge.title} is waiting"
+    plain = (
+        f"Hi {user.name},\n\n"
+        f"You joined {challenge.title} but haven't logged for it today. "
+        f"Log it in the coach or on the dashboard to keep your progress:\n{dashboard_url}\n\n"
+        "— fiT-X"
+    )
+    html = render_template(
+        "emails/challenge_reminder.html",
+        user_name=user.name,
+        challenge_title=challenge.title,
+        challenge_description=challenge.description,
+        dashboard_url=dashboard_url,
+    )
+    return _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
 
 
 def _send_due_workout_reminders() -> dict:
@@ -2147,6 +2541,7 @@ def _send_due_workout_reminders() -> dict:
         .where(
             ScheduledWorkout.status == "scheduled",
             ScheduledWorkout.reminder_sent_at.is_(None),
+            User.status == "active",  # suspended/banned users get no reminders
             ScheduledWorkout.scheduled_for >= now_utc - timedelta(hours=26),
             ScheduledWorkout.scheduled_for <= now_utc + timedelta(hours=14) + timedelta(minutes=REMINDER_WINDOW_MINUTES),
         )

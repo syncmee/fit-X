@@ -1,0 +1,100 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if item.id else 'New' }} exercise{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.exercises') }}" class="text-xs text-gray-400 hover:text-white">&larr; All exercises</a>
+
+<form method="post" class="glass rounded-xl p-5 space-y-4 max-w-3xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Name *</label>
+    <input type="text" name="name" value="{{ item.name or '' }}" required
+           class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Level</label>
+      <select name="level" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        <option value="">—</option>
+        {% for v in ['beginner', 'intermediate', 'expert'] %}
+        <option value="{{ v }}" {{ 'selected' if item.level == v }}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Force</label>
+      <select name="force" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        <option value="">—</option>
+        {% for v in ['push', 'pull', 'static'] %}
+        <option value="{{ v }}" {{ 'selected' if item.force == v }}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Mechanic</label>
+      <select name="mechanic" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        <option value="">—</option>
+        {% for v in ['compound', 'isolation'] %}
+        <option value="{{ v }}" {{ 'selected' if item.mechanic == v }}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Equipment</label>
+      <input type="text" name="equipment" value="{{ item.equipment or '' }}" list="equipment-list"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+      <datalist id="equipment-list">
+        {% for v in ['body only', 'barbell', 'dumbbell', 'cable', 'machine', 'kettlebells', 'bands', 'medicine ball', 'exercise ball', 'e-z curl bar', 'foam roll', 'other'] %}
+        <option value="{{ v }}">
+        {% endfor %}
+      </datalist>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Category</label>
+      <input type="text" name="category" value="{{ item.category or '' }}" list="category-list"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+      <datalist id="category-list">
+        {% for v in ['strength', 'stretching', 'plyometrics', 'powerlifting', 'olympic weightlifting', 'strongman', 'cardio'] %}
+        <option value="{{ v }}">
+        {% endfor %}
+      </datalist>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Primary muscles <span class="text-gray-600 normal-case">(comma separated)</span></label>
+      <input type="text" name="primary_muscles" value="{{ item.primary_muscles or '' }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Secondary muscles <span class="text-gray-600 normal-case">(comma separated)</span></label>
+      <input type="text" name="secondary_muscles" value="{{ item.secondary_muscles or '' }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+  </div>
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Instructions <span class="text-gray-600 normal-case">(one step per line)</span></label>
+    <textarea name="instructions" rows="6"
+              class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">{{ item.instructions or '' }}</textarea>
+  </div>
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Image URL</label>
+    <input type="text" name="image_url" value="{{ item.image_url or '' }}"
+           class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    {% if item.image_url %}<img src="{{ item.image_url }}" alt="" class="mt-2 h-24 rounded-lg border border-white/10">{% endif %}
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <button type="submit" class="grad-bg text-black text-xs font-bold px-5 py-2.5 rounded-lg">Save exercise</button>
+    <a href="{{ url_for('admin.exercises') }}" class="text-xs text-gray-400 hover:text-white">Cancel</a>
+  </div>
+</form>
+{% endblock %}

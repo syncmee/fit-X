@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+{% block title %}Announcements{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-black tracking-tighter-2">Announcements</h1>
+
+<form method="post" class="glass rounded-xl p-5 space-y-4 max-w-2xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Title *</label>
+    <input type="text" name="title" required placeholder="New challenge is live!"
+           class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+  </div>
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Message *</label>
+    <textarea name="body" rows="4" required placeholder="Tell them what's new…"
+              class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20"></textarea>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-2">Audience</label>
+      <select name="audience" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        {% for key, label in segments.items() %}
+        <option value="{{ key }}">{{ label }} ({{ sizes[key] }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-2">Channels</label>
+      <label class="flex items-center gap-2 text-xs text-gray-300 mb-1">
+        <input type="checkbox" name="channels" value="push" checked> Web push (subscribed devices)
+      </label>
+      <label class="flex items-center gap-2 text-xs text-gray-300">
+        <input type="checkbox" name="channels" value="email" checked> Email (SMTP configured: users with reminders on)
+      </label>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <button type="submit" class="grad-bg text-black text-xs font-bold px-5 py-2.5 rounded-lg"
+            onclick="return confirm('Send this announcement now?')">Send announcement</button>
+  </div>
+</form>
+{% endblock %}

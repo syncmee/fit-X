@@ -1,0 +1,9 @@
+{% if pages > 1 %}
+<div class="flex items-center justify-between text-xs text-gray-400">
+  <span>Page {{ page }} of {{ pages }}</span>
+  <div class="space-x-2">
+    {% if page > 1 %}<a href="{{ url_for(endpoint, q=q, page=page - 1) }}" class="glass rounded-lg px-3 py-2 hover:text-white">&larr; Prev</a>{% endif %}
+    {% if page < pages %}<a href="{{ url_for(endpoint, q=q, page=page + 1) }}" class="glass rounded-lg px-3 py-2 hover:text-white">Next &rarr;</a>{% endif %}
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,137 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ user.name }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.users') }}" class="text-xs text-gray-400 hover:text-white">&larr; All users</a>
+
+<!-- Profile -->
+<div class="glass rounded-xl p-5 space-y-4">
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="text-xl font-black tracking-tighter-2">{{ user.name }}
+        {% if user.is_admin %}<span class="text-[10px] uppercase tracking-wider text-yellow align-middle ml-1">admin</span>{% endif %}
+      </h1>
+      <div class="text-sm text-gray-400">{{ user.email }}</div>
+    </div>
+    <div class="flex items-center gap-2">
+      {% if user.status == 'active' %}
+        <span class="text-xs font-semibold text-green">active</span>
+      {% elif user.status == 'suspended' %}
+        <span class="text-xs font-semibold text-yellow">suspended</span>
+      {% else %}
+        <span class="text-xs font-semibold text-red-400">banned</span>
+      {% endif %}
+      {% if user.id != current_user.id %}
+        {% if user.status == 'active' %}
+        <form method="post" action="{{ url_for('admin.set_user_status', user_id=user.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="suspend">
+          <button class="glass rounded-lg px-3 py-2 text-xs text-yellow hover:opacity-80">Suspend</button>
+        </form>
+        <form method="post" action="{{ url_for('admin.set_user_status', user_id=user.id) }}" class="inline"
+              onsubmit="return confirm('Permanently ban {{ user.email }}?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="ban">
+          <button class="glass rounded-lg px-3 py-2 text-xs text-red-400 hover:opacity-80">Ban</button>
+        </form>
+        {% else %}
+        <form method="post" action="{{ url_for('admin.set_user_status', user_id=user.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="reactivate">
+          <button class="grad-bg text-black rounded-lg px-3 py-2 text-xs font-bold">Reactivate</button>
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-gray-400">
+    <div><span class="text-gray-600 block">Signup</span>{{ user.created_at.strftime('%b %d, %Y') if user.created_at else '—' }}</div>
+    <div><span class="text-gray-600 block">Last active</span>{{ user.last_active_at.strftime('%b %d, %Y %H:%M') if user.last_active_at else 'never' }}</div>
+    <div><span class="text-gray-600 block">Goal</span>{{ (user.goal or '—') | capitalize }}{% if user.pace %} · pace {{ user.pace }}/3{% endif %}</div>
+    <div><span class="text-gray-600 block">Body</span>
+      {{ user.age or '—' }}y · {{ user.height or '—' }} cm ·
+      {% if user.weight %}{{ user.weight }} kg{% if user.target_weight %} → {{ user.target_weight }} kg{% endif %}{% else %}—{% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Counts -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Weight logs</div>
+    <div class="text-2xl font-black mt-1">{{ counts.weight_logs }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Meals</div>
+    <div class="text-2xl font-black mt-1">{{ counts.meals }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Workouts</div>
+    <div class="text-2xl font-black mt-1">{{ counts.workouts_done }}<span class="text-gray-600 text-base font-semibold"> / {{ counts.workouts }}</span></div>
+  </div>
+</div>
+
+<!-- History -->
+<div class="grid lg:grid-cols-2 gap-4">
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-sm font-bold mb-3">Weight · last {{ weights | length }} of {{ counts.weight_logs }}</h2>
+    <table class="w-full text-xs">
+      <thead><tr class="text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/5">
+        <th class="text-left font-semibold py-2">Date</th><th class="text-right font-semibold py-2">kg</th>
+      </tr></thead>
+      <tbody>
+        {% for w in weights %}
+        <tr class="border-b border-white/5 last:border-0">
+          <td class="py-2 text-gray-400">{{ w.date.strftime('%b %d, %Y') }}</td>
+          <td class="py-2 text-right font-mono">{{ w.weight }}</td>
+        </tr>
+        {% else %}<tr><td colspan="2" class="py-4 text-center text-gray-600">No weight logs.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-sm font-bold mb-3">Workouts · last {{ workouts | length }} of {{ counts.workouts }}</h2>
+    <table class="w-full text-xs">
+      <thead><tr class="text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/5">
+        <th class="text-left font-semibold py-2">When</th><th class="text-left font-semibold py-2">Session</th>
+        <th class="text-right font-semibold py-2">Min</th><th class="text-right font-semibold py-2">kcal</th>
+      </tr></thead>
+      <tbody>
+        {% for w in workouts %}
+        <tr class="border-b border-white/5 last:border-0">
+          <td class="py-2 text-gray-400">{{ w.scheduled_for.strftime('%b %d, %H:%M') }}</td>
+          <td class="py-2">{{ w.title }} <span class="text-gray-600 {{ 'text-green' if w.status == 'completed' else '' }}">{{ w.status }}</span></td>
+          <td class="py-2 text-right font-mono">{{ w.duration_minutes }}</td>
+          <td class="py-2 text-right font-mono">{{ w.calories_burned or '—' }}</td>
+        </tr>
+        {% else %}<tr><td colspan="4" class="py-4 text-center text-gray-600">No workouts.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="glass rounded-xl p-5 lg:col-span-2">
+    <h2 class="text-sm font-bold mb-3">Meals · last {{ meals | length }} of {{ counts.meals }}</h2>
+    <table class="w-full text-xs">
+      <thead><tr class="text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/5">
+        <th class="text-left font-semibold py-2">Logged</th><th class="text-left font-semibold py-2">Meal</th>
+        <th class="text-left font-semibold py-2">Name</th>
+        <th class="text-right font-semibold py-2">kcal</th>
+        <th class="text-right font-semibold py-2">P / C / F g</th>
+      </tr></thead>
+      <tbody>
+        {% for m in meals %}
+        <tr class="border-b border-white/5 last:border-0">
+          <td class="py-2 text-gray-400">{{ m.logged_at.strftime('%b %d, %H:%M') }}</td>
+          <td class="py-2 text-gray-500">{{ m.meal_type }}</td>
+          <td class="py-2">{{ m.name }}</td>
+          <td class="py-2 text-right font-mono">{{ m.calories }}</td>
+          <td class="py-2 text-right font-mono text-gray-400">{{ m.protein }} / {{ m.carbs }} / {{ m.fats }}</td>
+        </tr>
+        {% else %}<tr><td colspan="5" class="py-4 text-center text-gray-600">No meals logged.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -6,9 +6,9 @@
 
 Log meals, weight, water, and any workout — gym, running, yoga, boxing, pilates — by typing
 plain sentences. fiT-X parses them with Google Gemini (Groq stands by as an automatic
-fallback), keeps the score, and shows it all in a dark, app-like dashboard. Install it to
-your home screen as a PWA, sign in with Google or email, and let it nudge you before every
-session — web push and email reminders included.
+fallback), keeps the score, and shows it all in a dark, app-like dashboard. Join challenges,
+earn badges, get nudged before every session (web push + email), install it to your home
+screen as a PWA, and manage the whole thing from a built-in admin panel.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=flat&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
@@ -133,16 +133,45 @@ date*. Yoga, running, combat sports, pilates, and weightlifting all count equall
 <tr>
 <td colspan="2" valign="top">
 
+### 🏆 Challenges & badges
+- **Four challenge types** — streak (consecutive days), cumulative (totals), single-goal (one big log), and count (N days in a window), over six metrics: workouts, distance, calories burned, meals, weigh-ins, steps
+- **Join & track** — the Challenges page shows available, joined (with progress bars and streak counters), and finished challenges; leave and rejoin anytime
+- **Badges on completion** — finishing a challenge automatically awards its badge
+- **Coach-aware** — ask *"what challenges are there?"* or *"join the 30 day streak"*; the coach suggests challenges that fit your goal and history
+- **Fully scheduled** — a daily job activates, expires, and resets challenges; evening reminders chase anyone who hasn't logged today
+- **Seeded templates** — "30-Day Streak", "Run 5K", "100 Workouts", "10K Steps × 7 Days"
+
+</td>
+</tr>
+<tr>
+<td colspan="2" valign="top">
+
 ### 🤖 The fiT-X Coach (AI)
 - Floating console on every screen — near full-screen on mobile
 - Natural-language logging for **weight, meals (with kcal/macros), water, and workouts** — the AI estimates missing values like calories and burn from your body weight, duration, and intensity
+- **Food-database aware** — when a logged food matches the curated food database, the coach uses those exact values (scaled to the portion) instead of estimating
 - Conversational: ask *"how am i doing today?"* and it answers from your real data; it reads your recent turns, so short follow-ups work
 - Every reply is persisted; quick-action buttons prefill common phrases
-- **Never breaks**: if the AI is unreachable or no key is configured, a built-in rule-based parser takes over automatically — it logs the same things and also answers schedule and progress questions
+- **Never breaks**: if the AI is unreachable or no key is configured, a built-in rule-based parser takes over automatically — it logs the same things, joins challenges, and answers schedule and progress questions
 
 </td>
 </tr>
 </table>
+
+---
+
+## Admin panel
+
+Sign in as an admin (`flask --app main promote-user you@email`) and open **/admin**:
+
+- **Dashboard** — total users, signups (7/30d) chart, DAU/WAU, workouts and meals logged per day
+- **Users** — searchable, paginated table with signup/last-active/status; detail pages with full weight, meal, and workout history; suspend, ban, delete (all audit-logged); CSV export of account data
+- **Content** — full CRUD over the exercise library (876 seeded from the free-exercise-db) and the food database
+- **Challenges** — create/schedule/publish/end challenges from templates, with audience targeting (all users, or the inactive-7d / new-users / participants segments) and per-challenge analytics (completion rate, drop-off day, average progress)
+- **Coach monitor** — requests per day, Gemini vs Groq fallback counts, error rate, latency, estimated token cost, and heavy users
+- **Announcements** — push and/or email blasts to any segment
+
+Every admin write action lands in the `audit_log` table. Suspended and banned users lose their session immediately and cannot sign in.
 
 ---
 
@@ -153,14 +182,17 @@ Flask talks to Gemini (Groq as fallback), SQLAlchemy, and the health-math CSVs.
 
 ```mermaid
 flowchart LR
-    subgraph Browser["Browser (Jinja2 + Tailwind + ApexCharts)"]
-        UI["Dashboard · Nutrition · Workouts · Progress<br/>Coach console"]
+    subgraph Browser["Browser (Jinja2 + Tailwind + ApexCharts/Chart.js)"]
+        UI["Dashboard · Nutrition · Workouts · Progress · Challenges<br/>Coach console · Admin panel"]
     end
 
     subgraph Flask["Flask app (app-factory)"]
         BP1["main_bp<br/>/ · /login · /auth/google · /onboarding<br/>/logout · /robots.txt · /sitemap.xml · /llms.txt"]
-        BP2["dashboard_bp<br/>/dashboard · /coach/message · /meals/*<br/>/water/add · /workouts/*/done · /push/*<br/>/settings/reminders · /profile/timezone<br/>/cron/send-reminders"]
+        BP2["dashboard_bp<br/>/dashboard · /coach/message · /meals/*<br/>/water/add · /workouts/*/done · /push/*<br/>/settings/reminders · /profile/timezone<br/>/cron/send-reminders · /cron/daily-challenges"]
+        BP3["challenges_bp<br/>/challenges · join · leave"]
+        BP4["admin_bp<br/>/admin · users · exercises · foods<br/>challenges · coach · announce"]
         CORE["app/dashboard.py<br/>context builder · health math<br/>AI coach + rule fallback"]
+        CHL["app/challenges.py<br/>challenge engine · segments · maintenance"]
         PLANS["app/plans.py<br/>session plan builder"]
         TIME["app/timeutil.py<br/>user wall clock · 4:30 AM day"]
         SEC["security.py<br/>custom CSRF"]
@@ -169,32 +201,41 @@ flowchart LR
 
     subgraph Data["SQLAlchemy"]
         DB[("SQLite (dev)<br/>PostgreSQL (prod)")]
-        MODELS["User · WeightLog · MealEntry<br/>WaterLog · ScheduledWorkout · CoachMessage<br/>PushSubscription"]
+        MODELS["User · WeightLog · MealEntry · WaterLog<br/>ScheduledWorkout · CoachMessage · PushSubscription<br/>Exercise · Food · Challenge · Badge<br/>UserChallenge · ChallengeDayLog · UserBadge · AuditLog"]
     end
 
     GEMINI["Google Gemini API<br/>(generateContent, JSON mode)"]
     GROQ["Groq API (fallback)<br/>(chat/completions, JSON mode)"]
     GOAUTH["Google OAuth 2.0<br/>(sign-in + profile avatar)"]
-    SMTP["SMTP (Brevo-ready)<br/>reminder email + session plan"]
+    SMTP["SMTP (Brevo-ready)<br/>reminder + announcement email"]
     PUSH["Web Push service<br/>(VAPID, per-workout tags)"]
-    CRON["GitHub Action scheduler<br/>every 10 min"]
+    CRON["GitHub Action schedulers<br/>10-min reminders · daily challenges"]
     CSV[("app/data/bmiagerev.csv<br/>CDC BMI-for-age reference<br/>app/data/exercises.json<br/>free-exercise-db")]
 
     UI -->|form posts + CSRF token| BP1
     UI -->|form posts + CSRF token| BP2
+    UI -->|form posts + CSRF token| BP3
+    UI -->|form posts + CSRF token| BP4
     BP1 --> VAL
     BP1 -->|OAuth dance| GOAUTH
     BP2 --> CORE
     BP2 --> TIME
+    BP2 --> CHL
+    BP3 --> CHL
+    BP4 --> CHL
     CORE -->|primary, 12s timeout| GEMINI
     CORE -.->|on Gemini failure| GROQ
     CORE --> CSV
     CRON -->|GET /cron/send-reminders + secret| BP2
+    CRON -->|GET /cron/daily-challenges + secret| BP2
     BP2 -->|due session, 45-min window| SMTP
     BP2 -->|due session, 45-min window| PUSH
+    BP2 -->|evening nudge, 1/day| PUSH
     SMTP --> PLANS
     BP1 --> MODELS
     BP2 --> MODELS
+    BP3 --> MODELS
+    BP4 --> MODELS
     MODELS --> DB
     SEC -.->|before_request| BP1
     SEC -.->|before_request| BP2
@@ -216,8 +257,12 @@ math (EER calorie targets, BMI), the AI coach, and its routes. `app/routes.py` s
 | `app/models.py` | `User`, `WeightLog`, `MealEntry`, `WaterLog`, `ScheduledWorkout`, `CoachMessage`, `PushSubscription` |
 | `app/security.py` | Session-based CSRF tokens (`secrets.compare_digest`) |
 | `app/validation.py` | Signup / login / onboarding form validation |
+| `app/admin.py` | Admin panel: dashboard, users (suspend/ban/delete/CSV), content CRUD, challenge admin, coach monitor, announcements, audit trail |
+| `app/challenges.py` | Challenge engine: `update_challenges()` hooks, type/metric semantics, audience segments, seed templates, daily maintenance |
 | `templates/` | Server-rendered Jinja2 (dark fiT-X design system), incl. the reminder email template |
 | `static/` | PWA assets: `manifest.json`, `sw.js` (service worker + offline page), `app-install.js`, icon set |
+| `tests/` | stdlib-unittest suite (`python -m unittest discover -s tests`) covering the challenge engine, admin gates, and coach fallback telemetry |
+| `migrations/` | Flask-Migrate/Alembic revisions — run `flask --app main db upgrade` after pulling |
 
 ---
 
@@ -338,11 +383,16 @@ All endpoints are server-rendered form posts (no JSON API), protected by session
 | `POST` | `/meals/<id>/delete` | Remove a meal entry |
 | `POST` | `/water/add` | Log water: `amount_ml` |
 | `POST` | `/workouts/<id>/done` | Mark a scheduled session completed |
+| `GET` | `/challenges` | Challenges page: available, joined, completed, badges |
+| `POST` | `/challenges/<id>/join` | Join an open challenge |
+| `POST` | `/challenges/<id>/leave` | Leave a challenge (progress resets) |
 | `POST` | `/profile/timezone` | Store the browser's UTC offset (all stamps use the user's wall clock) |
 | `POST` | `/settings/reminders` | Toggle email reminder opt-in |
 | `POST` | `/push/subscribe` | Save a web-push subscription (endpoint + keys from the bell panel) |
 | `POST` | `/push/unsubscribe` | Remove a push subscription |
-| `GET` | `/cron/send-reminders` | Scheduler entry point: deliver due reminders (requires `CRON_SECRET`) |
+| `GET` | `/cron/send-reminders` | Scheduler: due workout + challenge reminders (requires `CRON_SECRET`) |
+| `GET` | `/cron/daily-challenges` | Scheduler: daily challenge maintenance (requires `CRON_SECRET`) |
+| `*` | `/admin`, `/admin/users*`, `/admin/exercises*`, `/admin/foods*`, `/admin/challenges*`, `/admin/coach`, `/admin/announce` | Admin panel — every route gated by `admin_required` (login + `is_admin`); all write actions audit-logged |
 | `GET` | `/logout` | End session |
 
 ### The coach contract
@@ -376,6 +426,7 @@ Supported action types and fields:
 | `log_water` | `amount_ml` | 100–5000 ml |
 | `schedule_workout` | `title`, `days_ahead`, `time_24h`, `duration_minutes`, `calories_burned` | Any activity; past times shift to tomorrow |
 | `complete_workout` | `title`, `days_ago`, `duration_minutes`, `calories_burned` | Burn estimated from weight × duration × intensity |
+| `join_challenge` | `challenge_title` | Joins an active challenge by title; replies "already in" for duplicates |
 
 All action values are clamped server-side before touching the database, unknown action types
 are skipped, and the model estimates calories/macros/burn from its own nutrition knowledge for
@@ -408,10 +459,14 @@ web: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 12
 2. Add the environment variables from the [configuration table](#configuration) — set
    `DATABASE_URL` to a managed PostgreSQL instance and a strong `SECRET_KEY`, set
    `FLASK_ENV=production`
-3. Deploy — schema bootstrap happens on first boot
-4. For workout reminders: add `FITX_CRON_SECRET` (matching your `CRON_SECRET`) and
-   `FITX_APP_URL` as repo secrets so the scheduled GitHub Action can reach the cron endpoint,
-   and set `SITE_URL` so canonical links, previews, and the sitemap point at your domain
+3. Run `flask --app main db upgrade` (plus `flask --app main seed-content` and
+   `flask --app main seed-challenges` on first deploy) — then deploy; the boot-time
+   guarded ALTERs keep schema bootstrap working even without the upgrade step
+4. For the schedulers (workout + challenge reminders every 10 min, daily challenge
+   maintenance): add `FITX_CRON_SECRET` (matching your `CRON_SECRET`) and `FITX_APP_URL`
+   as repo secrets so the scheduled GitHub Actions can reach the cron endpoints, and set
+   `SITE_URL` so canonical links, previews, and the sitemap point at your domain
+5. Promote an admin: `flask --app main promote-user you@email` → sign in → `/admin`
 
 ---
 
@@ -419,8 +474,8 @@ web: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 12
 
 - [ ] **Body measurements** — waist, chest, arms, body-fat tracking (the Progress card is scaffolded as "coming soon")
 - [ ] **Editable settings** — persist biometrics, goals, and macro overrides from the settings modal (the reminder toggles already save; biometrics and goals are still read-only)
-- [ ] **Meal database & search** — food lookup with per-100 g nutrition instead of manual kcal entry
-- [ ] **Alembic migrations** — replace guarded `ALTER TABLE` statements with versioned migrations
+- [ ] **Food database expansion** — per-100 g search UI in the Add Food modal and coach prompt (the curated DB and coach wiring are live — feed it data from /admin/foods)
+- [ ] **Step data source** — step challenges are modeled and seeded; they start progressing when device sync (below) lands
 - [ ] **Device integrations** — Apple Health / Google Fit / Oura sync (the settings UI is scaffolded)
 - [ ] **Imperial units** — lb / ft / in display alongside metric
 

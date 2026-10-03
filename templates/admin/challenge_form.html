@@ -1,0 +1,150 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if item and item.id else 'New' }} challenge{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.challenges') }}" class="text-xs text-gray-400 hover:text-white">&larr; All challenges</a>
+
+{% if not item or not item.id %}
+<!-- Template picker (drafts double as templates) -->
+{% if templates %}
+<div class="glass rounded-xl p-4">
+  <div class="text-[10px] uppercase tracking-wider text-gray-500 mb-2">Start from a template</div>
+  <div class="flex flex-wrap gap-2">
+    {% for t in templates %}
+    <a href="{{ url_for('admin.challenge_new', template=t.id) }}"
+       class="glass rounded-lg px-3 py-2 text-xs text-gray-300 hover:text-white">
+      {{ t.title }} <span class="text-gray-600">· {{ t.type }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<form method="post" class="glass rounded-xl p-5 space-y-4 max-w-3xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  {% if prefill and not item.id %}
+  <div class="text-xs text-green">Prefilled from template “{{ prefill.title }}” — the template itself stays in place.</div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Title *</label>
+      <input type="text" name="title" value="{{ (item.title if item and item.title else (prefill.title if prefill else '')) }}" required
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Badge</label>
+      <select name="badge_id" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        <option value="">No badge</option>
+        {% for b in badges %}
+        <option value="{{ b.id }}" {{ 'selected' if (item and item.badge_id == b.id) or (not item and prefill and prefill.badge_id == b.id) }}>{{ b.icon }} {{ b.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Description</label>
+    <textarea name="description" rows="2"
+              class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">{{ (item.description if item and item.description else (prefill.description if prefill else '')) }}</textarea>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Type *</label>
+      <select name="type" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        {% for t in types %}
+        <option value="{{ t }}" {{ 'selected' if ((item and item.type == t) or (not item and prefill and prefill.type == t)) }}>{{ type_labels[t] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Metric *</label>
+      <select name="metric" class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        {% for m in metrics %}
+        <option value="{{ m }}" {{ 'selected' if ((item and item.metric == m) or (not item and prefill and prefill.metric == m)) }}>{{ metric_labels[m] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Target value *</label>
+      <input type="number" name="target_value" min="0.1" step="0.1"
+             value="{{ (item.target_value if item and item.target_value else (prefill.target_value if prefill else '')) }}" required
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Daily target <span class="text-gray-600 normal-case">(streak/count threshold)</span></label>
+      <input type="number" name="daily_target" min="0" step="0.1"
+             value="{{ (item.daily_target if item and item.daily_target else (prefill.daily_target if prefill else '')) }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Duration days <span class="text-gray-600 normal-case">(optional)</span></label>
+      <input type="number" name="duration_days" min="1" step="1"
+             value="{{ (item.duration_days if item and item.duration_days else (prefill.duration_days if prefill else '')) }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Start date <span class="text-gray-600 normal-case">(fixed challenges)</span></label>
+      <input type="date" name="start_date" value="{{ (item.start_date if item and item.start_date else (prefill.start_date if prefill else '')) }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">End date</label>
+      <input type="date" name="end_date" value="{{ (item.end_date if item and item.end_date else (prefill.end_date if prefill else '')) }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-xs text-gray-300">
+        <input type="checkbox" name="rolling" {{ 'checked' if (item and item.rolling) or (not item and prefill and prefill.rolling) }}>
+        Rolling — users can join anytime, window starts at their join
+      </label>
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Banner URL</label>
+      <input type="text" name="banner_url" value="{{ (item.banner_url if item and item.banner_url else (prefill.banner_url if prefill else '')) }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+  </div>
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Audience</label>
+    <div class="flex gap-3 flex-wrap">
+      <select name="audience" id="audienceSelect" onchange="document.getElementById('segmentWrap').classList.toggle('hidden', this.value !== 'segment')"
+              class="w-48 glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        <option value="all" {{ 'selected' if (item and item.audience == 'all') or not item }}>All users</option>
+        <option value="segment" {{ 'selected' if item and item.audience == 'segment' }}>Segment</option>
+      </select>
+      <select name="audience_segment" id="segmentWrap" class="{{ 'hidden' if not (item and item.audience == 'segment') }} w-56 glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+        {% for key, label in segments.items() %}
+        {% if key != 'all' %}
+        <option value="{{ key }}" {{ 'selected' if item and item.audience_segment == key }}>{{ label }}</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+    <div class="text-xs text-gray-500 mt-1">
+      Reach on publish: <span class="text-green font-semibold">{{ audience_count }}</span> users — {{ audience_label }}.
+      Segment sizes recompute when you save and reload.
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <button type="submit" class="grad-bg text-black text-xs font-bold px-5 py-2.5 rounded-lg">
+      {{ 'Save challenge' if item and item.id else 'Create draft' }}
+    </button>
+    <a href="{{ url_for('admin.challenges') }}" class="text-xs text-gray-400 hover:text-white">Cancel</a>
+  </div>
+</form>
+{% endblock %}

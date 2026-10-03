@@ -1,0 +1,26 @@
+# Daily challenge maintenance: activates scheduled challenges, ends expired
+# ones, resets broken streaks, fails expired rolling windows, all in one call.
+# Repo secrets needed (same as workout-reminders.yml):
+#   FITX_APP_URL     e.g. https://fit-x.onrender.com (no trailing slash)
+#   FITX_CRON_SECRET must match the app's CRON_SECRET env var
+name: daily-challenges
+
+on:
+  schedule:
+    # 03:17 UTC daily — early enough to flip scheduled challenges active
+    # before most members start logging.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger daily challenge maintenance
+        run: |
+          curl -sS -f --max-time 60 \
+            -H "X-Cron-Secret: $FITX_CRON_SECRET" \
+            "$FITX_APP_URL/cron/daily-challenges"
+        env:
+          FITX_APP_URL: ${{ secrets.FITX_APP_URL }}
+          FITX_CRON_SECRET: ${{ secrets.FITX_CRON_SECRET }}

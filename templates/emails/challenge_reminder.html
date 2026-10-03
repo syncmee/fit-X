@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>fiT-X · {{ challenge_title }}</title>
+</head>
+<body style="margin:0; padding:0; background-color:#0A0A0A; font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+  <div style="display:none; max-height:0; overflow:hidden;">{{ challenge_title }} is waiting — log today to keep your progress.</div>
+
+  <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" bgcolor="#0A0A0A" style="background-color:#0A0A0A;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="max-width:520px;">
+          <tr>
+            <td style="padding-bottom:24px;">
+              <span style="font-size:20px; font-weight:800; letter-spacing:-0.04em; color:#F5F5F5;">fi<span style="background:linear-gradient(135deg,#fef08a,#4ade80); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:color(srgb 1 1 1 / 0);">T-X</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td bgcolor="#151515" style="background-color:#151515; border:1px solid #262626; border-radius:16px; padding:32px 28px;">
+              <p style="margin:0 0 8px; font-size:13px; letter-spacing:1px; text-transform:uppercase; color:#4ADE80; font-weight:700;">Challenge nudge</p>
+              <h1 style="margin:0 0 12px; font-size:24px; line-height:1.25; color:#F5F5F5; font-weight:800;">{{ challenge_title }}</h1>
+              {% if challenge_description %}
+              <p style="margin:0 0 20px; font-size:14px; line-height:21px; color:#9CA3AF;">{{ challenge_description }}</p>
+              {% endif %}
+              <p style="margin:0 0 24px; font-size:15px; line-height:22px; color:#E5E5E5;">
+                Hi {{ user_name }} — you haven't logged for this challenge today.
+                Whatever you did today, it counts: log it and keep your progress moving.
+              </p>
+              <table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" bgcolor="#4ADE80" style="border-radius:10px;">
+                    <a href="{{ dashboard_url }}" target="_blank"
+                       style="display:inline-block; padding:15px 40px; font-size:15px; line-height:20px; font-weight:800; color:#0A0A0A; text-decoration:none; border-radius:10px;">Log today's session</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:20px 8px;">
+              <a href="{{ dashboard_url }}" target="_blank" style="font-size:12px; color:#9CA3AF; text-decoration:underline;">Open fiT-X</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,74 @@
+{% extends "admin/base.html" %}
+{% block title %}Challenge analytics{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.challenges') }}" class="text-xs text-gray-400 hover:text-white">&larr; All challenges</a>
+<h1 class="text-2xl font-black tracking-tighter-2">Challenge analytics</h1>
+
+<div class="glass rounded-xl p-5">
+  <h2 class="text-sm font-bold mb-4">Joined / completed / failed per challenge</h2>
+  <canvas id="analyticsChart" height="220"></canvas>
+</div>
+
+<div class="glass rounded-xl overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-[10px] uppercase tracking-wider text-gray-500 border-b border-white/5">
+        <th class="text-left font-semibold px-4 py-3">Challenge</th>
+        <th class="text-right font-semibold px-4 py-3">Joined</th>
+        <th class="text-right font-semibold px-4 py-3">Active</th>
+        <th class="text-right font-semibold px-4 py-3">Completed</th>
+        <th class="text-right font-semibold px-4 py-3">Failed</th>
+        <th class="text-right font-semibold px-4 py-3">Completion rate</th>
+        <th class="text-right font-semibold px-4 py-3">Avg progress</th>
+        <th class="text-right font-semibold px-4 py-3">Drop-off day</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr class="border-b border-white/5 last:border-0">
+        <td class="px-4 py-3 font-medium text-white">
+          {{ r.challenge.title }}
+          <div class="text-[10px] uppercase tracking-wider text-gray-600">{{ r.challenge.type }} · {{ r.challenge.status }}</div>
+        </td>
+        <td class="px-4 py-3 text-right font-mono">{{ r.joined }}</td>
+        <td class="px-4 py-3 text-right font-mono text-gray-400">{{ r.active }}</td>
+        <td class="px-4 py-3 text-right font-mono text-green">{{ r.completed }}</td>
+        <td class="px-4 py-3 text-right font-mono text-red-400">{{ r.failed }}</td>
+        <td class="px-4 py-3 text-right font-mono">{{ r.completion_rate ~ '%' if r.completion_rate is not none else '—' }}</td>
+        <td class="px-4 py-3 text-right font-mono text-gray-400">{{ r.avg_progress ~ '%' if r.avg_progress is not none else '—' }}</td>
+        <td class="px-4 py-3 text-right font-mono text-gray-400">{{ 'day ' ~ r.drop_off if r.drop_off is not none else '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8" class="px-4 py-8 text-center text-gray-500 text-sm">No challenges yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p class="text-xs text-gray-600">Drop-off day is the most common streak length among unfinished participants on streak challenges.</p>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  Chart.defaults.color = '#9CA3AF';
+  Chart.defaults.font.family = 'Inter';
+  new Chart(document.getElementById('analyticsChart'), {
+    type: 'bar',
+    data: {
+      labels: {{ labels | tojson }},
+      datasets: [
+        { label: 'Joined',   data: {{ joined | tojson }},   backgroundColor: 'rgba(254,240,138,0.7)' },
+        { label: 'Completed', data: {{ completed | tojson }}, backgroundColor: 'rgba(74,222,128,0.7)' },
+        { label: 'Failed',   data: {{ failed | tojson }},   backgroundColor: 'rgba(248,113,113,0.7)' },
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { maxRotation: 30 } },
+        y: { grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true, ticks: { precision: 0 } }
+      }
+    }
+  });
+</script>
+{% endblock %}

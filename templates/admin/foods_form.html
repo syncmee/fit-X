@@ -1,0 +1,51 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if item.id else 'New' }} food{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.foods') }}" class="text-xs text-gray-400 hover:text-white">&larr; Food database</a>
+
+<form method="post" class="glass rounded-xl p-5 space-y-4 max-w-2xl">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Name *</label>
+      <input type="text" name="name" value="{{ item.name or '' }}" required
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Serving <span class="text-gray-600 normal-case">(e.g. "100 g" or "1 medium")</span></label>
+      <input type="text" name="serving" value="{{ item.serving or '100 g' }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Calories *</label>
+      <input type="number" name="calories" min="0" step="1" value="{{ item.calories if item.calories is not none else 0 }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Protein g</label>
+      <input type="number" name="protein" min="0" step="1" value="{{ item.protein if item.protein is not none else 0 }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Carbs g</label>
+      <input type="number" name="carbs" min="0" step="1" value="{{ item.carbs if item.carbs is not none else 0 }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+    <div>
+      <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Fats g</label>
+      <input type="number" name="fats" min="0" step="1" value="{{ item.fats if item.fats is not none else 0 }}"
+             class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20">
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 pt-2">
+    <button type="submit" class="grad-bg text-black text-xs font-bold px-5 py-2.5 rounded-lg">Save food</button>
+    <a href="{{ url_for('admin.foods') }}" class="text-xs text-gray-400 hover:text-white">Cancel</a>
+  </div>
+</form>
+{% endblock %}

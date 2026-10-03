@@ -148,6 +148,12 @@ def login():
             flash("Invalid email or password.", "error")
             return render_template("login.html", active_section=active_section), 401
 
+        # Admin-imposed account state (app/admin.py): suspended and banned
+        # accounts cannot sign in. load_user also ends their existing sessions.
+        if user.status != "active":
+            flash(f"Your account is {user.status}. Contact support if this is a mistake.", "error")
+            return render_template("login.html", active_section=active_section), 403
+
         login_user(user, remember=cleaned_data["remember"])
 
         if not user.onboarding:
@@ -185,6 +191,9 @@ def google_callback():
     user = _find_or_create_google_user(profile)
     if user is None:
         flash("Your Google account's email isn't verified, so it can't be linked.", "error")
+        return redirect(url_for("main.login"))
+    if user.status != "active":
+        flash(f"Your account is {user.status}. Contact support if this is a mistake.", "error")
         return redirect(url_for("main.login"))
 
     login_user(user, remember=True)
@@ -281,6 +290,10 @@ def onboarding():
 
         if not current_user.logs:
             db.session.add(WeightLog(weight=cleaned_data["weight"], user=current_user))
+            from .challenges import update_challenges
+            from .timeutil import user_now as _user_now
+
+            update_challenges(current_user, {"kind": "weight", "at": _user_now(current_user)})
 
         db.session.commit()
         flash("Your profile is ready. Welcome to your dashboard.", "success")

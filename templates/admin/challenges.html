@@ -1,0 +1,94 @@
+{% extends "admin/base.html" %}
+{% block title %}Challenges{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between gap-4 flex-wrap">
+  <h1 class="text-2xl font-black tracking-tighter-2">Challenges</h1>
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('admin.challenge_analytics') }}" class="glass rounded-lg px-3 py-2 text-xs font-semibold text-gray-300 hover:text-white">Analytics</a>
+    <a href="{{ url_for('admin.challenge_new') }}" class="grad-bg text-black text-xs font-bold px-4 py-2 rounded-lg">+ New challenge</a>
+  </div>
+</div>
+
+<div class="glass rounded-xl overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-[10px] uppercase tracking-wider text-gray-500 border-b border-white/5">
+        <th class="text-left font-semibold px-4 py-3">Challenge</th>
+        <th class="text-left font-semibold px-4 py-3">Type / Metric</th>
+        <th class="text-left font-semibold px-4 py-3">Window</th>
+        <th class="text-right font-semibold px-4 py-3">Joined</th>
+        <th class="text-left font-semibold px-4 py-3">Status</th>
+        <th class="text-right font-semibold px-4 py-3">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in rows %}
+      <tr class="border-b border-white/5 last:border-0">
+        <td class="px-4 py-3 font-medium text-white">
+          {{ c.title }}
+          {% if c.badge %}<span class="ml-1" title="{{ c.badge.name }}">{{ c.badge.icon }}</span>{% endif %}
+          {% if c.rolling %}<span class="text-[10px] uppercase tracking-wider text-gray-500 ml-1">rolling</span>{% endif %}
+          <div class="text-xs text-gray-500 max-w-sm truncate">{{ c.description or '' }}</div>
+        </td>
+        <td class="px-4 py-3 text-xs text-gray-400">
+          {{ type_labels[c.type] or c.type }}<br>
+          <span class="text-gray-500">{{ metric_labels[c.metric] or c.metric }} · target {{ c.target_value | int }}{% if c.daily_target %} · daily {{ c.daily_target | int }}{% endif %}</span>
+        </td>
+        <td class="px-4 py-3 text-xs text-gray-400">
+          {% if c.rolling %}from join{% else %}{{ c.start_date or '—' }} → {{ c.end_date or '—' }}{% endif %}
+          {% if c.duration_days %}<div class="text-gray-500">{{ c.duration_days }} days</div>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-right font-mono">{{ counts.get(c.id, 0) }}</td>
+        <td class="px-4 py-3">
+          {% if c.status == 'active' %}<span class="text-xs font-semibold text-green">active</span>
+          {% elif c.status == 'draft' %}<span class="text-xs font-semibold text-gray-400">draft</span>
+          {% elif c.status == 'scheduled' %}<span class="text-xs font-semibold text-yellow">scheduled</span>
+          {% else %}<span class="text-xs font-semibold text-red-400">ended</span>{% endif %}
+        </td>
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <a href="{{ url_for('admin.challenge_edit', challenge_id=c.id) }}" class="text-xs text-gray-400 hover:text-white mr-3">Edit</a>
+          {% if c.status == 'draft' %}
+          <form method="post" action="{{ url_for('admin.challenge_status', challenge_id=c.id) }}" class="inline mr-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="publish">
+            <button class="text-xs text-green hover:opacity-80">Publish</button>
+          </form>
+          <form method="post" action="{{ url_for('admin.challenge_status', challenge_id=c.id) }}" class="inline mr-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="schedule">
+            <button class="text-xs text-yellow hover:opacity-80">Schedule</button>
+          </form>
+          {% elif c.status == 'scheduled' %}
+          <form method="post" action="{{ url_for('admin.challenge_status', challenge_id=c.id) }}" class="inline mr-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="publish">
+            <button class="text-xs text-green hover:opacity-80">Publish now</button>
+          </form>
+          <form method="post" action="{{ url_for('admin.challenge_status', challenge_id=c.id) }}" class="inline mr-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="redraft">
+            <button class="text-xs text-gray-400 hover:opacity-80">Back to draft</button>
+          </form>
+          {% elif c.status == 'active' %}
+          <form method="post" action="{{ url_for('admin.challenge_status', challenge_id=c.id) }}" class="inline mr-3"
+                onsubmit="return confirm('End {{ c.title }}? Participants keep their progress.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="end">
+            <button class="text-xs text-red-400 hover:opacity-80">End</button>
+          </form>
+          {% endif %}
+          <form method="post" action="{{ url_for('admin.challenge_delete', challenge_id=c.id) }}" class="inline"
+                onsubmit="return confirm('Delete {{ c.title }} and ALL participations? This cannot be undone.')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="text-xs text-gray-500 hover:text-red-400">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500 text-sm">No challenges yet — publish a template or create one.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

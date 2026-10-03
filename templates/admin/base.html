@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{% block title %}Admin{% endblock %} · fiT-X Admin</title>
+<link rel="icon" href="/static/favicon.ico" sizes="48x48">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: { bg: '#0A0A0A', bg2: '#0E0E0E', bg3: '#121212', yellow: '#fef08a', green: '#4ade80' },
+        fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+      }
+    }
+  }
+</script>
+<style>
+  :root {
+    --surface: rgba(255,255,255,0.03);
+    --border: rgba(255,255,255,0.08);
+    --grad: linear-gradient(135deg, #fef08a 0%, #4ade80 100%);
+  }
+  body { background: var(--surface, #0A0A0A); background-color: #0A0A0A; color: #F5F5F5; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  .tracking-tighter-2 { letter-spacing: -0.04em; }
+  .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .grad-bg { background: var(--grad); }
+  .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); }
+</style>
+</head>
+<body class="min-h-screen flex">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="w-56 flex-shrink-0 bg-bg2 border-r border-white/5 hidden md:flex flex-col sticky top-0 h-screen">
+    <div class="px-5 py-6">
+      <a href="{{ url_for('admin.dashboard') }}" class="text-xl font-black tracking-tighter-2"><span class="grad-text">fiT-X</span> <span>Admin</span></a>
+    </div>
+    <nav class="flex-1 px-3 space-y-1 text-sm">
+      {% set nav = request.endpoint or '' %}
+      <a href="{{ url_for('admin.dashboard') }}" class="block px-3 py-2 rounded-lg {% if nav == 'admin.dashboard' %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Dashboard</a>
+      <a href="{{ url_for('admin.users') }}" class="block px-3 py-2 rounded-lg {% if nav.startswith('admin.users') %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Users</a>
+      <a href="{{ url_for('admin.exercises') }}" class="block px-3 py-2 rounded-lg {% if nav.startswith('admin.exercises') %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Exercises</a>
+      <a href="{{ url_for('admin.foods') }}" class="block px-3 py-2 rounded-lg {% if nav.startswith('admin.foods') %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Foods</a>
+      <a href="{{ url_for('admin.challenges') }}" class="block px-3 py-2 rounded-lg {% if nav.startswith('admin.challenges') %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Challenges</a>
+      <div class="pt-4 mt-4 border-t border-white/5"></div>
+      <a href="{{ url_for('admin.coach_monitor') }}" class="block px-3 py-2 rounded-lg {% if nav == 'admin.coach_monitor' %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Coach monitor</a>
+      <a href="{{ url_for('admin.announce') }}" class="block px-3 py-2 rounded-lg {% if nav == 'admin.announce' %}bg-white/5 text-white font-semibold{% else %}text-gray-400 hover:text-white hover:bg-white/5{% endif %}">Announcements</a>
+    </nav>
+    <div class="px-3 pb-6 text-sm">
+      <a href="{{ url_for('dashboard.dashboard') }}" class="block px-3 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5">&larr; Back to app</a>
+    </div>
+  </aside>
+
+  <!-- ===================== CONTENT ===================== -->
+  <main class="flex-1 min-w-0">
+    <div class="max-w-5xl mx-auto p-6 lg:p-8 space-y-6">
+
+      <!-- Mobile nav (sidebar is md+) -->
+      <div class="md:hidden flex items-center justify-between glass rounded-xl px-4 py-3">
+        <a href="{{ url_for('admin.dashboard') }}" class="font-black tracking-tighter-2"><span class="grad-text">fiT-X</span> <span>Admin</span></a>
+        <a href="{{ url_for('dashboard.dashboard') }}" class="text-xs text-gray-400">Back to app &rarr;</a>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="glass rounded-lg px-4 py-3 text-xs font-medium {{ 'border-red-400/40 text-red-200' if category == 'error' else 'text-green' }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+</body>
+</html>

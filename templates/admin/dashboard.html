@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-black tracking-tighter-2">Overview</h1>
+
+<!-- Key stats -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Total users</div>
+    <div class="text-3xl font-black mt-1">{{ stats.total_users }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">New · 7 days</div>
+    <div class="text-3xl font-black mt-1 text-green">{{ stats.new_users_7d }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">New · 30 days</div>
+    <div class="text-3xl font-black mt-1">{{ stats.new_users_30d }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">DAU <span class="normal-case text-gray-600">/ 24h active</span></div>
+    <div class="text-3xl font-black mt-1 text-yellow">{{ stats.dau }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">WAU <span class="normal-case text-gray-600">/ 7d active</span></div>
+    <div class="text-3xl font-black mt-1 text-yellow">{{ stats.wau }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Workouts · 24h</div>
+    <div class="text-3xl font-black mt-1">{{ stats.workouts_24h }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Meals · 24h</div>
+    <div class="text-3xl font-black mt-1">{{ stats.meals_24h }}</div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="grid lg:grid-cols-2 gap-4">
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-sm font-bold mb-4">New signups · last 30 days</h2>
+    <canvas id="signupsChart" height="220"></canvas>
+  </div>
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-sm font-bold mb-4">Logged per day · last 30 days</h2>
+    <canvas id="activityChart" height="220"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  const GRID = 'rgba(255,255,255,0.06)';
+  Chart.defaults.color = '#9CA3AF';
+  Chart.defaults.font.family = 'Inter';
+
+  function lineChart(id, labels, datasets, stacked) {
+    new Chart(document.getElementById(id), {
+      type: 'line',
+      data: { labels: labels, datasets: datasets },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { display: datasets.length > 1, labels: { boxWidth: 10, boxHeight: 10 } } },
+        scales: {
+          x: { grid: { color: GRID }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+          y: { grid: { color: GRID }, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+  }
+
+  lineChart('signupsChart',
+    {{ signup_series.labels | tojson }},
+    [{ label: 'Signups', data: {{ signup_series.counts | tojson }},
+       borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.12)',
+       fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }]);
+
+  lineChart('activityChart',
+    {{ activity_series.labels | tojson }},
+    [
+      { label: 'Workouts', data: {{ activity_series.workouts | tojson }},
+        borderColor: '#fef08a', tension: 0.3, pointRadius: 0, borderWidth: 2 },
+      { label: 'Meals', data: {{ activity_series.meals | tojson }},
+        borderColor: '#4ade80', tension: 0.3, pointRadius: 0, borderWidth: 2 },
+    ]);
+</script>
+{% endblock %}

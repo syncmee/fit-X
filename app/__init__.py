@@ -1,10 +1,13 @@
 from datetime import timedelta
 from pathlib import Path
 
+import click
 from flask import Flask, current_app
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from .config import Config
+from .admin import admin_bp
+from .challenges import challenges_bp
 from .dashboard import dashboard_bp
 from .extensions import db, login_manager, migrate, oauth
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
@@ -68,6 +71,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     app.register_blueprint(main_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(challenges_bp)
+    app.register_blueprint(admin_bp)
     register_cli_commands(app)
 
     # create_all is idempotent; guarantees MealEntry/WaterLog exist in prod,
@@ -82,6 +87,10 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             'ALTER TABLE "user" ADD COLUMN pace INTEGER',
             'ALTER TABLE "user" ADD COLUMN tz_offset_minutes INTEGER',
             'ALTER TABLE "user" ADD COLUMN email_reminders_enabled BOOLEAN DEFAULT TRUE',
+            # Admin foundation (also shipped as migration 0001_admin_foundation)
+            'ALTER TABLE "user" ADD COLUMN is_admin BOOLEAN DEFAULT FALSE',
+            'ALTER TABLE "user" ADD COLUMN created_at TIMESTAMP',
+            'ALTER TABLE "user" ADD COLUMN last_active_at TIMESTAMP',
         ):
             try:
                 db.session.execute(db.text(statement))
@@ -157,6 +166,43 @@ def register_cli_commands(app: Flask) -> None:
         with app.app_context():
             db.create_all()
         print("Database initialized.")
+
+    @app.cli.command("promote-user")
+    @click.argument("email")
+    @click.option("--revoke", is_flag=True, help="Remove admin rights instead of granting them.")
+    def promote_user_command(email: str, revoke: bool) -> None:
+        """Grant (or with --revoke, remove) admin rights for a user's email."""
+        with app.app_context():
+            user = db.session.execute(
+                select(User).where(func.lower(User.email) == email.strip().lower())
+            ).scalar_one_or_none()
+            if user is None:
+                print(f"No user with email {email!r}.")
+                raise SystemExit(1)
+            user.is_admin = not revoke
+            db.session.commit()
+            print(f"{'Revoked admin from' if revoke else 'Promoted'} {user.email} ({user.name}).")
+
+    @app.cli.command("seed-content")
+    def seed_content_command() -> None:
+        """Seed the exercise library (bundled free-exercise-db) and the
+        starter food database. Idempotent — existing names are skipped."""
+        from .admin import seed_exercises_from_json, seed_starter_foods
+
+        with app.app_context():
+            exercises = seed_exercises_from_json()
+            foods = seed_starter_foods()
+        print(f"Exercises added: {exercises}. Foods added: {foods}.")
+
+    @app.cli.command("seed-challenges")
+    def seed_challenges_command() -> None:
+        """Seed the starter challenge templates (draft status) and their
+        badges. Idempotent — existing titles are skipped."""
+        from .challenges import seed_challenge_templates
+
+        with app.app_context():
+            challenges = seed_challenge_templates()
+        print(f"Challenge templates added: {challenges}.")
 
 
 app = create_app()

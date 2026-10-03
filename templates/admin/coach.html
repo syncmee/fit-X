@@ -1,0 +1,96 @@
+{% extends "admin/base.html" %}
+{% block title %}Coach monitor{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between gap-4 flex-wrap">
+  <h1 class="text-2xl font-black tracking-tighter-2">AI Coach Monitor</h1>
+  <span class="text-xs text-gray-500">last 7 days unless noted</span>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Requests · 24h</div>
+    <div class="text-2xl font-black mt-1">{{ stats.requests_24h }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Requests · 7d</div>
+    <div class="text-2xl font-black mt-1">{{ stats.requests_7d }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Successes · 7d</div>
+    <div class="text-2xl font-black mt-1 text-green">{{ stats.successes_7d }}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Error rate · 7d</div>
+    <div class="text-2xl font-black mt-1 {{ 'text-red-400' if stats.error_rate else '' }}">{{ stats.error_rate if stats.error_rate is not none else '—' }}{% if stats.error_rate %}%{% endif %}</div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Avg latency</div>
+    <div class="text-2xl font-black mt-1">{{ stats.avg_latency if stats.avg_latency is not none else '—' }}<span class="text-sm text-gray-500 font-semibold"> ms</span></div>
+  </div>
+  <div class="glass rounded-xl p-4">
+    <div class="text-[10px] uppercase tracking-wider text-gray-500">Est. cost · 7d</div>
+    <div class="text-2xl font-black mt-1 text-yellow">${{ stats.est_cost_7d }}</div>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-4">
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-sm font-bold mb-4">Requests per day · last 14 days</h2>
+    <canvas id="coachChart" height="220"></canvas>
+  </div>
+  <div class="glass rounded-xl p-5">
+    <h2 class="text-sm font-bold mb-4">Provider split · 7d (attempts incl. errors)</h2>
+    <table class="w-full text-sm">
+      <thead><tr class="text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/5">
+        <th class="text-left font-semibold py-2">Provider</th><th class="text-right font-semibold py-2">Attempts</th>
+      </tr></thead>
+      <tbody>
+        {% for provider, count in provider_counts | dictsort %}
+        <tr class="border-b border-white/5 last:border-0">
+          <td class="py-2 {% if provider == 'gemini' %}text-yellow{% elif provider == 'groq' %}text-green{% endif %}">{{ provider }}</td>
+          <td class="py-2 text-right font-mono">{{ count }}</td>
+        </tr>
+        {% else %}<tr><td colspan="2" class="py-4 text-center text-gray-600">No coach traffic yet.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    <p class="text-xs text-gray-600 mt-3">Errors are counted per failed attempt — a request that falls back from Gemini to Groq shows one of each.</p>
+  </div>
+</div>
+
+<div class="glass rounded-xl p-5">
+  <h2 class="text-sm font-bold mb-3">Heavy users · 7d</h2>
+  <table class="w-full text-sm">
+    <thead><tr class="text-[10px] uppercase tracking-wider text-gray-600 border-b border-white/5">
+      <th class="text-left font-semibold py-2">User</th>
+      <th class="text-right font-semibold py-2">Requests</th>
+      <th class="text-right font-semibold py-2">Avg latency ms</th>
+    </tr></thead>
+    <tbody>
+      {% for h in heavy %}
+      <tr class="border-b border-white/5 last:border-0">
+        <td class="py-2"><a href="{{ url_for('admin.user_detail', user_id=h.user.id) }}" class="text-white hover:text-green">{{ h.user.email }}</a></td>
+        <td class="py-2 text-right font-mono">{{ h.requests }}</td>
+        <td class="py-2 text-right font-mono text-gray-400">{{ h.avg_latency if h.avg_latency is not none else '—' }}</td>
+      </tr>
+      {% else %}<tr><td colspan="3" class="py-4 text-center text-gray-600">No coach traffic in the last 7 days.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+  Chart.defaults.color = '#9CA3AF';
+  Chart.defaults.font.family = 'Inter';
+  new Chart(document.getElementById('coachChart'), {
+    type: 'line',
+    data: { labels: {{ series.labels | tojson }},
+            datasets: [{ label: 'Requests', data: {{ series.counts | tojson }},
+                         borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.12)',
+                         fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2 }] },
+    options: { plugins: { legend: { display: false } },
+               scales: { x: { grid: { color: 'rgba(255,255,255,0.06)' }, ticks: { maxTicksLimit: 8, maxRotation: 0 } },
+                         y: { grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+</script>
+{% endblock %}
