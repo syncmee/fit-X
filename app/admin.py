@@ -348,8 +348,7 @@ def export_users():
 
 # Starter food database. Nutrition is per the listed serving; values are
 # round approximations meant to be edited by admins, not lab data.
-STARTER_FOODS = (
-    ("Roti", "1 medium (40 g)", 100, 3, 20, 1),
+STARTER_FOODS = (    ("Roti", "1 medium (40 g)", 100, 3, 20, 1),
     ("White Rice, cooked", "100 g", 130, 3, 28, 0),
     ("Brown Rice, cooked", "100 g", 112, 3, 24, 1),
     ("Dal, cooked", "100 g", 116, 9, 20, 1),
@@ -418,6 +417,37 @@ def seed_starter_foods() -> int:
         db.session.add(Food(name=name, serving=serving, calories=kcal,
                             protein=p, carbs=c, fats=f))
         added += 1
+    db.session.commit()
+    return added
+
+
+INDIAN_FOOD_CSV = Path(__file__).parent / "data" / "indian_food_nutrition_processed.csv"
+
+
+def seed_indian_foods_from_csv() -> int:
+    """Seed the food database from the Indian food nutrition dataset
+    (app/data/indian_food_nutrition_processed.csv — ~1,014 dishes, per-100 g
+    values). Skips names already present; returns rows added."""
+    if not INDIAN_FOOD_CSV.exists():
+        return 0
+    existing = {n.lower() for n in db.session.scalars(select(Food.name)).all()}
+    added = 0
+    with open(INDIAN_FOOD_CSV, encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            name = (row.get("Dish Name") or "").strip()
+            if not name or name.lower() in existing:
+                continue
+            try:
+                kcal = int(round(float(row.get("Calories (kcal)") or 0)))
+                protein = int(round(float(row.get("Protein (g)") or 0)))
+                carbs = int(round(float(row.get("Carbohydrates (g)") or 0)))
+                fats = int(round(float(row.get("Fats (g)") or 0)))
+            except (TypeError, ValueError):
+                continue
+            db.session.add(Food(name=name, serving="100 g", calories=kcal,
+                                protein=protein, carbs=carbs, fats=fats))
+            existing.add(name.lower())
+            added += 1
     db.session.commit()
     return added
 

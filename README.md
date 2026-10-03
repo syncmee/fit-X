@@ -149,7 +149,7 @@ date*. Yoga, running, combat sports, pilates, and weightlifting all count equall
 ### 🤖 The fiT-X Coach (AI)
 - Floating console on every screen — near full-screen on mobile
 - Natural-language logging for **weight, meals (with kcal/macros), water, and workouts** — the AI estimates missing values like calories and burn from your body weight, duration, and intensity
-- **Food-database aware** — when a logged food matches the curated food database, the coach uses those exact values (scaled to the portion) instead of estimating
+- **Food-database aware** — when a logged food matches the curated food database (starter set + a 1,000-dish Indian food nutrition dataset), the coach uses those exact per-100 g values (scaled to the portion) instead of estimating
 - Conversational: ask *"how am i doing today?"* and it answers from your real data; it reads your recent turns, so short follow-ups work
 - Every reply is persisted; quick-action buttons prefill common phrases
 - **Never breaks**: if the AI is unreachable or no key is configured, a built-in rule-based parser takes over automatically — it logs the same things, joins challenges, and answers schedule and progress questions
@@ -166,7 +166,7 @@ Sign in as an admin (`flask --app main promote-user you@email`) and open **/admi
 
 - **Dashboard** — total users, signups (7/30d) chart, DAU/WAU, workouts and meals logged per day
 - **Users** — searchable, paginated table with signup/last-active/status; detail pages with full weight, meal, and workout history; suspend, ban, delete (all audit-logged); CSV export of account data
-- **Content** — full CRUD over the exercise library (876 seeded from the free-exercise-db) and the food database
+- **Content** — full CRUD over the exercise library (876 seeded from the free-exercise-db) and the food database (1,000+ dishes: starter set + the Indian food nutrition dataset, per-100 g values)
 - **Challenges** — create/schedule/publish/end challenges from templates, with audience targeting (all users, or the inactive-7d / new-users / participants segments) and per-challenge analytics (completion rate, drop-off day, average progress)
 - **Coach monitor** — requests per day, Gemini vs Groq fallback counts, error rate, latency, estimated token cost, and heavy users
 - **Announcements** — push and/or email blasts to any segment
@@ -474,7 +474,7 @@ web: gunicorn main:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 12
 
 - [ ] **Body measurements** — waist, chest, arms, body-fat tracking (the Progress card is scaffolded as "coming soon")
 - [ ] **Editable settings** — persist biometrics, goals, and macro overrides from the settings modal (the reminder toggles already save; biometrics and goals are still read-only)
-- [ ] **Food database expansion** — per-100 g search UI in the Add Food modal and coach prompt (the curated DB and coach wiring are live — feed it data from /admin/foods)
+- [ ] **Food database expansion** — a per-100 g search UI in the Add Food modal (the coach wiring and the 1,000+ dish dataset are live; feed more data via /admin/foods or app/data CSVs)
 - [ ] **Step data source** — step challenges are modeled and seeded; they start progressing when device sync (below) lands
 - [ ] **Device integrations** — Apple Health / Google Fit / Oura sync (the settings UI is scaffolded)
 - [ ] **Imperial units** — lb / ft / in display alongside metric

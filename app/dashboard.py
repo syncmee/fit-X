@@ -1152,32 +1152,67 @@ class CoachAIError(Exception):
     """Raised when the Gemini call fails or returns unusable output."""
 
 
-def _food_db_matches(message_text: str, limit: int = 8) -> list[dict]:
-    """Food-database rows whose names (or their head before a comma —
-    'Dal' from 'Dal, cooked') appear in the user's message, longest match
-    first. The AI prefers these exact values over its own estimates."""
-    if not message_text:
-        return []
-    msg = message_text.lower()
-    matches = []
-    foods = db.session.scalars(select(Food).order_by(Food.name)).all()
-    for food in sorted(foods, key=lambda f: len(f.name), reverse=True):
-        keys = [food.name.lower()]
-        head = keys[0].split(",")[0].strip()
-        if head and head not in keys:
-            keys.append(head)
-        if any(k in msg for k in keys):
-            matches.append({
+# The food table can hold 1,000+ rows and the coach reads it on every
+# message — cache the match keys briefly (admin edits appear within TTL).
+# Keyed to the app instance so each app (tests included) gets its own cache.
+_FOOD_MATCH_CACHE: dict = {"app": None, "entries": None, "loaded": 0.0}
+_FOOD_MATCH_TTL_SECONDS = 300
+
+
+def _food_name_keys(name: str) -> list[str]:
+    """Lowercase aliases a food can be matched by: the full name, the head
+    before a comma or open-paren ('Dal' from 'Dal, cooked'), each '/'-split
+    side ('Roti' and 'Chapati' from 'Chapati/Roti'), and multi-word
+    parenthesised aliases ('garam chai' from 'Hot tea (Garam Chai)')."""
+    lowered = " ".join(name.lower().split())
+    keys = {lowered}
+    head = re.split(r"[,(]", lowered)[0].strip()
+    if head:
+        keys.add(head)
+    for side in re.split(r"[/()]", lowered):
+        side = side.strip()
+        if side:
+            keys.add(side)
+    for match in re.findall(r"\(([^()]+)\)", lowered):
+        if " " in match:
+            keys.add(match.strip())
+    return [k for k in keys if len(k) >= 3]
+
+
+def _food_match_entries() -> list[tuple[list[str], dict]]:
+    app_ref = current_app._get_current_object()
+    cached = _FOOD_MATCH_CACHE
+    now = monotonic()
+    if (cached["app"] is not app_ref or cached["entries"] is None
+            or now - cached["loaded"] > _FOOD_MATCH_TTL_SECONDS):
+        entries = []
+        for food in db.session.scalars(select(Food).order_by(Food.name)).all():
+            entries.append((_food_name_keys(food.name), {
                 "name": food.name,
                 "serving": food.serving,
                 "calories": food.calories,
                 "protein_g": food.protein,
                 "carbs_g": food.carbs,
                 "fats_g": food.fats,
-            })
-            if len(matches) >= limit:
-                break
-    return matches
+            }))
+        cached.update(app=app_ref, entries=entries, loaded=now)
+    return cached["entries"]
+
+
+def _food_db_matches(message_text: str, limit: int = 8) -> list[dict]:
+    """Foods whose aliases appear in the user's message, most specific
+    (longest alias) first. The AI prefers these exact per-serving values,
+    scaled to the portion, over its own estimates."""
+    if not message_text:
+        return []
+    msg = " ".join(message_text.lower().split())
+    matched: list[tuple[int, dict]] = []
+    for keys, food in _food_match_entries():
+        hit = max((len(k) for k in keys if k in msg), default=0)
+        if hit:
+            matched.append((hit, food))
+    matched.sort(key=lambda pair: -pair[0])
+    return [food for _len, food in matched[:limit]]
 
 
 def _challenges_context(user: User) -> list[dict]:

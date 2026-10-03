@@ -185,14 +185,16 @@ def register_cli_commands(app: Flask) -> None:
 
     @app.cli.command("seed-content")
     def seed_content_command() -> None:
-        """Seed the exercise library (bundled free-exercise-db) and the
-        starter food database. Idempotent — existing names are skipped."""
-        from .admin import seed_exercises_from_json, seed_starter_foods
+        """Seed the exercise library (bundled free-exercise-db) and the food
+        database (starter foods + the Indian food nutrition dataset).
+        Idempotent — existing names are skipped."""
+        from .admin import seed_exercises_from_json, seed_indian_foods_from_csv, seed_starter_foods
 
         with app.app_context():
             exercises = seed_exercises_from_json()
             foods = seed_starter_foods()
-        print(f"Exercises added: {exercises}. Foods added: {foods}.")
+            indian = seed_indian_foods_from_csv()
+        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {indian} indian.")
 
     @app.cli.command("seed-challenges")
     def seed_challenges_command() -> None:
