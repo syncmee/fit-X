@@ -12,13 +12,14 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 from collections import Counter
 from datetime import date, datetime, timedelta
 from functools import wraps
 from math import ceil
 from pathlib import Path
 
-from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, abort, current_app, flash, redirect, render_template, render_template_string, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import delete, func, or_, select, update
 
@@ -816,11 +817,96 @@ COACH_COST_PER_1M = {
 
 ANNOUNCE_SEGMENTS = SEGMENTS
 
+# Placeholders usable inside a custom announcement email. Everything is
+# filled per recipient at send time.
+ANNOUNCE_PLACEHOLDERS = {
+    "first_name": "recipient's first name",
+    "full_name": "recipient's full name",
+    "email": "recipient's email address",
+    "title": "the announcement title",
+    "body": "the announcement message",
+    "dashboard_url": "absolute link to the app",
+}
+
+
+def _html_to_plain(html: str) -> str:
+    """Rough plain-text alternative for custom-HTML emails: drop tags,
+    keep line breaks, unescape entities."""
+    import html as html_module
+
+    text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html, flags=re.S | re.I)
+    text = re.sub(r"<br\s*/?>|</p>|</div>|</tr>|</h[1-6]>|</li>", "\n", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html_module.unescape(text)
+    lines = (line.strip() for line in text.splitlines())
+    return "\n".join(line for line in lines if line)
+
+
+def _render_announcement_email(user: User, title: str, body: str,
+                               template_style: str, custom_html: str,
+                               dashboard_url: str) -> str:
+    """One recipient's email HTML. 'fitx' uses the branded template;
+    'custom' renders the admin's HTML as a Jinja template so their
+    {{ first_name }}-style placeholders are filled per recipient."""
+    if template_style != "custom":
+        return render_template(
+            "emails/announcement.html",
+            announce_title=title, announce_body=body,
+            user_name=user.name, dashboard_url=dashboard_url,
+        )
+    try:
+        return render_template_string(
+            custom_html,
+            first_name=user.name.split()[0] if user.name else "",
+            full_name=user.name,
+            email=user.email,
+            title=title,
+            body=body,
+            dashboard_url=dashboard_url,
+        )
+    except Exception as exc:
+        raise ValueError(f"Custom HTML failed to render: {exc}") from exc
+
 
 def _segment_users(segment: str) -> list[User]:
     if segment not in SEGMENTS:
         abort(400)
     return users_in_segment(segment)
+
+
+def _announce_form_fields() -> tuple[str, str, str, str]:
+    """Parsed announcement form: (title, body, template_style, custom_html)."""
+    title = (request.form.get("title") or "").strip()
+    body = (request.form.get("body") or "").strip()
+    template_style = request.form.get("template_style") or "fitx"
+    custom_html = request.form.get("custom_html") or ""
+    if template_style not in {"fitx", "custom"}:
+        abort(400)
+    return title, body, template_style, custom_html
+
+
+@admin_bp.route("/announce/preview", methods=["POST"])
+@admin_required
+def announce_preview():
+    """Render the announcement for the admin's own data and return it as a
+    page, so custom HTML can be designed and checked before sending."""
+    from .dashboard import _send_via_smtp, _send_web_push  # noqa: F401 (parity with send path)
+
+    title, body, template_style, custom_html = _announce_form_fields()
+    if not title or not body:
+        flash("Give the announcement a title and a message first.", "error")
+        return redirect(url_for("admin.announce"))
+    if template_style == "custom" and not custom_html.strip():
+        flash("Paste your custom HTML first.", "error")
+        return redirect(url_for("admin.announce"))
+    dashboard_url = current_app.config.get("SITE_URL", "").rstrip("/") + "/dashboard"
+    try:
+        html = _render_announcement_email(current_user, title, body,
+                                          template_style, custom_html, dashboard_url)
+    except ValueError as exc:
+        flash(str(exc), "error")
+        return redirect(url_for("admin.announce"))
+    return Response(html)
 
 
 @admin_bp.route("/announce", methods=["GET", "POST"])
@@ -829,8 +915,7 @@ def announce():
     from .dashboard import _send_via_smtp, _send_web_push
 
     if request.method == "POST":
-        title = (request.form.get("title") or "").strip()
-        body = (request.form.get("body") or "").strip()
+        title, body, template_style, custom_html = _announce_form_fields()
         segment = request.form.get("audience") or "all"
         channels = set(request.form.getlist("channels"))
         if not title or not body:
@@ -840,6 +925,9 @@ def announce():
             abort(400)
         if not channels <= {"push", "email"} or not channels:
             flash("Pick at least one channel.", "error")
+            return redirect(url_for("admin.announce"))
+        if template_style == "custom" and not custom_html.strip():
+            flash("Paste your custom HTML first.", "error")
             return redirect(url_for("admin.announce"))
 
         users = _segment_users(segment)
@@ -856,11 +944,14 @@ def announce():
                     pushes += 1
                     delivered = True
             if "email" in channels and smtp_user:
-                plain = f"Hi {user.name},\n\n{title}\n\n{body}\n\n— fiT-X"
-                html = render_template("emails/announcement.html",
-                                       announce_title=title, announce_body=body,
-                                       user_name=user.name, dashboard_url=dashboard_url)
-                ok, _detail = _send_via_smtp(user, f"fiT-X · {title}", plain, html,
+                try:
+                    html = _render_announcement_email(user, title, body,
+                                                      template_style, custom_html, dashboard_url)
+                except ValueError as exc:
+                    flash(str(exc), "error")
+                    return redirect(url_for("admin.announce"))
+                ok, _detail = _send_via_smtp(user, f"fiT-X · {title}",
+                                             _html_to_plain(html), html,
                                              smtp_user, smtp_password)
                 if ok:
                     emails += 1
@@ -876,7 +967,8 @@ def announce():
         return redirect(url_for("admin.announce"))
 
     sizes = {key: len(_segment_users(key)) for key in ANNOUNCE_SEGMENTS}
-    return render_template("admin/announce.html", segments=ANNOUNCE_SEGMENTS, sizes=sizes)
+    return render_template("admin/announce.html", segments=ANNOUNCE_SEGMENTS, sizes=sizes,
+                           placeholders=ANNOUNCE_PLACEHOLDERS)
 
 
 @admin_bp.route("/challenges/analytics")

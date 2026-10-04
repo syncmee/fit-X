@@ -35,7 +35,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import delete, func, select
 
 from .extensions import db
-from .challenges import _day_qualifies, challenge_visible_to, run_daily_maintenance, update_challenges
+from .challenges import _day_qualifies, _joinable, challenge_visible_to, progress_view, run_daily_maintenance, update_challenges
 from .models import (
     Challenge,
     CoachMessage,
@@ -44,6 +44,7 @@ from .models import (
     PushSubscription,
     ScheduledWorkout,
     User,
+    UserBadge,
     UserChallenge,
     WaterLog,
     WeightLog,
@@ -2052,6 +2053,32 @@ def _build_weight_data() -> dict:
     }
 
 
+def _build_challenges_view(user: User, local_now: datetime) -> dict:
+    """Everything the Challenges tab on the dashboard shows: open challenges,
+    the user's participations with computed progress, and earned badges."""
+    today = local_now.date()
+    participations = db.session.scalars(
+        select(UserChallenge)
+        .where(UserChallenge.user_id == user.id)
+        .order_by(UserChallenge.joined_at.desc())
+    ).all()
+    joined_ids = {uc.challenge_id for uc in participations if uc.status == "active"}
+    available = [
+        c for c in db.session.scalars(
+            select(Challenge).where(Challenge.status == "active").order_by(Challenge.title)
+        ).all()
+        if c.id not in joined_ids
+        and _joinable(c, today)
+        and challenge_visible_to(c, user)
+    ]
+    joined = [(uc, progress_view(uc)) for uc in participations if uc.status == "active"]
+    finished = [(uc, progress_view(uc)) for uc in participations if uc.status in {"completed", "failed"}]
+    badges = db.session.scalars(
+        select(UserBadge).where(UserBadge.user_id == user.id).order_by(UserBadge.awarded_at.desc())
+    ).all()
+    return {"available": available, "joined": joined, "finished": finished, "badges": badges}
+
+
 def _build_dashboard_context() -> dict:
     # Every stored datetime is the user's wall clock; `now` is the same clock.
     # Never pass datetime.now() into the time helpers — they expect UTC.
@@ -2175,6 +2202,7 @@ def _build_dashboard_context() -> dict:
         ),
         "phase_label": phase_label,
         "day_count": day_count,
+        "challenges": _build_challenges_view(current_user, now),
         "now_label": f"{now.strftime('%a · %b %d · ')}{now.strftime('%I:%M %p').lstrip('0')}",
         # Calories / metabolism
         "calories": target_kcal,

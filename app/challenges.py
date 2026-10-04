@@ -27,7 +27,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import select
 
@@ -252,36 +252,8 @@ def _joinable(challenge: Challenge, today) -> bool:
 @challenges_bp.route("/")
 @login_required
 def index():
-    today = user_now(current_user).date()
-
-    participations = db.session.scalars(
-        select(UserChallenge)
-        .where(UserChallenge.user_id == current_user.id)
-        .order_by(UserChallenge.joined_at.desc())
-    ).all()
-    joined_ids = {uc.challenge_id for uc in participations if uc.status == "active"}
-
-    available = [
-        c for c in db.session.scalars(
-            select(Challenge).where(Challenge.status == "active").order_by(Challenge.title)
-        ).all()
-        if c.id not in joined_ids
-        and _joinable(c, today)
-        and challenge_visible_to(c, current_user)
-    ]
-    joined = [uc for uc in participations if uc.status == "active"]
-    finished = [uc for uc in participations if uc.status in {"completed", "failed"}]
-    badges = db.session.scalars(
-        select(UserBadge).where(UserBadge.user_id == current_user.id).order_by(UserBadge.awarded_at.desc())
-    ).all()
-
-    return render_template(
-        "challenges.html",
-        available=available,
-        joined=[(uc, progress_view(uc)) for uc in joined],
-        finished=[(uc, progress_view(uc)) for uc in finished],
-        badges=badges,
-    )
+    """Challenges live as a tab on the dashboard; keep the URL working."""
+    return redirect(url_for("dashboard.dashboard", _anchor="challenges"))
 
 
 @challenges_bp.route("/<int:challenge_id>/join", methods=["POST"])
@@ -291,7 +263,7 @@ def join(challenge_id: int):
     today = user_now(current_user).date()
     if challenge is None or not _joinable(challenge, today) or not challenge_visible_to(challenge, current_user):
         flash("That challenge isn't open for joining.", "error")
-        return redirect(url_for("challenges.index"))
+        return redirect(url_for("dashboard.dashboard", _anchor="challenges"))
     existing = db.session.scalar(
         select(UserChallenge.id).where(
             UserChallenge.user_id == current_user.id,
@@ -300,12 +272,12 @@ def join(challenge_id: int):
     )
     if existing:
         flash("You already joined this challenge.", "error")
-        return redirect(url_for("challenges.index"))
+        return redirect(url_for("dashboard.dashboard", _anchor="challenges"))
 
     db.session.add(UserChallenge(user_id=current_user.id, challenge_id=challenge.id))
     db.session.commit()
     flash(f"Joined {challenge.title} — every qualifying log now counts.", "success")
-    return redirect(url_for("challenges.index"))
+    return redirect(url_for("dashboard.dashboard", _anchor="challenges"))
 
 
 @challenges_bp.route("/<int:challenge_id>/leave", methods=["POST"])
@@ -320,12 +292,12 @@ def leave(challenge_id: int):
     )
     if uc is None:
         flash("You aren't in that challenge.", "error")
-        return redirect(url_for("challenges.index"))
+        return redirect(url_for("dashboard.dashboard", _anchor="challenges"))
     title = uc.challenge.title
     db.session.delete(uc)  # cascades to the participation's day logs
     db.session.commit()
     flash(f"Left {title} — join again anytime to restart.", "success")
-    return redirect(url_for("challenges.index"))
+    return redirect(url_for("dashboard.dashboard", _anchor="challenges"))
 
 
 # ============================================================

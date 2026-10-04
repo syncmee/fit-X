@@ -17,6 +17,29 @@
     <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Message *</label>
     <textarea name="body" rows="4" required placeholder="Tell them what's new…"
               class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-white/20"></textarea>
+    <p class="text-[10px] text-gray-600 mt-1">Used as the push text and the plain-text email fallback.</p>
+  </div>
+
+  <div>
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Email design</label>
+    <select name="template_style" id="templateStyle" onchange="document.getElementById('customHtmlWrap').classList.toggle('hidden', this.value !== 'custom')"
+            class="w-full glass rounded-lg px-3 py-2 text-sm text-white outline-none bg-bg3">
+      <option value="fitx">fiT-X branded template (default)</option>
+      <option value="custom">Custom HTML — my own design</option>
+    </select>
+  </div>
+
+  <div id="customHtmlWrap" class="hidden">
+    <label class="text-[10px] uppercase tracking-wider text-gray-500 block mb-1">Custom email HTML</label>
+    <textarea name="custom_html" rows="12" placeholder="<!DOCTYPE html> …your full email design…"
+              class="w-full glass rounded-lg px-3 py-2 text-xs font-mono text-white outline-none focus:border-white/20"></textarea>
+    <div class="text-[10px] text-gray-500 mt-2 space-y-1">
+      <p>Personalization placeholders — filled per recipient when the email goes out:</p>
+      <p class="font-mono text-gray-400">
+        {% for key, label in placeholders.items() %}{{ '{{ ' }}{{ key }}{{ ' }}' }} <span class="text-gray-600">({{ label }})</span>{% if not loop.last %} · {% endif %}{% endfor %}
+      </p>
+      <p>Email HTML tips: use tables + inline styles, max width ~600px, and host images at absolute URLs (e.g. {{ url_for('main.homepage', _external=True) }}static/logos/…) — email clients don't load local files. Use <span class="font-mono text-gray-400">Preview</span> to check your design before sending.</p>
+    </div>
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -42,6 +65,8 @@
   <div class="flex items-center gap-3 pt-2">
     <button type="submit" class="grad-bg text-black text-xs font-bold px-5 py-2.5 rounded-lg"
             onclick="return confirm('Send this announcement now?')">Send announcement</button>
+    <button type="submit" formaction="{{ url_for('admin.announce_preview') }}" formtarget="_blank"
+            class="glass rounded-lg px-4 py-2.5 text-xs font-semibold text-gray-300 hover:text-white">Preview with my data</button>
   </div>
 </form>
 {% endblock %}

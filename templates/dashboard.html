@@ -413,7 +413,7 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
         Progress
       </a>
-      <a href="/challenges" class="nav-link relative">
+      <a href="#" onclick="switchView('challenges'); return false;" data-view="challenges" class="nav-link relative">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.5 13L7 22l5-3 5 3-1.5-9"/></svg>
         Challenges
       </a>
@@ -954,6 +954,98 @@
         </div>
       </div>
 
+      <!-- ===================== PILLAR 5: CHALLENGES ===================== -->
+      <div id="view-challenges" class="view-container hidden space-y-5">
+
+        {% if challenges.badges %}
+        <div class="glass rounded-2xl p-5">
+          <h3 class="text-sm font-semibold text-gray-300 mb-3">Badges earned · {{ challenges.badges | length }}</h3>
+          <div class="flex flex-wrap gap-3">
+            {% for ub in challenges.badges %}
+            <div class="glass rounded-xl px-4 py-3 flex items-center gap-3" title="{{ ub.badge.description or '' }}">
+              <span class="text-2xl">{{ ub.badge.icon }}</span>
+              <div>
+                <div class="text-sm font-bold">{{ ub.badge.name }}</div>
+                <div class="text-[10px] font-mono text-gray-500">{{ ub.awarded_at.strftime('%b %d, %Y') if ub.awarded_at }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if challenges.joined %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {% for uc, pv in challenges.joined %}
+          <div class="glass rounded-2xl p-5 space-y-3">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-bold">{{ uc.challenge.title }} {% if uc.challenge.badge %}{{ uc.challenge.badge.icon }}{% endif %}</div>
+                <div class="text-xs text-gray-500">{{ uc.challenge.description }}</div>
+              </div>
+              {% if pv.done %}<span class="text-[10px] font-mono uppercase text-green">done</span>{% endif %}
+            </div>
+            <div>
+              <div class="flex items-baseline justify-between text-xs font-mono">
+                <span>{{ pv.current | int }} <span class="text-gray-500">/ {{ pv.goal | int }} {{ pv.unit }}</span></span>
+                <span class="text-gray-500">{{ pv.caption }}</span>
+              </div>
+              <div class="mt-1.5 h-2 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full grad-bg rounded-full" style="width: {{ pv.pct }}%"></div>
+              </div>
+            </div>
+            <form method="post" action="{{ url_for('challenges.leave', challenge_id=uc.challenge_id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="text-xs text-gray-500 hover:text-red-400">Leave challenge</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {% for c in challenges.available %}
+          <div class="glass rounded-2xl overflow-hidden flex flex-col">
+            {% if c.banner_url %}<img src="{{ c.banner_url }}" alt="" class="w-full h-28 object-cover">{% endif %}
+            <div class="p-5 space-y-3 flex-1 flex flex-col">
+              <div>
+                <div class="font-bold">{{ c.title }} {% if c.badge %}<span title="Earns: {{ c.badge.name }}">{{ c.badge.icon }}</span>{% endif %}</div>
+                <div class="text-xs text-gray-500">{{ c.description }}</div>
+              </div>
+              <div class="text-[10px] font-mono uppercase tracking-wider text-gray-600">
+                {{ c.type }} · {{ c.target_value | int }} {{ c.metric.replace('_', ' ') }}{% if c.daily_target %} · daily {{ c.daily_target | int }}{% endif %}
+              </div>
+              <form method="post" action="{{ url_for('challenges.join', challenge_id=c.id) }}" class="mt-auto pt-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="w-full grad-bg text-black text-xs font-bold px-4 py-2.5 rounded-lg hover:opacity-90 transition">Join challenge</button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <div class="glass rounded-2xl p-8 text-center text-gray-500 text-sm md:col-span-2">
+            {% if challenges.joined %}No other challenges open right now — you're in everything available.{% else %}No challenges open right now — ask the coach what's coming up, or check back soon.{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        {% if challenges.finished %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {% for uc, pv in challenges.finished %}
+          <div class="glass rounded-2xl p-5 space-y-2 {{ 'border-green/30' if uc.status == 'completed' }}">
+            <div class="flex items-center justify-between">
+              <div class="font-bold">{{ uc.challenge.title }} {% if uc.challenge.badge and uc.status == 'completed' %}{{ uc.challenge.badge.icon }}{% endif %}</div>
+              <span class="text-[10px] font-mono uppercase {{ 'text-green' if uc.status == 'completed' else 'text-red-400' }}">{{ uc.status }}</span>
+            </div>
+            <div class="text-xs text-gray-500 font-mono">
+              {{ pv.current | int }} / {{ pv.goal | int }} {{ pv.unit }}
+              {% if uc.completed_at %} · finished {{ uc.completed_at.strftime('%b %d, %Y') }}{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
     </div>
   </main>
 </div>
@@ -976,7 +1068,7 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
     Progress
   </button>
-  <a href="/challenges" class="mobile-nav-link">
+  <a href="#" onclick="switchView('challenges'); return false;" data-view="challenges" class="mobile-nav-link">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.5 13L7 22l5-3 5 3-1.5-9"/></svg>
     Challenges
   </a>
@@ -1386,7 +1478,8 @@
       dashboard: 'Dashboard',
       nutrition: 'Nutrition',
       workouts: 'Workouts',
-      progress: 'Progress'
+      progress: 'Progress',
+      challenges: 'Challenges'
     };
     document.getElementById('viewTitle').textContent = titles[viewName];
 
@@ -1735,7 +1828,7 @@
     const hash = window.location.hash;
     if (hash === '#coach') {
       toggleChat();
-    } else if (['#nutrition', '#workouts', '#progress'].includes(hash)) {
+    } else if (['#nutrition', '#workouts', '#progress', '#challenges'].includes(hash)) {
       switchView(hash.slice(1));
     }
     history.replaceState(null, '', window.location.pathname + window.location.search);

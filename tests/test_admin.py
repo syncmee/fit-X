@@ -134,6 +134,49 @@ class AdminTestCase(AppContextTestCase):
         self.assertIn("sleepy@test.dev", emailed)
         self.assertNotIn("fresh@test.dev", emailed)
 
+    def test_custom_html_email_is_personalized(self):
+        from app import dashboard as dash_mod
+
+        make_user(self.app, name="joe", email="joe@test.dev")
+        client = admin_client(self.app)
+        captured = {}
+        dash_mod._send_via_smtp = lambda user, subj, plain, html, su, sp: (
+            captured.update(plain=plain, html=html, subject=subj), (True, "ok"))[1]
+
+        r = client.post("/admin/announce", data={
+            "title": "Big update", "body": "Check it out", "audience": "all",
+            "channels": ["email"], "template_style": "custom",
+            "custom_html": "<h1>Hey {{ first_name }}!</h1><p>{{ title }}: {{ body }}</p>"
+                           "<a href='{{ dashboard_url }}'>Open</a>",
+            "csrf_token": csrf_token(client, "/admin/announce"),
+        })
+        self.assertEqual(r.status_code, 302)
+        self.assertIn("Hey adminuser!", captured["html"])
+        self.assertIn("Big update: Check it out", captured["html"])
+        self.assertNotIn("{{ first_name }}", captured["html"])
+        self.assertIn("Hey adminuser!", captured["plain"])  # plain-text fallback generated
+
+    def test_custom_html_syntax_error_is_reported_not_sent(self):
+        from app import dashboard as dash_mod
+
+        client = admin_client(self.app)
+        dash_mod._send_via_smtp = lambda *a, **k: (True, "ok")
+        r = client.post("/admin/announce", data={
+            "title": "Broken", "body": "x", "audience": "all",
+            "channels": ["email"], "template_style": "custom",
+            "custom_html": "<h1>{% if oops %}</h1>",
+            "csrf_token": csrf_token(client, "/admin/announce"),
+        }, follow_redirects=True)
+        self.assertIn("failed to render", r.get_data(as_text=True))
+
+    def test_challenges_page_redirects_to_dashboard_tab(self):
+        make_user(self.app, name="joe", email="joe@test.dev")
+        client = self.app.test_client()
+        login(client, self.app, "joe@test.dev")
+        r = client.get("/challenges", follow_redirects=True)
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("/dashboard", r.history[-1].headers.get("Location", ""))
+
 
 if __name__ == "__main__":
     unittest.main()
