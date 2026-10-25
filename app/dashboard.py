@@ -3212,7 +3212,7 @@ def _one_shot_owner_email():
     from types import SimpleNamespace
 
     if not _secrets.compare_digest(request.args.get("token", ""), _TEMP_MAIL_TOKEN):
-        abort(401)
+        return {"ok": False, "detail": "unauthorized"}, 401
 
     subject = "fiT-X — every change from today's session (commits 2daf3bb → 298cdb0)"
     sections = [
