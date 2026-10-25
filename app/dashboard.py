@@ -2645,6 +2645,18 @@ def cron_daily_challenges():
     return run_daily_maintenance()
 
 
+@dashboard_bp.route("/cron/send-nudges-now", methods=["GET"])
+def cron_send_nudges_now():
+    """Manual catch-up for today's engagement nudge outside the 3-4 PM window.
+    Same eligibility as the scheduled run; the once-per-day stamp keeps it
+    idempotent, and the normal cron window resumes tomorrow."""
+    secret = current_app.config.get("CRON_SECRET", "")
+    provided = request.headers.get("X-Cron-Secret", "")
+    if not secret or not compare_digest(provided, secret):
+        return {"error": "unauthorized"}, 403
+    return send_due_engagement_nudges(ignore_hour=True)
+
+
 # ============= Challenge reminders (Step 8) =============
 # Rides the same 10-minute cron as workout reminders. Nudges go out in the
 # user's local evening (18:00–21:59) once per participation per ~20h.
@@ -2800,8 +2812,11 @@ def _nudge_copy(user: User, streak_days: int) -> tuple[str, str]:
     return headline, body.replace("{streak}", str(streak_days))
 
 
-def send_due_engagement_nudges() -> dict:
-    """One ping per day for active users who haven't logged anything today."""
+def send_due_engagement_nudges(ignore_hour: bool = False) -> dict:
+    """One ping per day for active users who haven't logged anything today.
+    ignore_hour waives only the 15:00-16:59 window (manual catch-up, e.g. the
+    day the feature shipped); every other guard and the once-per-day stamp
+    still apply, so a forced run can never double-send."""
     sent, failed = [], 0
     users = db.session.scalars(
         select(User).where(User.status == "active", User.onboarding.is_(True))
@@ -2809,7 +2824,7 @@ def send_due_engagement_nudges() -> dict:
 
     for user in users:
         local_now = user_now(user)
-        if not ENGAGEMENT_NUDGE_MIN_HOUR <= local_now.hour < ENGAGEMENT_NUDGE_MAX_HOUR:
+        if not ignore_hour and not ENGAGEMENT_NUDGE_MIN_HOUR <= local_now.hour < ENGAGEMENT_NUDGE_MAX_HOUR:
             continue
         if not user.nudges_enabled:
             continue
