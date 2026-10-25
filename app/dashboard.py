@@ -2043,6 +2043,7 @@ def _build_week_strip(now: datetime) -> list[dict]:
         select(ScheduledWorkout)
         .where(
             ScheduledWorkout.user_id == current_user.id,
+            ScheduledWorkout.status == "scheduled",
             ScheduledWorkout.scheduled_for >= week_start,
             ScheduledWorkout.scheduled_for < week_end,
         )
@@ -2051,6 +2052,18 @@ def _build_week_strip(now: datetime) -> list[dict]:
     for workout in scheduled:
         by_date.setdefault(workout.scheduled_for.date(), []).append(workout)
 
+    # Days with a completed session show as "done" on the strip — today keeps
+    # its live pulse while something is still queued.
+    completed = db.session.execute(
+        select(ScheduledWorkout.scheduled_for).where(
+            ScheduledWorkout.user_id == current_user.id,
+            ScheduledWorkout.status == "completed",
+            ScheduledWorkout.scheduled_for >= week_start,
+            ScheduledWorkout.scheduled_for < week_end,
+        )
+    ).scalars().all()
+    done_dates = {d.date() for d in completed}
+
     strip = []
     for offset in range(7):
         day = (week_start + timedelta(days=offset)).date()
@@ -2058,6 +2071,8 @@ def _build_week_strip(now: datetime) -> list[dict]:
         is_today = offset == 0
         if is_today and day_workouts:
             state = "today"
+        elif day in done_dates:
+            state = "done"
         elif day_workouts:
             state = "planned"
         else:
