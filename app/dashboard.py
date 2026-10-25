@@ -2750,7 +2750,7 @@ def _send_challenge_reminder_email(user: User, challenge: Challenge) -> tuple[bo
 # device allows it, email only as the fallback — never both on the same day.
 ENGAGEMENT_NUDGE_MIN_HOUR = 15
 ENGAGEMENT_NUDGE_MAX_HOUR = 17
-ENGAGEMENT_NUDGE_ACTIVE_DAYS = 30  # stop pinging accounts silent for a month
+ENGAGEMENT_NUDGE_ACTIVE_DAYS = 90  # stop pinging accounts silent for a quarter — lapsed-but-winnable users still count
 
 NUDGE_COPY_STREAK = [
     ("Your streak is waiting", "Day {streak} is on the board — one log today keeps it alive. Weight, a meal, anything counts."),
@@ -2818,22 +2818,34 @@ def send_due_engagement_nudges(ignore_hour: bool = False) -> dict:
     day the feature shipped); every other guard and the once-per-day stamp
     still apply, so a forced run can never double-send."""
     sent, failed = [], 0
+    candidates = 0
+    considered = 0
+    skip_reasons = {
+        "outside_window": 0, "opted_out": 0, "already_nudged": 0, "logged_today": 0,
+        "inactive": 0, "imminent_workout": 0, "no_channel": 0,
+    }
     users = db.session.scalars(
         select(User).where(User.status == "active", User.onboarding.is_(True))
     ).all()
+    candidates = len(users)
 
     for user in users:
         local_now = user_now(user)
         if not ignore_hour and not ENGAGEMENT_NUDGE_MIN_HOUR <= local_now.hour < ENGAGEMENT_NUDGE_MAX_HOUR:
+            skip_reasons["outside_window"] += 1
             continue
         if not user.nudges_enabled:
+            skip_reasons["opted_out"] += 1
             continue
         today = effective_today(user)
         if user.last_nudge_sent_on == today:
+            skip_reasons["already_nudged"] += 1
             continue
         if _user_logged_today(user):
+            skip_reasons["logged_today"] += 1
             continue
         if not _user_active_recently(user):
+            skip_reasons["inactive"] += 1
             continue
         # A session starting soon already has its own reminder — never double-ping.
         soon_cutoff = local_now + timedelta(hours=2)
@@ -2850,7 +2862,9 @@ def send_due_engagement_nudges(ignore_hour: bool = False) -> dict:
             )
         )
         if has_soon_workout:
+            skip_reasons["imminent_workout"] += 1
             continue
+        considered += 1
 
         streak_days, _ = _logging_streak(list(user.logs), user)
         headline, body = _nudge_copy(user, streak_days)
@@ -2868,10 +2882,14 @@ def send_due_engagement_nudges(ignore_hour: bool = False) -> dict:
             user.last_nudge_sent_on = today
             sent.append({"user": user.email, "via": delivered, "streak": streak_days})
         else:
+            skip_reasons["no_channel"] += 1
             failed += 1
 
     db.session.commit()
-    return {"nudged": len(sent), "skipped": failed, "detail": sent}
+    return {
+        "nudged": len(sent), "skipped": failed, "detail": sent,
+        "candidates": candidates, "considered": considered, "skip_reasons": skip_reasons,
+    }
 
 
 def _send_engagement_nudge_email(user: User, headline: str, body: str) -> tuple[bool, str]:
