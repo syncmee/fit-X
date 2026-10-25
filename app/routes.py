@@ -277,6 +277,8 @@ def onboarding():
         current_user.activity_level = cleaned_data["activity_level"]
         current_user.goal = cleaned_data["goal"]
         current_user.pace = cleaned_data["pace"]
+        if cleaned_data.get("training_environment"):
+            current_user.training_environment = cleaned_data["training_environment"]
         current_user.onboarding = True
 
         # Capture the zone before the first weight log is stamped, so it lands

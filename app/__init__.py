@@ -91,6 +91,14 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             'ALTER TABLE "user" ADD COLUMN is_admin BOOLEAN DEFAULT FALSE',
             'ALTER TABLE "user" ADD COLUMN created_at TIMESTAMP',
             'ALTER TABLE "user" ADD COLUMN last_active_at TIMESTAMP',
+            # Training environment (plans + coach follow-up) and daily nudges
+            "ALTER TABLE scheduled_workout ADD COLUMN environment VARCHAR(20)",
+            'ALTER TABLE "user" ADD COLUMN training_environment VARCHAR(20)',
+            'ALTER TABLE "user" ADD COLUMN nudges_enabled BOOLEAN DEFAULT TRUE',
+            'ALTER TABLE "user" ADD COLUMN last_nudge_sent_on DATE',
+            'ALTER TABLE "user" ADD COLUMN macro_protein_override INTEGER',
+            'ALTER TABLE "user" ADD COLUMN macro_carbs_override INTEGER',
+            'ALTER TABLE "user" ADD COLUMN macro_fats_override INTEGER',
         ):
             try:
                 db.session.execute(db.text(statement))

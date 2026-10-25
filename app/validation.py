@@ -5,6 +5,12 @@ EMAIL_PATTERN = re.compile(r"^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$", re.IGNORE
 ALLOWED_GENDERS = {"male", "female"}
 ALLOWED_ACTIVITY_LEVELS = {"sedentary", "light", "moderate", "athlete"}
 ALLOWED_GOALS = {"lose", "gain", "maintain"}
+ALLOWED_ENVIRONMENTS = {"gym", "home", "home_gym"}
+ENVIRONMENT_LABELS = {
+    "gym": "Gym",
+    "home": "Home",
+    "home_gym": "Home + equipment",
+}
 
 
 def _normalize_text(value: str | None) -> str:
@@ -87,6 +93,12 @@ def validate_login_form(form) -> tuple[dict, list[str]]:
     }, errors
 
 
+def validate_environment(value: str | None) -> str | None:
+    env = _normalize_text(value).lower().replace(" ", "_")
+    env = {"home_equipment": "home_gym", "gym": "gym", "home": "home", "home_gym": "home_gym"}.get(env)
+    return env if env in ALLOWED_ENVIRONMENTS else None
+
+
 def validate_onboarding_form(form) -> tuple[dict, list[str]]:
     errors: list[str] = []
 
@@ -147,4 +159,87 @@ def validate_onboarding_form(form) -> tuple[dict, list[str]]:
         "activity_level": activity_level,
         "goal": goal,
         "pace": pace,
+        # Optional: unset means the coach asks after the first schedule.
+        "training_environment": validate_environment(form.get("training_environment")),
     }, errors
+
+
+def validate_profile_form(form) -> tuple[dict, list[str]]:
+    """Settings -> Biometrics/Goals save: the editable subset of the profile.
+    Everything is optional so each tab can post only its own fields."""
+    errors: list[str] = []
+    data: dict = {"training_environment": validate_environment(form.get("training_environment"))}
+
+    try:
+        data["weight"] = _parse_float(form.get("weight"), "Weight", 30, 350) if (form.get("weight") or "").strip() else None
+    except ValueError as exc:
+        errors.append(str(exc))
+        data["weight"] = None
+
+    try:
+        data["height"] = _parse_float(form.get("height"), "Height", 100, 260) if (form.get("height") or "").strip() else None
+    except ValueError as exc:
+        errors.append(str(exc))
+        data["height"] = None
+
+    try:
+        data["age"] = _parse_int(form.get("age"), "Age", 13, 100) if (form.get("age") or "").strip() else None
+    except ValueError as exc:
+        errors.append(str(exc))
+        data["age"] = None
+
+    activity_level = _normalize_text(form.get("activity_level")).lower()
+    data["activity_level"] = activity_level if activity_level in ALLOWED_ACTIVITY_LEVELS else None
+
+    goal = _normalize_text(form.get("goal")).lower()
+    data["goal"] = goal if goal in ALLOWED_GOALS else None
+
+    try:
+        data["pace"] = _parse_int(form.get("pace"), "Pace", 1, 3) if (form.get("pace") or "").strip() else None
+    except ValueError as exc:
+        errors.append(str(exc))
+        data["pace"] = None
+
+    try:
+        data["target_weight"] = (
+            _parse_float(form.get("target_weight"), "Target weight", 30, 350) if (form.get("target_weight") or "").strip() else None
+        )
+    except ValueError as exc:
+        errors.append(str(exc))
+        data["target_weight"] = None
+
+    weight = data["weight"] or None
+    target_weight = data["target_weight"] or None
+    goal = data["goal"]
+    if weight is not None and target_weight is not None:
+        if goal == "lose" and target_weight >= weight:
+            errors.append("For a weight-loss goal, target weight should be lower than your current weight.")
+        if goal == "gain" and target_weight <= weight:
+            errors.append("For a muscle-gain goal, target weight should be higher than your current weight.")
+
+    def _macro(name: str) -> int | None:
+        raw = (form.get(name) or "").strip()
+        if not raw:
+            return None
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            errors.append(f"Macro {name.replace('macro_', '')} must be a whole number.")
+            return None
+        if not 0 <= value <= 1000:
+            errors.append(f"Macro {name.replace('macro_', '')} must be between 0 and 1000 g.")
+            return None
+        return value
+
+    # Macro overrides ride the Goals tab form: all three saved together when
+    # the toggle is on, cleared together when it's off.
+    if form.get("macro_overrides_enabled") == "true":
+        data["macro_overrides"] = {
+            "protein": _macro("macro_protein"),
+            "carbs": _macro("macro_carbs"),
+            "fats": _macro("macro_fats"),
+        }
+    else:
+        data["macro_overrides"] = None
+
+    return data, errors

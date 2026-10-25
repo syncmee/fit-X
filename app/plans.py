@@ -19,6 +19,24 @@ _IMAGE_BASE = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/e
 # Muscles that count as "lower body" when choosing the warm-up/cool-down frame.
 _LOWER_GROUPS = {"legs", "glutes", "quads", "hamstrings", "calves"}
 
+# Where the session happens decides which equipment may appear in the plan:
+# gym = anything, home = bodyweight only, home_gym = small home kit.
+_ENVIRONMENT_EQUIPMENT = {
+    "gym": None,
+    "home": {"body only"},
+    "home_gym": {"body only", "dumbbell", "kettlebells", "bands", "medicine ball", "exercise ball"},
+}
+# Beginner-first ordering for dataset fallbacks — the tab plan audience is
+# people who don't know movements yet, so easy variations win ties.
+_LEVEL_ORDER = {"beginner": 0, "intermediate": 1, "expert": 2}
+
+
+def _env_ok(exercise: dict, environment: str | None) -> bool:
+    allowed = _ENVIRONMENT_EQUIPMENT.get(environment)
+    if allowed is None:
+        return True
+    return (exercise.get("equipment") or "body only").lower() in allowed
+
 
 @lru_cache(maxsize=1)
 def _exercises() -> list[dict]:
@@ -50,19 +68,27 @@ _EQUIPMENT_ORDER = {
 }
 
 
-def _db_pick(muscles: tuple[str, ...], used: set) -> dict | None:
+def _db_pick(muscles: tuple[str, ...], used: set, environment: str | None = None) -> dict | None:
     def rank(e):
-        return (_EQUIPMENT_ORDER.get(e["equipment"], 9), e["name"])
+        return (
+            0 if _env_ok(e, environment) else 1,
+            _LEVEL_ORDER.get(e.get("level"), 1),
+            _EQUIPMENT_ORDER.get(e["equipment"], 9),
+            e["name"],
+        )
+
     for e in sorted(_exercises(), key=rank):
-        if e["name"] not in used and set(e["primaryMuscles"]) & set(muscles):
+        if e["name"] not in used and set(e["primaryMuscles"]) & set(muscles) and _env_ok(e, environment):
             return e
     return None
 
 
-def _pick_line(candidates: tuple[str, ...], dose: str, muscles: tuple[str, ...], used: set) -> dict | None:
+def _pick_line(
+    candidates: tuple[str, ...], dose: str, muscles: tuple[str, ...], used: set, environment: str | None = None
+) -> dict | None:
     e = _resolve(*candidates)
-    if e is None or e["name"] in used:
-        e = _db_pick(muscles, used)
+    if e is None or e["name"] in used or not _env_ok(e, environment):
+        e = _db_pick(muscles, used, environment)
     if e is None:
         return None
     used.add(e["name"])
@@ -71,6 +97,8 @@ def _pick_line(candidates: tuple[str, ...], dose: str, muscles: tuple[str, ...],
         "dose": dose,
         "source": "free-exercise-db",
         "image": _IMAGE_BASE + e["images"][0] if e["images"] else None,
+        "level": e.get("level"),
+        "instructions": list((e.get("instructions") or [])[:3]),
     }
 
 
@@ -312,49 +340,51 @@ def _quotas(n: int) -> list[int]:
     return quotas
 
 
-def _warmup_block(groups: list[str]) -> dict:
+def _warmup_block(groups: list[str], environment: str | None = None, used: set | None = None) -> dict:
+    used = used if used is not None else set()
     if all(g in _LOWER_GROUPS for g in groups):
         return _block("Warm-up", "wake the hips up", [
-            _pick_line(("Bodyweight Walking Lunge",), "2 x 10 each leg", ("quadriceps",), set()),
-            _pick_line(("Knee Circles",), "10 each way", ("quadriceps",), set()),
+            _pick_line(("Bodyweight Walking Lunge",), "2 x 10 each leg", ("quadriceps",), used, environment),
+            _pick_line(("Knee Circles",), "10 each way", ("quadriceps",), used, environment),
         ])
     return _block("Warm-up", "get the shoulders moving", [
-        _pick_line(("Arm Circles",), "2 x 15", ("shoulders",), set()),
-        _pick_line(("Dynamic Chest Stretch",), "2 x 10", ("chest",), set()),
+        _pick_line(("Arm Circles",), "2 x 15", ("shoulders",), used, environment),
+        _pick_line(("Dynamic Chest Stretch",), "2 x 10", ("chest",), used, environment),
     ])
 
 
-def _cooldown_block(groups: list[str]) -> dict:
+def _cooldown_block(groups: list[str], environment: str | None = None, used: set | None = None) -> dict:
+    used = used if used is not None else set()
     if all(g in _LOWER_GROUPS for g in groups):
         return _block("Cool-down", "the walk-home will thank you", [
-            _pick_line(("90/90 Hamstring",), "2 x 30 sec each leg", ("hamstrings",), set()),
-            _pick_line(("Lying Prone Quadriceps",), "2 x 30 sec each leg", ("quadriceps",), set()),
-            _pick_line(("Kneeling Hip Flexor",), "2 x 30 sec each side", ("quadriceps",), set()),
+            _pick_line(("90/90 Hamstring",), "2 x 30 sec each leg", ("hamstrings",), used, environment),
+            _pick_line(("Lying Prone Quadriceps",), "2 x 30 sec each leg", ("quadriceps",), used, environment),
+            _pick_line(("Kneeling Hip Flexor",), "2 x 30 sec each side", ("quadriceps",), used, environment),
         ])
     return _block("Cool-down", "stretch the presses and pulls away", [
-        _pick_line(("Behind Head Chest Stretch",), "2 x 30 sec", ("chest",), set()),
-        _pick_line(("Overhead Lat",), "2 x 30 sec each side", ("lats",), set()),
+        _pick_line(("Behind Head Chest Stretch",), "2 x 30 sec", ("chest",), used, environment),
+        _pick_line(("Overhead Lat",), "2 x 30 sec each side", ("lats",), used, environment),
     ])
 
 
-def _gym_plan(title: str) -> dict | None:
+def _gym_plan(title: str, environment: str | None = None) -> dict | None:
     groups, split_label = _parse_groups(title)
     if not groups:
         return None
     used: set = set()
-    blocks = [_warmup_block(groups)]
+    blocks = [_warmup_block(groups, environment, used)]
     for g, quota in zip(groups, _quotas(len(groups))):
         table = _GROUP_TABLE[g]
         lines = []
         for candidates, dose in table["picks"]:
             if len(lines) >= quota:
                 break
-            line = _pick_line(candidates, dose, table["muscles"], used)
+            line = _pick_line(candidates, dose, table["muscles"], used, environment)
             if line:
                 lines.append(line)
         if lines:
             blocks.append(_block(_GROUP_LABELS[g].upper(), table["focus"], lines))
-    blocks.append(_cooldown_block(groups))
+    blocks.append(_cooldown_block(groups, environment, used))
     if split_label and len(blocks) == len(groups) + 2:
         name = split_label
     else:
@@ -362,9 +392,38 @@ def _gym_plan(title: str) -> dict | None:
     return {"name": name, "blocks": blocks}
 
 
+def _generic_plan(environment: str | None = None) -> dict:
+    """Beginner full-body circuit for titles the composer can't parse (yoga,
+    swimming, cricket, ...). Bodyweight-first so it works in any environment;
+    the environment filter only trims the pool."""
+    used: set = set()
+    return {
+        "name": "Full Body",
+        "blocks": [
+            _block("Warm-up", "easy pace, get warm before you work", [
+                _pick_line(("Jumping Jacks", "Star Jump"), "2 x 30 sec", ("quadriceps",), used, environment),
+                _pick_line(("Arm Circles",), "2 x 15", ("shoulders",), used, environment),
+            ]),
+            _block("Main work", "beginner circuit — 2 to 3 rounds, rest as needed", [
+                _pick_line(("Bodyweight Squat", "Air Squat"), "12 reps", ("quadriceps",), used, environment),
+                _pick_line(("Push Ups", "Push-Ups", "Knee Push Up"), "8-12 reps", ("chest",), used, environment),
+                _pick_line(("Bodyweight Walking Lunge",), "10 each leg", ("quadriceps", "glutes"), used, environment),
+                _pick_line(("Single Leg Glute Bridge", "Glute Kickback"), "10 each side", ("glutes",), used, environment),
+                _pick_line(("Plank", "Front Plank"), "30-45 sec", ("abdominals",), used, environment),
+            ]),
+            _block("Cool-down", "stretch, breathe, done", [
+                _pick_line(("90/90 Hamstring",), "30 sec each leg", ("hamstrings",), used, environment),
+                _pick_line(("Behind Head Chest Stretch",), "30 sec", ("chest",), used, environment),
+                _pick_line(("Child Pose", "Child's Pose"), "45 sec", ("lower back",), used, environment),
+            ]),
+        ],
+    }
+
+
 # Title-keyword → plan. Modality plans first, then the gym composer; a title
-# matching nothing (yoga, swimming, ...) gets no plan section.
-def build_plan(title: str) -> dict | None:
+# matching nothing (yoga, swimming, ...) returns None unless generic_fallback
+# is set, in which case a beginner full-body circuit stands in.
+def build_plan(title: str, environment: str | None = None, generic_fallback: bool = False) -> dict | None:
     t = (title or "").lower()
     if not t.strip():
         return None
@@ -372,4 +431,9 @@ def build_plan(title: str) -> dict | None:
         return {"name": "Boxing", "blocks": _boxing_plan()}
     if any(k in t for k in ("run", "jog", "sprint", "treadmill", "5k", "10k", "interval")):
         return {"name": "Running", "blocks": _running_plan()}
-    return _gym_plan(title)
+    plan = _gym_plan(title, environment)
+    if plan:
+        return plan
+    if generic_fallback:
+        return _generic_plan(environment)
+    return None

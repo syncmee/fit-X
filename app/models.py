@@ -30,6 +30,18 @@ class User(UserMixin, db.Model):
     # local wall clock.
     tz_offset_minutes = db.Column(db.Integer)
     email_reminders_enabled = db.Column(db.Boolean, default=True)
+    # Where the user usually trains: gym | home | home_gym. Drives which
+    # equipment the workout-plan builder may use; nullable until they answer
+    # (onboarding chip or the coach's follow-up question).
+    training_environment = db.Column(db.String(20))
+    # Daily re-engagement nudge (3-4 PM local when nothing logged today).
+    nudges_enabled = db.Column(db.Boolean, default=True)
+    last_nudge_sent_on = db.Column(db.Date)
+    # Manual macro split (grams/day) from Settings -> Goals. All three set =
+    # overrides active; any None = the coach's automatic split.
+    macro_protein_override = db.Column(db.Integer)
+    macro_carbs_override = db.Column(db.Integer)
+    macro_fats_override = db.Column(db.Integer)
 
     # Admin panel (app/admin.py). created_at is stamped server-UTC: signup
     # happens before the browser reports its offset, and it only feeds coarse
@@ -89,6 +101,9 @@ class ScheduledWorkout(db.Model):
     status = db.Column(db.String(20), nullable=False, default="scheduled", index=True)
     notes = db.Column(db.Text)
     calories_burned = db.Column(db.Integer)
+    # Per-session override of the user's training environment (same 3 values);
+    # plan rendering falls back to User.training_environment when null.
+    environment = db.Column(db.String(20))
     reminder_sent_at = db.Column(db.DateTime)  # set once the reminder email has gone out
     created_at = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)

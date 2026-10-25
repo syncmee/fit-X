@@ -50,6 +50,7 @@ from .models import (
     WeightLog,
 )
 from .plans import build_plan
+from .validation import validate_environment, validate_profile_form
 from .timeutil import (
     APP_DAY_START,
     DAY_START_SHIFT,
@@ -455,6 +456,8 @@ def process_coach_message_rules(user: User, message_text: str, now: datetime | N
             ),
             action="help",
         )
+    elif _looks_like_environment_answer(normalized):
+        outcome = _answer_environment(user, normalized, now)
     elif _looks_like_challenge_join(normalized):
         outcome = _join_challenge_rule(user, normalized, now)
     elif _looks_like_challenge_lookup(normalized):
@@ -512,6 +515,59 @@ def _looks_like_workout_schedule(message: str) -> bool:
     return any(keyword in message for keyword in schedule_keywords) and any(
         keyword in message for keyword in workout_keywords
     )
+
+
+# --- Training environment (gym / home / home with equipment) ----------------
+
+# The chat answer must be essentially ONLY the environment, so a normal
+# schedule request mentioning "gym" can never be mistaken for the reply.
+_ENV_ANSWER_RE = re.compile(
+    r"^(?:the\s+)?(?:at\s+the\s+|in\s+the\s+|at\s+|in\s+)?"
+    r"(gym|home(?:\s+gym)?|home\s+(?:with\s+)?equipment|equipment)\W*$"
+)
+
+ENVIRONMENT_ASK = "One quick thing: where will you usually train — gym, home, or home with equipment? Tap a chip below."
+
+
+def _looks_like_environment_answer(message: str) -> bool:
+    return bool(_ENV_ANSWER_RE.match(message.strip()))
+
+
+def _extract_environment(message: str) -> str | None:
+    """Environment mentioned inside a longer message ("home push day") —
+    per-session override. home+equipment must win over plain home."""
+    m = message.lower()
+    if re.search(r"\bhome\b", m) and re.search(r"\b(equipment|equipment[- ]?free|dumbbells?|weights?|bench|kettlebells?|bands?)\b", m):
+        return "home_gym"
+    if re.search(r"\bhome\b", m):
+        return "home"
+    if re.search(r"\bgym\b", m):
+        return "gym"
+    return None
+
+
+def _answer_environment(user: User, message: str, now: datetime) -> CoachOutcome:
+    env = _extract_environment(message) or ("home_gym" if "equipment" in message else "home" if "home" in message else "gym")
+    user.training_environment = env
+    # Backfill the session that triggered the question, so its plan re-renders
+    # for the right environment immediately.
+    pending = db.session.scalars(
+        select(ScheduledWorkout)
+        .where(
+            ScheduledWorkout.user_id == user.id,
+            ScheduledWorkout.status == "scheduled",
+            ScheduledWorkout.environment.is_(None),
+        )
+        .order_by(ScheduledWorkout.created_at.desc())
+        .limit(1)
+    ).first()
+    label = {"gym": "the gym", "home": "home", "home_gym": "home with your equipment"}[env]
+    if pending is not None:
+        pending.environment = env
+        reply = f"Noted — plans will use {label}. I updated your {pending.title} session too."
+    else:
+        reply = f"Noted — plans will use {label} from now on. Change it anytime in Settings."
+    return CoachOutcome(reply=reply, action="environment_set")
 
 
 def _looks_like_meal_log(message: str) -> bool:
@@ -755,6 +811,9 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
     title = _extract_workout_title(message)
     duration_minutes = _extract_duration_minutes(message)
     notes = _extract_workout_notes(message, title)
+    # Per-session override from the words ("home push day"), else the profile
+    # default. Plans render from this, so it wants to be right at insert time.
+    environment = _extract_environment(message) or user.training_environment
 
     db.session.add(
         ScheduledWorkout(
@@ -762,6 +821,7 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
             scheduled_for=scheduled_for,
             duration_minutes=duration_minutes,
             notes=notes,
+            environment=environment,
             status="scheduled",
             user=user,
             created_at=local_now,
@@ -776,6 +836,8 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
         f"Scheduled {title} for {_format_datetime_label(scheduled_for, local_now)} "
         f"for {duration_minutes} min.{shift_note}"
     )
+    if environment is None:
+        reply += f" {ENVIRONMENT_ASK}"
     return CoachOutcome(reply=reply, action="workout_scheduled")
 
 
@@ -1339,7 +1401,7 @@ ACTION TYPES (each an object inside "actions"; use an empty array for pure quest
 1. {{"type":"log_weight","weight_kg":number,"days_ago":0}}  — weight check-in; days_ago 0-7 (1 means yesterday). Valid weight 30-350 kg. Keep the exact value the user said, decimals included (they said 81.9 → send 81.9, never round to 82).
 2. {{"type":"log_meal","name":"short food name","meal_type":"breakfast|lunch|dinner|snack","calories":int,"protein":int,"carbs":int,"fats":int}}  — grams of protein/carbs/fat. If the user gives only macros, set calories = protein*4 + carbs*4 + fats*9. If only calories are given, leave macros 0. Pick meal_type from context (time of day or the user's words).
 3. {{"type":"log_water","amount_ml":int}}  — 100-5000 ml. "a glass" ≈ 250, "a bottle" ≈ 500.
-4. {{"type":"schedule_workout","title":"Activity","days_ahead":0,"time_24h":"18:30","duration_minutes":int,"calories_burned":int}}  — ANY activity counts: gym, running, cycling, swimming, yoga, pilates, boxing, martial arts, sports, walking. days_ahead 0-30 (0 = today; if that time already passed, use tomorrow). time_24h defaults to the user's words or "18:00". duration 5-240 min. Estimate calories_burned from the user's weight, duration and intensity (light yoga ≈ 3 kcal/kg/h, brisk walk ≈ 4.3, cycling ≈ 6, running ≈ 10, HIIT/boxing ≈ 9; round to the nearest 10).
+4. {{"type":"schedule_workout","title":"Activity","days_ahead":0,"time_24h":"18:30","duration_minutes":int,"calories_burned":int,"environment":"gym|home|home_gym"}}  — ANY activity counts: gym, running, cycling, swimming, yoga, pilates, boxing, martial arts, sports, walking. days_ahead 0-30 (0 = today; if that time already passed, use tomorrow). time_24h defaults to the user's words or "18:00". duration 5-240 min. environment is OPTIONAL — set it only when the user's words say where they train ("home workout", "at the gym"); omit otherwise. Estimate calories_burned from the user's weight, duration and intensity (light yoga ≈ 3 kcal/kg/h, brisk walk ≈ 4.3, cycling ≈ 6, running ≈ 10, HIIT/boxing ≈ 9; round to the nearest 10).
 5. {{"type":"complete_workout","title":"Activity","days_ago":0,"duration_minutes":int,"calories_burned":int}}  — the user already finished it. days_ago 0-7. Estimate burn the same way.
 6. {{"type":"join_challenge","challenge_title":"exact title from active_challenges"}}  — the user wants to join one of the app's active challenges (not a workout). Only for titles in the active_challenges list, and only ones with "joined": false. If they are already joined, just say so with empty actions.
 
@@ -1579,6 +1641,9 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[st
             title = " ".join(str(action.get("title") or "Workout").split())[:80]
             duration_minutes = _clamp_int(action.get("duration_minutes"), 5, 300, default=30)
             calories_burned = _clamp_int(action.get("calories_burned"), 0, 4000, default=0) or None
+            # The model may echo an environment it saw in the user's words
+            # ("home workout"); anything else falls back to the profile default.
+            environment = validate_environment(action.get("environment")) or user.training_environment
 
             if action_type == "schedule_workout":
                 days_ahead = _clamp_int(action.get("days_ahead"), 0, 30, default=0)
@@ -1598,6 +1663,7 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[st
                         scheduled_for=scheduled_for,
                         duration_minutes=duration_minutes,
                         calories_burned=calories_burned,
+                        environment=environment,
                         status="scheduled",
                         user=user,
                         created_at=local_now,
@@ -1673,6 +1739,8 @@ def process_coach_message_ai(
     reply = result["reply"]
     if challenge_notes:
         reply += " " + " · ".join(challenge_notes) + "."
+    if user.training_environment is None and any(a.startswith("scheduled") for a in applied):
+        reply += f" {ENVIRONMENT_ASK}"
     usage = result.get("usage") or {}
     db.session.add(CoachMessage(role="user", content=message_text, user=user, created_at=to_user_clock(user, now)))
     db.session.add(CoachMessage(
@@ -2142,6 +2210,16 @@ def _build_dashboard_context() -> dict:
     intake_remaining = max(0, target_kcal - today_totals["calories"])
 
     macro_targets = _build_macro_targets(current_user.weight, target_kcal, current_user.goal)
+    if (
+        current_user.macro_protein_override is not None
+        and current_user.macro_carbs_override is not None
+        and current_user.macro_fats_override is not None
+    ):
+        macro_targets = {
+            "protein": current_user.macro_protein_override,
+            "carbs": current_user.macro_carbs_override,
+            "fats": current_user.macro_fats_override,
+        }
 
     week_net_labels, week_net_values = _build_week_net(current_user, now, target_kcal)
 
@@ -2160,6 +2238,17 @@ def _build_dashboard_context() -> dict:
     recent_completed = _get_recent_completed(now)
     week_activity = _build_week_activity(current_user, now)
     weeks_history_labels, weeks_history_minutes = _build_weeks_minutes_history(current_user, now)
+    # Session plans come from the same builder as the reminder email, so the
+    # tab and the email can never disagree. Environment falls back per-session
+    # to the profile default; unknown environments still get the generic plan.
+    upcoming_plans = {
+        workout.id: build_plan(
+            workout.title,
+            workout.environment or current_user.training_environment,
+            generic_fallback=True,
+        )
+        for workout in upcoming_workouts
+    }
 
     weekly_workout_count = db.session.execute(
         select(func.count(ScheduledWorkout.id)).where(
@@ -2247,6 +2336,9 @@ def _build_dashboard_context() -> dict:
         "streak_week": streak_week,
         # Workouts
         "upcoming_workouts": upcoming_workouts,
+        "upcoming_plans": upcoming_plans,
+        "needs_training_environment": current_user.training_environment is None,
+        "training_environment": current_user.training_environment,
         "recent_completed": recent_completed,
         "next_workout": next_workout,
         "next_workout_label": _format_workout_label(next_workout.scheduled_for, now) if next_workout else None,
@@ -2426,6 +2518,52 @@ def settings_reminders():
     return {"enabled": current_user.email_reminders_enabled}
 
 
+@dashboard_bp.route("/settings/nudges", methods=["POST"])
+@login_required
+def settings_nudges():
+    current_user.nudges_enabled = request.form.get("enabled") == "true"
+    db.session.commit()
+    return {"enabled": current_user.nudges_enabled}
+
+
+@dashboard_bp.route("/settings/profile", methods=["POST"])
+@login_required
+def settings_profile():
+    """Settings -> Biometrics / Goals save. Each tab posts only its own fields;
+    everything absent stays untouched. A changed weight is a check-in, so it
+    also lands a WeightLog like a coach log would."""
+    cleaned, errors = validate_profile_form(request.form)
+    if errors:
+        return {"ok": False, "errors": errors}, 400
+
+    user = current_user
+    if cleaned["training_environment"]:
+        user.training_environment = cleaned["training_environment"]
+    for field in ("height", "age", "activity_level", "goal", "pace", "target_weight"):
+        value = cleaned.get(field)
+        if value is not None:
+            setattr(user, field, value)
+
+    if cleaned["weight"] is not None and cleaned["weight"] != user.weight:
+        user.weight = cleaned["weight"]
+        db.session.add(WeightLog(weight=cleaned["weight"], user=user))
+
+    overrides = cleaned["macro_overrides"]
+    if overrides is None:
+        user.macro_protein_override = None
+        user.macro_carbs_override = None
+        user.macro_fats_override = None
+    elif all(v is not None for v in overrides.values()):
+        user.macro_protein_override = overrides["protein"]
+        user.macro_carbs_override = overrides["carbs"]
+        user.macro_fats_override = overrides["fats"]
+    else:
+        return {"ok": False, "errors": ["Set all three macros (protein, carbs, fats) to save the override."]}, 400
+
+    db.session.commit()
+    return {"ok": True}
+
+
 MAX_PUSH_SUBSCRIPTIONS_PER_USER = 5
 
 
@@ -2492,6 +2630,7 @@ def cron_send_reminders():
         return {"error": "unauthorized"}, 403
     result = _send_due_workout_reminders()
     result["challenge_reminders"] = send_due_challenge_reminders()
+    result["engagement_nudges"] = send_due_engagement_nudges()
     return result
 
 
@@ -2588,6 +2727,151 @@ def _send_challenge_reminder_email(user: User, challenge: Challenge) -> tuple[bo
         user_name=user.name,
         challenge_title=challenge.title,
         challenge_description=challenge.description,
+        dashboard_url=dashboard_url,
+    )
+    return _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
+
+
+# ============= Daily re-engagement nudges (bring-backs) =============
+# Rides the same cron as workout/challenge reminders. A user who hasn't logged
+# anything today gets one ping in their local 15:00-16:59 window: push if the
+# device allows it, email only as the fallback — never both on the same day.
+ENGAGEMENT_NUDGE_MIN_HOUR = 15
+ENGAGEMENT_NUDGE_MAX_HOUR = 17
+ENGAGEMENT_NUDGE_ACTIVE_DAYS = 30  # stop pinging accounts silent for a month
+
+NUDGE_COPY_STREAK = [
+    ("Your streak is waiting", "Day {streak} is on the board — one log today keeps it alive. Weight, a meal, anything counts."),
+    ("Don't break the chain", "{streak} days in a row so far. It takes 10 seconds to keep it going."),
+    ("The streak believes in you", "Day {streak} ends tonight. Log your weight or a meal and it rolls into tomorrow."),
+]
+NUDGE_COPY_FRESH = [
+    ("Today's page is still blank", "Your 04:30 recalc uses every log — today's is empty. Start with a weigh-in, it takes 10 seconds."),
+    ("Small log, big trend", "One weight check-in today keeps your trend line honest. That's it, that's the task."),
+    ("The coach noticed", "Nothing logged today. Log a meal or your weight and the coach adjusts tonight's plan around it."),
+]
+
+
+def _fiT_x_day_bounds(user: User) -> tuple[datetime, datetime]:
+    """[start, end) of the user's current fiT-X day (04:30 local reset)."""
+    start = datetime.combine(effective_today(user), APP_DAY_START)
+    return start, start + timedelta(days=1)
+
+
+def _has_row_between(model, user: User, start: datetime, end: datetime, date_field: str, extra=None) -> bool:
+    stmt = select(model.id).where(
+        getattr(model, "user_id") == user.id,
+        getattr(model, date_field) >= start,
+        getattr(model, date_field) < end,
+    )
+    if extra is not None:
+        stmt = stmt.where(extra)
+    # scalar() yields False (not None) on an empty EXISTS — bool() it.
+    return bool(db.session.scalar(select(stmt.exists())))
+
+
+def _user_logged_today(user: User) -> bool:
+    start, end = _fiT_x_day_bounds(user)
+    return (
+        _has_row_between(WeightLog, user, start, end, "date")
+        or _has_row_between(MealEntry, user, start, end, "logged_at")
+        or _has_row_between(WaterLog, user, start, end, "logged_at")
+        or _has_row_between(
+            ScheduledWorkout, user, start, end, "scheduled_for", ScheduledWorkout.status == "completed"
+        )
+    )
+
+
+def _user_active_recently(user: User, days: int = ENGAGEMENT_NUDGE_ACTIVE_DAYS) -> bool:
+    end = datetime.combine(effective_today(user), APP_DAY_START) + timedelta(days=1)
+    start = end - timedelta(days=days)
+    return (
+        _has_row_between(WeightLog, user, start, end, "date")
+        or _has_row_between(MealEntry, user, start, end, "logged_at")
+        or _has_row_between(WaterLog, user, start, end, "logged_at")
+        or _has_row_between(ScheduledWorkout, user, start, end, "created_at")
+    )
+
+
+def _nudge_copy(user: User, streak_days: int) -> tuple[str, str]:
+    today_ordinal = effective_today(user).toordinal()
+    pool = NUDGE_COPY_STREAK if streak_days >= 2 else NUDGE_COPY_FRESH
+    headline, body = pool[(today_ordinal + user.id) % len(pool)]
+    return headline, body.replace("{streak}", str(streak_days))
+
+
+def send_due_engagement_nudges() -> dict:
+    """One ping per day for active users who haven't logged anything today."""
+    sent, failed = [], 0
+    users = db.session.scalars(
+        select(User).where(User.status == "active", User.onboarding.is_(True))
+    ).all()
+
+    for user in users:
+        local_now = user_now(user)
+        if not ENGAGEMENT_NUDGE_MIN_HOUR <= local_now.hour < ENGAGEMENT_NUDGE_MAX_HOUR:
+            continue
+        if not user.nudges_enabled:
+            continue
+        today = effective_today(user)
+        if user.last_nudge_sent_on == today:
+            continue
+        if _user_logged_today(user):
+            continue
+        if not _user_active_recently(user):
+            continue
+        # A session starting soon already has its own reminder — never double-ping.
+        soon_cutoff = local_now + timedelta(hours=2)
+        has_soon_workout = db.session.scalar(
+            select(
+                select(ScheduledWorkout.id)
+                .where(
+                    ScheduledWorkout.user_id == user.id,
+                    ScheduledWorkout.status == "scheduled",
+                    ScheduledWorkout.scheduled_for >= local_now,
+                    ScheduledWorkout.scheduled_for <= soon_cutoff,
+                )
+                .exists()
+            )
+        )
+        if has_soon_workout:
+            continue
+
+        streak_days, _ = _logging_streak(list(user.logs), user)
+        headline, body = _nudge_copy(user, streak_days)
+
+        delivered = []
+        if user.push_subscriptions:
+            if _send_web_push(user, title=f"fiT-X · {headline}", body=body, url="/dashboard", tag=f"nudge-{today.isoformat()}"):
+                delivered.append("push")
+        elif user.email_reminders_enabled:
+            ok, _detail = _send_engagement_nudge_email(user, headline, body)
+            if ok:
+                delivered.append("email")
+
+        if delivered:
+            user.last_nudge_sent_on = today
+            sent.append({"user": user.email, "via": delivered, "streak": streak_days})
+        else:
+            failed += 1
+
+    db.session.commit()
+    return {"nudged": len(sent), "skipped": failed, "detail": sent}
+
+
+def _send_engagement_nudge_email(user: User, headline: str, body: str) -> tuple[bool, str]:
+    smtp_user = current_app.config.get("SMTP_USER", "")
+    smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")
+    if not smtp_user:
+        return False, "smtp not configured"
+    dashboard_url = url_for("dashboard.dashboard", _external=True)
+    subject = f"fiT-X · {headline}"
+    plain = f"Hi {user.name},\n\n{body}\n\nOpen fiT-X: {dashboard_url}\n\n— fiT-X"
+    html = render_template(
+        "emails/daily_nudge.html",
+        user_name=user.name,
+        headline=headline,
+        body=body,
         dashboard_url=dashboard_url,
     )
     return _send_via_smtp(user, subject, plain, html, smtp_user, smtp_password)
@@ -2765,7 +3049,10 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         horizon = f"starts in ~{round(starts_in_min)} min"
     subject = f"fiT-X · {workout.title} {horizon}"
     dashboard_url = url_for("dashboard.dashboard", _external=True)
-    plan = build_plan(workout.title)
+    # The session plan lives in the Workouts tab now — deep-link the CTAs there.
+    session_url = url_for("dashboard.dashboard", _external=True, _anchor="workouts")
+    # Same builder the tab uses, environment included, so email and tab agree.
+    plan = build_plan(workout.title, workout.environment or user.training_environment)
 
     # Week calendar for the email: Mon-Sun of the user's current local week,
     # with each day's weight-log state (done / today / missed / future).
@@ -2799,6 +3086,7 @@ def _send_reminder_email(user: User, workout: ScheduledWorkout, starts_in_min: f
         start_date=f"{workout.scheduled_for.strftime('%B')} {workout.scheduled_for.day}",
         workout_notes=(workout.notes or "").strip() or None,
         dashboard_url=dashboard_url,
+        session_url=session_url,
         plan_blocks=plan["blocks"] if plan else None,
         plan_name=plan["name"] if plan else None,
         week_cells=week_cells,

@@ -329,6 +329,22 @@
     border-radius: 0 2px 2px 0;
   }
 
+  /* Settings on phones: bottom sheet with the tab rail as a scrollable row,
+     tighter padding, and 16px inputs (below that iOS zooms on focus). */
+  @media (max-width: 767px) {
+    #settingsModal { padding: 0; align-items: flex-end; }
+    #settingsModal .modal-content {
+      height: 94vh;
+      max-height: 94vh;
+      border-radius: 1.25rem 1.25rem 0 0;
+    }
+    #settingsModal .settings-scroll { padding: 1.25rem; }
+    #settingsModal input,
+    #settingsModal select { font-size: 16px; }
+    #settingsModal h2 { font-size: 1.35rem; }
+    #settingsModal .settings-nav { width: auto; padding: 0.5rem 0.85rem; white-space: nowrap; }
+  }
+
   /* Segmented Control in Settings */
   .seg-control {
     display: flex;
@@ -816,18 +832,49 @@
 
             <div class="space-y-3">
               {% for workout in upcoming_workouts %}
-              <div class="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                <div class="w-9 h-9 rounded-md grad-bg flex items-center justify-center flex-shrink-0">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><path d="M6 4v16M18 4v16M2 9h4M2 15h4M18 9h4M18 15h4M6 12h12"/></svg>
+              <div class="bg-white/5 rounded-lg border border-white/5 overflow-hidden">
+                <div class="flex items-center gap-3 p-3">
+                  <div class="w-9 h-9 rounded-md grad-bg flex items-center justify-center flex-shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><path d="M6 4v16M18 4v16M2 9h4M2 15h4M18 9h4M18 15h4M6 12h12"/></svg>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-medium truncate">{{ workout.title }}</div>
+                    <div class="text-[10px] font-mono text-gray-500">{{ workout.scheduled_for.strftime('%a, %d %b · %I:%M %p').lstrip('0') }} · {{ workout.duration_minutes }} min</div>
+                  </div>
+                  <form method="POST" action="{{ url_for('dashboard.workout_done', workout_id=workout.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="text-[10px] font-mono font-semibold text-green border border-green/30 px-2.5 py-1.5 rounded-md hover:bg-green/10 transition">Mark done</button>
+                  </form>
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="text-xs font-medium truncate">{{ workout.title }}</div>
-                  <div class="text-[10px] font-mono text-gray-500">{{ workout.scheduled_for.strftime('%a, %d %b · %I:%M %p').lstrip('0') }} · {{ workout.duration_minutes }} min</div>
-                </div>
-                <form method="POST" action="{{ url_for('dashboard.workout_done', workout_id=workout.id) }}">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                  <button type="submit" class="text-[10px] font-mono font-semibold text-green border border-green/30 px-2.5 py-1.5 rounded-md hover:bg-green/10 transition">Mark done</button>
-                </form>
+                {% set session_plan = upcoming_plans.get(workout.id) %}
+                {% if session_plan %}
+                <details class="border-t border-white/5">
+                  <summary class="cursor-pointer select-none list-none px-3 py-2 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-gray-500 hover:text-gray-300 transition">
+                    <span>{{ session_plan.name }} plan · beginner cues included</span>
+                    <span class="text-green">show ▾</span>
+                  </summary>
+                  <div class="px-3 pb-3 space-y-3">
+                    {% for block in session_plan.blocks %}
+                    <div>
+                      <div class="text-[10px] font-mono uppercase tracking-wider text-green">{{ block.block }} <span class="text-gray-600 normal-case">· {{ block.focus }}</span></div>
+                      <div class="mt-1.5 space-y-1.5">
+                        {% for exercise in block.exercises %}
+                        <div class="flex gap-3 items-start bg-black/20 rounded-lg p-2 border border-white/5">
+                          {% if exercise.image %}<img src="{{ exercise.image }}" alt="" loading="lazy" class="w-12 h-12 object-cover rounded-md flex-shrink-0 bg-black/40">{% endif %}
+                          <div class="min-w-0">
+                            <div class="text-xs font-medium">{{ exercise.name }} <span class="font-mono text-[10px] text-gray-500">· {{ exercise.dose }}</span></div>
+                            {% for step in exercise.instructions %}
+                            <div class="text-[10px] text-gray-500 leading-relaxed mt-0.5">{{ step }}</div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </details>
+                {% endif %}
               </div>
               {% else %}
               <div class="rounded-xl border border-dashed border-white/10 bg-black/20 p-8 text-center">
@@ -1127,6 +1174,16 @@
         </div>
         {% endfor %}
       </div>
+      {% if needs_training_environment %}
+      <div class="px-4 pt-3 bg-black/30 border-t border-white/5">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2">Where do you usually train? Plans adapt to it.</div>
+        <div class="flex flex-wrap gap-2 pb-3">
+          <button type="button" onclick="sendEnvironment('gym')" class="text-xs font-medium text-gray-200 border border-white/10 rounded-lg px-3 py-2 hover:border-green hover:text-green transition">Gym</button>
+          <button type="button" onclick="sendEnvironment('home')" class="text-xs font-medium text-gray-200 border border-white/10 rounded-lg px-3 py-2 hover:border-green hover:text-green transition">Home</button>
+          <button type="button" onclick="sendEnvironment('home_gym')" class="text-xs font-medium text-gray-200 border border-white/10 rounded-lg px-3 py-2 hover:border-green hover:text-green transition">Home + equipment</button>
+        </div>
+      </div>
+      {% endif %}
       <form id="coachForm" action="{{ url_for('dashboard.coach_message') }}" method="POST" class="p-4 border-t border-white/5 bg-black/30">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus-within:border-green">
@@ -1275,95 +1332,139 @@
       </div>
     </div>
 
-    <div class="flex-1 p-8 overflow-y-auto">
+    <div class="settings-scroll flex-1 p-5 md:p-8 overflow-y-auto">
       <div id="tab-biometrics" class="settings-content">
         <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Biometrics</h2>
-        <p class="text-sm text-gray-400 mb-8">The base layer for your metabolic rate calculation. Edit these in onboarding for now.</p>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Current Weight</label>
-            <div class="relative">
-              <input type="number" value="{{ '%.1f'|format(user.weight) if user.weight is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">kg</span>
+        <p class="text-sm text-gray-400 mb-8">The base layer for your metabolic rate calculation.</p>
+        <form id="biometricsForm" onsubmit="saveSettingsForm('biometricsForm'); return false;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Current Weight</label>
+              <div class="relative">
+                <input type="number" name="weight" step="0.1" min="30" max="350" value="{{ '%.1f'|format(user.weight) if user.weight is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">kg</span>
+              </div>
+              <p class="text-[11px] font-mono text-gray-600 mt-1.5">Saving a new weight logs it as a check-in.</p>
+            </div>
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Height</label>
+              <div class="relative">
+                <input type="number" name="height" step="0.1" min="100" max="260" value="{{ user.height if user.height is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">cm</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Age</label>
+              <div class="relative">
+                <input type="number" name="age" min="13" max="100" value="{{ user.age if user.age is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">yrs</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Activity Level</label>
+              <select name="activity_level" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono">
+                <option value="sedentary" {% if user.activity_level == 'sedentary' %}selected{% endif %}>Inactive (sedentary)</option>
+                <option value="light" {% if user.activity_level == 'light' %}selected{% endif %}>Low Active (light)</option>
+                <option value="moderate" {% if user.activity_level == 'moderate' %}selected{% endif %}>Active (moderate)</option>
+                <option value="athlete" {% if user.activity_level == 'athlete' %}selected{% endif %}>Very Active (athlete)</option>
+              </select>
             </div>
           </div>
-          <div>
-            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Height</label>
-            <div class="relative">
-              <input type="number" value="{{ user.height if user.height is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">cm</span>
+          <div class="mt-6">
+            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Training Environment</label>
+            <div class="seg-control w-full md:w-2/3" id="envSeg">
+              <button type="button" data-value="gym" class="{% if user.training_environment == 'gym' %}active{% endif %}" onclick="pickSeg(this, 'envInput')">Gym</button>
+              <button type="button" data-value="home" class="{% if user.training_environment == 'home' %}active{% endif %}" onclick="pickSeg(this, 'envInput')">Home</button>
+              <button type="button" data-value="home_gym" class="{% if user.training_environment == 'home_gym' %}active{% endif %}" onclick="pickSeg(this, 'envInput')">Home + equipment</button>
             </div>
+            <input type="hidden" name="training_environment" id="envInput" value="{{ user.training_environment or '' }}">
+            <p class="text-[11px] font-mono text-gray-600 mt-2">Powers your session plans — bodyweight moves at home, full kit at the gym.</p>
           </div>
-          <div>
-            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Age</label>
-            <div class="relative">
-              <input type="number" value="{{ user.age if user.age is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
-              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">yrs</span>
-            </div>
+          <div class="mt-8 flex items-center gap-3">
+            <button type="submit" class="grad-bg text-black text-sm font-semibold px-6 py-3 rounded-md hover:opacity-90 transition">Save changes</button>
+            <span class="save-note text-xs font-mono hidden"></span>
           </div>
-          <div>
-            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Activity Level</label>
-            <select class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono">
-              <option {% if user.activity_level == 'sedentary' %}selected{% endif %}>Inactive (sedentary)</option>
-              <option {% if user.activity_level == 'light' %}selected{% endif %}>Low Active (light)</option>
-              <option {% if user.activity_level == 'moderate' %}selected{% endif %}>Active (moderate)</option>
-              <option {% if user.activity_level == 'athlete' %}selected{% endif %}>Very Active (athlete)</option>
-            </select>
-          </div>
-        </div>
+        </form>
       </div>
       <div id="tab-goals" class="settings-content hidden">
         <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Goals & Nutrition</h2>
-        <p class="text-sm text-gray-400 mb-8">Your current phase, based on the goal you set during onboarding.</p>
-        <div class="space-y-8">
-          <div>
-            <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Current Phase</label>
-            <div class="seg-control w-full md:w-1/2">
-              <button class="{% if user.goal == 'lose' %}active{% endif %}">Cut</button>
-              <button class="{% if user.goal == 'maintain' %}active{% endif %}">Maintain</button>
-              <button class="{% if user.goal == 'gain' %}active{% endif %}">Bulk</button>
-            </div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-2">
-              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Goal Progress</label>
-              <span class="text-sm font-mono font-bold text-green">{{ goal_progress }}%</span>
-            </div>
-            <div class="h-2 bg-white/5 rounded-full overflow-hidden">
-              <div class="h-full grad-bg rounded-full" style="width: {{ goal_progress }}%"></div>
-            </div>
-            <p class="text-[11px] font-mono text-gray-600 mt-2">{{ calorie_target_note }}</p>
-          </div>
-          <div class="border-t border-white/5 pt-6">
-            <div class="flex items-center justify-between mb-4">
-              <label class="text-sm font-medium text-gray-300">Macro Overrides</label>
-              <div class="toggle" onclick="toggleSwitch(this)"></div>
-            </div>
-            <div class="grid grid-cols-3 gap-4 opacity-50 pointer-events-none" id="macroOverrides">
-              <div>
-                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Protein</label>
-                <div class="relative">
-                  <input type="number" value="{{ macro_targets.protein }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
-                </div>
+        <p class="text-sm text-gray-400 mb-8">Change your phase, pace, or target — the 04:30 recalc picks it up.</p>
+        <form id="goalsForm" onsubmit="saveSettingsForm('goalsForm'); return false;">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="space-y-8">
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Current Phase</label>
+              <div class="seg-control w-full md:w-1/2" id="goalSeg">
+                <button type="button" data-value="lose" class="{% if user.goal == 'lose' %}active{% endif %}" onclick="pickSeg(this, 'goalInput')">Cut</button>
+                <button type="button" data-value="maintain" class="{% if user.goal == 'maintain' %}active{% endif %}" onclick="pickSeg(this, 'goalInput')">Maintain</button>
+                <button type="button" data-value="gain" class="{% if user.goal == 'gain' %}active{% endif %}" onclick="pickSeg(this, 'goalInput')">Bulk</button>
               </div>
-              <div>
-                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Carbs</label>
-                <div class="relative">
-                  <input type="number" value="{{ macro_targets.carbs }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
-                </div>
+              <input type="hidden" name="goal" id="goalInput" value="{{ user.goal or '' }}">
+            </div>
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Weekly Pace</label>
+              <div class="seg-control w-full md:w-1/2" id="paceSeg">
+                <button type="button" data-value="1" class="{% if user.pace == 1 %}active{% endif %}" onclick="pickSeg(this, 'paceInput')">Slow</button>
+                <button type="button" data-value="2" class="{% if user.pace == 2 or not user.pace %}active{% endif %}" onclick="pickSeg(this, 'paceInput')">Balanced</button>
+                <button type="button" data-value="3" class="{% if user.pace == 3 %}active{% endif %}" onclick="pickSeg(this, 'paceInput')">Aggressive</button>
               </div>
-              <div>
-                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Fats</label>
-                <div class="relative">
-                  <input type="number" value="{{ macro_targets.fats }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
-                </div>
+              <input type="hidden" name="pace" id="paceInput" value="{{ user.pace or 2 }}">
+            </div>
+            <div>
+              <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Target Weight</label>
+              <div class="relative w-full md:w-1/2">
+                <input type="number" name="target_weight" step="0.1" min="30" max="350" value="{{ user.target_weight if user.target_weight is not none else '' }}" class="input-field rounded-lg w-full px-4 py-3 text-sm font-mono pr-12">
+                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500">kg</span>
               </div>
             </div>
+            <div>
+              <div class="flex justify-between mb-2">
+                <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500">Goal Progress</label>
+                <span class="text-sm font-mono font-bold text-green">{{ goal_progress }}%</span>
+              </div>
+              <div class="h-2 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full grad-bg rounded-full" style="width: {{ goal_progress }}%"></div>
+              </div>
+              <p class="text-[11px] font-mono text-gray-600 mt-2">{{ calorie_target_note }}</p>
+            </div>
+            <div class="border-t border-white/5 pt-6">
+              <div class="flex items-center justify-between mb-4">
+                <label class="text-sm font-medium text-gray-300">Macro Overrides</label>
+                <div class="toggle {% if user.macro_protein_override is not none %}active{% endif %}" onclick="toggleMacroOverrides(this)"></div>
+              </div>
+              <p class="text-[11px] font-mono text-gray-600 mb-3">Off = the coach's automatic split from your target. On = your numbers win.</p>
+              <div class="grid grid-cols-3 gap-4 {% if user.macro_protein_override is none %}opacity-50 pointer-events-none{% endif %}" id="macroOverrides">
+                <div>
+                  <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Protein</label>
+                  <div class="relative">
+                    <input type="number" name="macro_protein" min="0" max="1000" value="{{ user.macro_protein_override if user.macro_protein_override is not none else macro_targets.protein }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Carbs</label>
+                  <div class="relative">
+                    <input type="number" name="macro_carbs" min="0" max="1000" value="{{ user.macro_carbs_override if user.macro_carbs_override is not none else macro_targets.carbs }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Fats</label>
+                  <div class="relative">
+                    <input type="number" name="macro_fats" min="0" max="1000" value="{{ user.macro_fats_override if user.macro_fats_override is not none else macro_targets.fats }}" class="input-field rounded-lg w-full px-3 py-2.5 text-sm font-mono pr-8">
+                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono text-gray-500">g</span>
+                  </div>
+                </div>
+              </div>
+              <input type="hidden" name="macro_overrides_enabled" id="macroEnabled" value="{% if user.macro_protein_override is not none %}true{% else %}false{% endif %}">
+            </div>
+            <div class="flex items-center gap-3">
+              <button type="submit" class="grad-bg text-black text-sm font-semibold px-6 py-3 rounded-md hover:opacity-90 transition">Save changes</button>
+              <span class="save-note text-xs font-mono hidden"></span>
+            </div>
           </div>
-        </div>
+        </form>
       </div>
       <div id="tab-coach" class="settings-content hidden">
         <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">AI Coach</h2>
@@ -1382,7 +1483,7 @@
       </div>
       <div id="tab-integrations" class="settings-content hidden">
         <h2 class="text-2xl font-bold tracking-tighter-2 mb-1">Integrations</h2>
-        <p class="text-sm text-gray-400 mb-8">Device sync is a design placeholder — toggles are not connected yet.</p>
+        <p class="text-sm text-gray-400 mb-8">Email and nudges are live. Device-sync platforms below are placeholders for now.</p>
         <div class="space-y-4">
           <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
             <div class="flex items-center gap-4">
@@ -1395,6 +1496,18 @@
               </div>
             </div>
             <div class="toggle {% if user.email_reminders_enabled %}active{% endif %}" onclick="toggleEmailReminders(this)"></div>
+          </div>
+          <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22a8 8 0 0 0 8-8c0-3.5-2-5.5-3.5-7L12 2 7.5 7C6 8.5 4 10.5 4 14a8 8 0 0 0 8 8z"/></svg>
+              </div>
+              <div>
+                <div class="text-sm font-semibold">Daily check-in nudge</div>
+                <div class="text-xs text-gray-500">A 3–4 PM reminder when nothing is logged yet today — keeps the streak alive</div>
+              </div>
+            </div>
+            <div class="toggle {% if user.nudges_enabled %}active{% endif %}" onclick="toggleNudges(this)"></div>
           </div>
           <div class="glass rounded-xl p-4 flex items-center justify-between border border-white/5">
             <div class="flex items-center gap-4">
@@ -1488,6 +1601,17 @@
     }, 100);
   }
 
+  // Deep links (/dashboard#workouts from reminder emails, #coach from the
+  // coach flow) open the right view instead of leaving the dashboard tab up.
+  (function () {
+    const hashView = (location.hash || '').replace('#', '');
+    if (['dashboard', 'nutrition', 'workouts', 'progress', 'challenges'].includes(hashView)) {
+      switchView(hashView);
+    } else if (hashView === 'coach') {
+      toggleChat();
+    }
+  })();
+
   // ============= Chatbot Logic =============
   function toggleChat() {
     const launcher = document.getElementById('chatLauncher');
@@ -1530,6 +1654,74 @@
     }).then(r => r.json())
       .then(d => el.classList.toggle('active', !!d.enabled))
       .catch(() => el.classList.toggle('active'));
+  }
+
+  function toggleNudges(el) {
+    const next = !el.classList.contains('active');
+    fetch('{{ url_for("dashboard.settings_nudges") }}', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token() }}' },
+      body: new URLSearchParams({ enabled: next })
+    }).then(r => r.json())
+      .then(d => el.classList.toggle('active', !!d.enabled))
+      .catch(() => el.classList.toggle('active'));
+  }
+
+  // Settings segmented picks (environment, phase, pace) write to a hidden input.
+  function pickSeg(btn, inputId) {
+    btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const input = document.getElementById(inputId);
+    if (input) input.value = btn.dataset.value;
+  }
+
+  function toggleMacroOverrides(el) {
+    el.classList.toggle('active');
+    const on = el.classList.contains('active');
+    document.getElementById('macroEnabled').value = on ? 'true' : 'false';
+    const wrap = document.getElementById('macroOverrides');
+    wrap.classList.toggle('opacity-50', !on);
+    wrap.classList.toggle('pointer-events-none', !on);
+  }
+
+  async function saveSettingsForm(formId) {
+    const form = document.getElementById(formId);
+    const note = form.querySelector('.save-note');
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('{{ url_for("dashboard.settings_profile") }}', { method: 'POST', body: new FormData(form) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        note.textContent = 'Saved ✓';
+        note.classList.remove('hidden', 'text-red-400');
+        note.classList.add('text-green');
+      } else {
+        note.textContent = (data.errors || ['Save failed — try again.']).join(' ');
+        note.classList.remove('hidden', 'text-green');
+        note.classList.add('text-red-400');
+      }
+    } catch (err) {
+      note.textContent = 'Save failed — check your connection.';
+      note.classList.remove('hidden', 'text-green');
+      note.classList.add('text-red-400');
+    } finally {
+      if (btn) btn.disabled = false;
+      clearTimeout(note._t);
+      note._t = setTimeout(() => note.classList.add('hidden'), 3000);
+    }
+  }
+
+  // Environment chips in the coach console: the tap sends the answer as a chat
+  // message, the rule layer stores it, and the chips disappear on the reload.
+  function sendEnvironment(env) {
+    const labels = { gym: 'gym', home: 'home', home_gym: 'home with equipment' };
+    const input = document.getElementById('coachInput');
+    const form = document.getElementById('coachForm');
+    if (!input || !form) return;
+    input.value = labels[env] || env;
+    if (form.requestSubmit) form.requestSubmit();
+    else form.dispatchEvent(new Event('submit', { cancelable: true }));
   }
 
   // ============= Push notifications (bell panel) =============

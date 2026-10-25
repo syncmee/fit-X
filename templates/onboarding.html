@@ -319,6 +319,7 @@
   <input type="hidden" id="fieldActivityLevel" name="activity-level" value="moderate">
   <input type="hidden" id="fieldGoal" name="goal" value="lose">
   <input type="hidden" id="fieldPace" name="pace" value="2">
+  <input type="hidden" id="fieldEnv" name="training_environment" value="">
 
 <!-- Main Onboarding Layout -->
 <main class="pt-16 grid lg:grid-cols-2 min-h-screen">
@@ -467,6 +468,17 @@
               <span class="text-[10px] font-mono text-gray-600">×1.9</span>
             </button>
           </div>
+        </div>
+
+        <!-- Training Environment -->
+        <div class="mb-10">
+          <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-3 block">Where do you usually train?</label>
+          <div id="envContainer" class="grid grid-cols-3 gap-3">
+            <button type="button" onclick="selectEnv('gym', this)" class="select-card input-field rounded-lg py-3.5 text-sm font-medium text-center">Gym</button>
+            <button type="button" onclick="selectEnv('home', this)" class="select-card input-field rounded-lg py-3.5 text-sm font-medium text-center">Home</button>
+            <button type="button" onclick="selectEnv('home_gym', this)" class="select-card input-field rounded-lg py-3.5 text-sm font-medium text-center">Home + kit</button>
+          </div>
+          <div class="text-[11px] font-mono text-gray-600 mt-2">Optional — powers your session plans. Skip and the coach asks later.</div>
         </div>
 
         <div class="flex justify-end">
@@ -754,6 +766,14 @@
     state.pace = 2;
   }
 
+  // Step 1: Training environment (optional)
+  let envChoice = '';
+  function selectEnv(env, el) {
+    envChoice = env;
+    document.querySelectorAll('#envContainer .select-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
   // Step 3: Pace slider
   function updatePace(val) {
     state.pace = parseInt(val);
@@ -876,6 +896,7 @@
     document.getElementById('fieldActivityLevel').value = state.activityLevel;
     document.getElementById('fieldGoal').value = state.goal;
     document.getElementById('fieldPace').value = state.pace;
+    document.getElementById('fieldEnv').value = envChoice;
 
     // Calculate dynamic target weight since the UI implies it based on pace and goal
     let targetWeight = parseFloat(state.weight);
