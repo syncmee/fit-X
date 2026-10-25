@@ -394,7 +394,7 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
     # A bare "gym" / "home with equipment" reply is a structured chip answer —
     # route it straight to the rules layer even when AI is configured, or the
     # model would answer it conversationally and the setting would never save.
-    if _looks_like_environment_answer(normalized):
+    if _looks_like_environment_answer(cleaned_message.lower()):
         return process_coach_message_rules(user, cleaned_message, now)
     if current_app.config.get("GEMINI_API_KEY", ""):
         ai_attempted = True
