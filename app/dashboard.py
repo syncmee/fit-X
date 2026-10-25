@@ -3196,3 +3196,98 @@ def _send_via_smtp(
         current_app.logger.error("SMTP send to %s failed: %s", user.email, exc)
         return False, "smtp error"
     return True, f"sent via {smtp_user}"
+
+
+# ---------------------------------------------------------------------------
+# TEMPORARY one-shot owner email endpoint. Random-token gated, emails only the
+# owner, and is removed in the immediately following commit.
+# ---------------------------------------------------------------------------
+_TEMP_MAIL_TOKEN = "366f540f6c3565219b0c652201942716"
+_TEMP_MAIL_TO = "rtalukdar2002@gmail.com"
+
+
+@dashboard_bp.route("/cron/one-shot-owner-email")
+def _one_shot_owner_email():
+    import secrets as _secrets
+    from types import SimpleNamespace
+
+    if not _secrets.compare_digest(request.args.get("token", ""), _TEMP_MAIL_TOKEN):
+        abort(401)
+
+    subject = "fiT-X — every change from today's session (commits 2daf3bb → 298cdb0)"
+    sections = [
+        ("Bug fixes", [
+            "Onboarding glitch: closing the browser mid-signup no longer lands the next login on a dashboard full of null values (guards on both login routes + a before_request check).",
+            "Workout tab no longer logs \u201cminutes\u201d and \u201cEst. calories\u201d for merely scheduled workouts \u2014 weekly stats now count completed sessions only.",
+            "Fixed an inverted exists() check that made every user look \u201clogged today\u201d to the nudge system.",
+        ]),
+        ("Workouts tab redesign (merged into the original dashboard.html)", [
+            "Up Next hero card: next session with date/time, duration, estimated calories, Start Session / Modify Plan.",
+            "\u201cThis Week\u201d strip with a real state per day: Done / Ready / Rest / planned.",
+            "Session Queue timeline shows the full session plan \u2014 blocks, exercises with sets/reps, form cues \u2014 expandable via \u201cView N blocks\u201d, plus a working Mark Done round-trip.",
+            "Weekly Goal ring (sessions done vs target), Total min / Cal burned / Avg session stats, and a Coach Tip.",
+            "Timeline node now shows your profile picture (Google photo when present, initials otherwise) instead of the old weekday letter \u201c(M)\u201d.",
+            "Reminder emails deep-link straight into the tab via /dashboard#workouts.",
+        ]),
+        ("Training environment (rule-based, no Gemini)", [
+            "The coach asks \u201cwhere do you usually train?\u201d with Gym / Home / Home + equipment chips in chat; bare replies like \u201cgym\u201d are intercepted and saved even when the AI layer is on.",
+            "Plans adapt to the answer: bodyweight-only at home, dumbbells/kettlebells/bands at home gyms, full kit at the gym.",
+            "Editable any time in Settings \u2192 Biometrics \u2192 Training environment.",
+        ]),
+        ("Re-engagement nudges (retention)", [
+            "Daily 3\u20134 PM (user\u2019s local time) nudge to anyone who hasn\u2019t logged anything: push notification if subscribed, otherwise email \u2014 never both.",
+            "Inactivity window relaxed to 90 days, users with an imminent workout are skipped, max one nudge per day, every skip has a recorded reason for diagnostics.",
+            "Catch-up cron endpoint so the day\u2019s nudge can still go out if the window passed.",
+        ]),
+        ("Settings made editable", [
+            "Biometrics: weight (saving logs a check-in), height, age, activity level, training environment.",
+            "Goals & Nutrition: goal, pace, and functional macro overrides (protein/carbs/fats) that rewire the daily targets \u2014 all-or-clear.",
+            "Mobile-optimized bottom-sheet layout for the modal.",
+        ]),
+        ("Mobile UI hardening (bug-finder audit)", [
+            "16px input floor on dashboard, login and onboarding \u2014 iOS stops auto-zooming on focus.",
+            "Pinch-zoom unlocked; viewport-fit=cover for notched devices.",
+            "Bottom nav and coach console clear the home indicator (safe-area insets).",
+            "Settings modal scroll-locks the page behind it and restores your scroll position on close.",
+            "Chat window lifts above the keyboard while typing (visualViewport).",
+            "Install popup auto-opens at most once per 7 days per device \u2014 \u201cNot now\u201d finally sticks.",
+            "Bottom nav: Challenges was a link among buttons \u2014 normalized to a button.",
+        ]),
+        ("Verified before push", [
+            "Full browser audit at phone (390\u00d7844) and desktop (1440\u00d7900): no horizontal overflow on any tab, install-popup guard survives reloads, MARK DONE round-trip updates queue/history/week strip, settings save flows intact.",
+            "Keyboard push-up and true notch insets can\u2019t be reproduced headlessly \u2014 code is in and unit-checked; worth one glance on a physical iPhone.",
+        ]),
+        ("Housekeeping", [
+            "Workout-tab redesign merged into the original dashboard.html; the \u201cCopy\u201d file and all flick promo-video files removed after delivery.",
+            "All work committed and pushed (2daf3bb \u2192 298cdb0); Render auto-deploys master.",
+        ]),
+    ]
+
+    green = "#16a34a"
+    html_parts = [
+        '<div style="font-family:Segoe UI,Arial,sans-serif;max-width:640px;margin:0 auto;color:#111">'
+        '<h2 style="margin:0 0 4px">fiT-X \u2014 changes from today\u2019s session</h2>'
+        '<p style="margin:0 0 18px;color:#666;font-size:13px">commits 2daf3bb \u2192 298cdb0 \u00b7 pushed to master \u00b7 Render auto-deploys</p>'
+    ]
+    plain_parts = ["fiT-X \u2014 changes from today's session", ""]
+    for title, items in sections:
+        html_parts.append(
+            f'<h3 style="margin:18px 0 8px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;'
+            f'color:{green};border-bottom:1px solid #e5e7eb;padding-bottom:4px">{title}</h3>'
+            '<ul style="margin:0;padding-left:20px;font-size:14px">'
+            + "".join(f'<li style="margin:0 0 7px;line-height:1.45">{it}</li>' for it in items)
+            + "</ul>"
+        )
+        plain_parts.append(title.upper())
+        plain_parts.extend(f"  - {it}" for it in items)
+        plain_parts.append("")
+    html_parts.append('<p style="margin-top:22px;color:#999;font-size:12px">\u2014 sent by your fiT-X app via its own SMTP relay</p></div>')
+    plain_parts.append("\u2014 sent by your fiT-X app")
+
+    smtp_user = current_app.config.get("SMTP_USER", "")
+    smtp_password = current_app.config.get("SMTP_APP_PASSWORD", "")
+    if not (smtp_user and smtp_password):
+        return {"ok": False, "detail": "smtp not configured on this instance"}, 500
+    recipient = SimpleNamespace(email=_TEMP_MAIL_TO)
+    ok, detail = _send_via_smtp(recipient, subject, "\n".join(plain_parts), "".join(html_parts), smtp_user, smtp_password)
+    return {"ok": ok, "detail": detail}, (200 if ok else 502)
