@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>fiT-X — Onboarding</title>
 <meta name="google-site-verification" content="YvyRv-trMgXgZ_1u2ymNwU7azKwdJRsldf5fVZw1heE" />
 <link rel="icon" href="/static/favicon.ico" sizes="48x48">
@@ -266,6 +266,15 @@
     border: none;
     border-radius: 50%;
     box-shadow: 0 0 0 4px rgba(74,222,128,0.2);
+  }
+
+  /* iOS: prevent auto-zoom on focus — every control >= 16px on phones */
+  @media (max-width: 767px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
   }
 </style>
 </head>

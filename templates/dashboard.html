@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>fiT-X — Dashboard</title>
 <meta name="google-site-verification" content="YvyRv-trMgXgZ_1u2ymNwU7azKwdJRsldf5fVZw1heE" />
 <link rel="icon" href="/static/favicon.ico" sizes="48x48">
@@ -401,6 +401,28 @@
     bottom: 0;
     width: 1px;
     background: linear-gradient(to bottom, rgba(74,222,128,0.3), transparent);
+  }
+
+  /* ===================== MOBILE CORRECTNESS ===================== */
+  /* iOS auto-zooms any focused control under 16px — floor every control on
+     phones (unlayered + !important so it beats Tailwind's text-* utilities). */
+  @media (max-width: 767px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+    /* Home-indicator clearance on installed PWA / notched devices */
+    .mobile-nav-bar {
+      height: calc(4rem + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .chat-launcher {
+      bottom: calc(5rem + env(safe-area-inset-bottom)) !important;
+    }
+    .chat-window {
+      bottom: calc(4.5rem + env(safe-area-inset-bottom)) !important;
+    }
   }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -925,7 +947,11 @@
               <div class="relative group">
                 <!-- Timeline Node -->
                 <div class="absolute -left-10 top-0 w-11 h-11 rounded-full glass-strong border border-green/20 flex items-center justify-center z-10 group-hover:border-green/50 transition-colors">
-                   <span class="text-[10px] font-mono text-green font-bold">{{ workout.scheduled_for.strftime('%a')[:1] }}</span>
+                   {% if user_picture %}
+                   <img src="{{ user_picture }}" alt="" class="w-full h-full rounded-full object-cover">
+                   {% else %}
+                   <span class="text-[10px] font-mono text-green font-bold">{{ user_initials }}</span>
+                   {% endif %}
                    <!-- Connector -->
                    {% if not loop.last %}<div class="absolute top-full left-1/2 w-px h-[calc(100%+1.5rem)] bg-white/5 -translate-x-1/2"></div>{% endif %}
                 </div>
@@ -1246,7 +1272,7 @@
 </div>
 
 <!-- ===================== MOBILE BOTTOM NAV ===================== -->
-<nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 glass-strong border-t border-white/5 flex items-center justify-around px-2">
+<nav class="mobile-nav-bar md:hidden fixed bottom-0 left-0 right-0 z-40 h-16 glass-strong border-t border-white/5 flex items-center justify-around px-2">
   <button onclick="switchView('dashboard')" data-view="dashboard" class="mobile-nav-link active">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
     Home
@@ -1263,10 +1289,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg>
     Progress
   </button>
-  <a href="#" onclick="switchView('challenges'); return false;" data-view="challenges" class="mobile-nav-link">
+  <button onclick="switchView('challenges')" data-view="challenges" class="mobile-nav-link">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M8.5 13L7 22l5-3 5 3-1.5-9"/></svg>
     Challenges
-  </a>
+  </button>
 </nav>
 
 <!-- ===================== FLOATING AI COACH CONSOLE ===================== -->
@@ -1749,6 +1775,28 @@
     }, 100);
   }
 
+  // iOS: when the on-screen keyboard opens, the visual viewport shrinks but
+  // position:fixed elements keep the layout viewport — lift the chat window
+  // above the keyboard while the input is focused.
+  (function () {
+    const vv = window.visualViewport;
+    const win = document.getElementById('chatWindow');
+    const input = document.getElementById('coachInput');
+    if (!vv || !win || !input) return;
+    const lift = () => {
+      if (document.activeElement === input) {
+        const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+        win.style.setProperty('bottom', `calc(4.5rem + ${overlap}px + env(safe-area-inset-bottom))`, 'important');
+      } else {
+        win.style.removeProperty('bottom');
+      }
+    };
+    input.addEventListener('focus', lift);
+    input.addEventListener('blur', () => { win.style.removeProperty('bottom'); });
+    vv.addEventListener('resize', lift);
+    vv.addEventListener('scroll', lift);
+  })();
+
   // Deep links (/dashboard#workouts from reminder emails, #coach from the
   // coach flow) open the right view instead of leaving the dashboard tab up.
   (function () {
@@ -2123,10 +2171,27 @@
 
   // ============= Settings Modal Logic =============
   function openSettings() {
+    // iOS: overflow:hidden on body is ignored — pin the body so the page
+    // doesn't scroll behind the modal, restore on close.
+    try {
+      const y = window.scrollY;
+      document.body.dataset.scrollLockY = String(y);
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${y}px`;
+      document.body.style.width = '100%';
+    } catch (e) { /* private mode */ }
     document.getElementById('settingsModal').classList.add('active');
   }
   function closeSettings() {
     document.getElementById('settingsModal').classList.remove('active');
+    try {
+      const y = parseInt(document.body.dataset.scrollLockY || '0', 10);
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      delete document.body.dataset.scrollLockY;
+      window.scrollTo(0, y);
+    } catch (e) { /* private mode */ }
   }
   document.getElementById('settingsModal').addEventListener('click', function(e) {
     if (e.target === this) closeSettings();

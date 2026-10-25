@@ -2,14 +2,30 @@
 // Android/Chrome: captures beforeinstallprompt and opens the native install
 // dialog from our button/popup. iOS/Safari: shows Share → Add to Home Screen
 // steps (Apple allows no programmatic prompt).
-// The popup appears on EVERY browser visit; people who installed via the
-// home-screen bookmark run in standalone mode and never see any of this.
+// The auto-popup shows at most once per 7 days per device — dismissing it
+// must not turn every page load into an interstitial. The toolbar button
+// always works on demand. People who installed via the home-screen bookmark
+// run in standalone mode and never see any of this.
 (function () {
   if (window.matchMedia("(min-width: 768px)").matches) return; // desktop: skip entirely
 
   var isStandalone = window.matchMedia("(display-mode: standalone)").matches ||
     window.navigator.standalone === true;
   if (isStandalone) return; // installed (bookmark/home-screen) — never prompt
+
+  var DISMISS_KEY = "fitxInstallPromptDismissedAt";
+  var DISMISS_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  function recentlyDismissed() {
+    try {
+      var at = parseInt(localStorage.getItem(DISMISS_KEY) || "0", 10);
+      return at && Date.now() - at < DISMISS_COOLDOWN;
+    } catch (e) { return false; }
+  }
+
+  function markDismissed() {
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (e) { /* private mode */ }
+  }
 
   var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -76,13 +92,15 @@
     if (!btn && !popup) return;
 
     showButton();
-    if (popup) setTimeout(openPopup, 1200);
+    // Auto-open only when the user hasn't recently dismissed it; the button
+    // still opens it on demand at any time.
+    if (popup && !recentlyDismissed()) setTimeout(openPopup, 1200);
 
     if (btn) btn.addEventListener("click", openPopup);
     var closeX = document.getElementById("installPopupClose");
-    if (closeX) closeX.addEventListener("click", closePopup);
+    if (closeX) closeX.addEventListener("click", function () { markDismissed(); closePopup(); });
     var dismiss = document.getElementById("installPopupDismiss");
-    if (dismiss) dismiss.addEventListener("click", closePopup);
+    if (dismiss) dismiss.addEventListener("click", function () { markDismissed(); closePopup(); });
     var androidBtn = document.getElementById("installPopupAndroidBtn");
     if (androidBtn) androidBtn.addEventListener("click", tryNativeInstall);
 
