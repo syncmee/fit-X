@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>fiT-X — Sign in</title>
 {% set seo_description = "Sign in to fiT-X to see today's adjusted calorie targets, your weekly trend and your next scheduled workout." %}
 {% set seo_title = "fiT-X — Sign in" %}
@@ -259,15 +259,6 @@
   @keyframes loadProgress {
     0% { width: 0%; }
     100% { width: 100%; }
-  }
-
-  /* iOS: prevent auto-zoom on focus — every control >= 16px on phones */
-  @media (max-width: 767px) {
-    input:not([type='checkbox']):not([type='radio']):not([type='range']),
-    textarea,
-    select {
-      font-size: 16px !important;
-    }
   }
 </style>
 </head>
