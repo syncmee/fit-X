@@ -7,7 +7,7 @@ from datetime import datetime
 from tests.base import AppContextTestCase, make_user
 
 from app.extensions import db
-from app.models import CoachMessage, User, UserChallenge
+from app.models import CoachMessage, MealEntry, ScheduledWorkout, User, UserChallenge, WaterLog, WeightLog
 from sqlalchemy import select
 
 
@@ -43,6 +43,14 @@ class CoachTestCase(AppContextTestCase):
         self.assertEqual(matches.get("Roti"), 100)
         self.assertEqual(matches.get("Dal, cooked"), 116)
         self.assertEqual(_food_db_matches("nothing relevant"), [])
+
+    def test_food_db_matches_explicit_aliases(self):
+        from app.models import Food
+        from app.dashboard import _food_db_matches
+
+        db.session.add(Food(name="Whole wheat roti", aliases='["chapati", "phulka"]', serving="1 medium", calories=110))
+        db.session.commit()
+        self.assertEqual(_food_db_matches("two chapatis")[0]["name"], "Whole wheat roti")
 
     def test_rule_coach_join_updates_participations(self):
         from app.dashboard import process_coach_message
@@ -96,6 +104,24 @@ class CoachTestCase(AppContextTestCase):
             datetime.utcnow())
         self.assertEqual(applied2, ["already in 30-Day Streak"])
         self.assertIsNotNone(db.session.scalar(select(UserChallenge.id)))
+
+    def test_apply_ai_actions_logs_weight_meal_water_and_workout(self):
+        """The structured-action boundary accepts each supported log branch."""
+        from app.dashboard import _apply_ai_actions
+
+        applied, _ = _apply_ai_actions(self._user(), [
+            {"type": "log_weight", "weight_kg": 72.4},
+            {"type": "log_meal", "name": "Dal rice", "meal_type": "lunch", "calories": 430,
+             "protein": 15, "carbs": 72, "fats": 8},
+            {"type": "log_water", "amount_ml": 500},
+            {"type": "complete_workout", "title": "Run", "duration_minutes": 30},
+        ], datetime.utcnow())
+        db.session.flush()
+        self.assertEqual(len(applied), 4)
+        self.assertEqual(db.session.scalar(select(WeightLog.weight)), 72.4)
+        self.assertEqual(db.session.scalar(select(MealEntry.calories)), 430)
+        self.assertEqual(db.session.scalar(select(WaterLog.amount_ml)), 500)
+        self.assertEqual(db.session.scalar(select(ScheduledWorkout.status)), "completed")
 
 
 if __name__ == "__main__":

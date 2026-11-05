@@ -1,9 +1,9 @@
-from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, send_from_directory, url_for
+from flask import Blueprint, Response, current_app, flash, redirect, render_template, request, send_from_directory, session, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 from secrets import token_urlsafe
 from sqlalchemy import func, or_, select
 
-from .extensions import db, oauth
+from .extensions import db, limiter, oauth
 from .models import GoogleIdentity, User, WeightLog
 from .seo import LLMS_TXT, ROBOTS_TXT, SITEMAP_LASTMOD, SITEMAP_PAGES, SITE_URL
 from .validation import validate_login_form, validate_onboarding_form, validate_signup_form
@@ -83,6 +83,7 @@ def legacy_test_page():
 
 
 @main_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute") if limiter is not None else (lambda view: view)
 def login():
     if current_user.is_authenticated:
         # A remembered/restored session must not skip onboarding — finishing it
@@ -132,7 +133,8 @@ def login():
             db.session.add(new_user)
             db.session.commit()
 
-            login_user(new_user)
+            login_user(new_user, remember=True)
+            session.permanent = True
             return redirect(url_for("main.onboarding"))
 
         cleaned_data, errors = validate_login_form(request.form)
@@ -154,7 +156,10 @@ def login():
             flash(f"Your account is {user.status}. Contact support if this is a mistake.", "error")
             return render_template("login.html", active_section=active_section), 403
 
-        login_user(user, remember=cleaned_data["remember"])
+        # Persistent by default fixes standalone iOS PWA launches after an
+        # inactive period; the checkbox remains accepted for old clients.
+        login_user(user, remember=True)
+        session.permanent = True
 
         if not user.onboarding:
             return redirect(url_for("main.onboarding"))
@@ -197,6 +202,7 @@ def google_callback():
         return redirect(url_for("main.login"))
 
     login_user(user, remember=True)
+    session.permanent = True
     if not user.onboarding:
         return redirect(url_for("main.onboarding"))
     return redirect(url_for("dashboard.dashboard"))

@@ -126,6 +126,9 @@ class CoachMessage(db.Model):
     had_error = db.Column(db.Boolean, default=False)
     prompt_tokens = db.Column(db.Integer)
     completion_tokens = db.Column(db.Integer)
+    # Exact provider response for audit/debugging. It is never rendered in
+    # the chat UI because it can contain model-only fields.
+    raw_model_json = db.Column(db.Text)
 
     def __repr__(self) -> str:
         return f"<CoachMessage {self.role} {self.created_at}>"
@@ -158,6 +161,18 @@ class WaterLog(db.Model):
 
     def __repr__(self) -> str:
         return f"<WaterLog {self.amount_ml}ml {self.logged_at}>"
+
+
+class IdempotencyKey(db.Model):
+    """One accepted mutation token per user; prevents double taps/retries."""
+
+    __tablename__ = "idempotency_key"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    key = db.Column(db.String(64), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    __table_args__ = (db.UniqueConstraint("user_id", "key", name="uq_idempotency_user_key"),)
 
 
 class PushSubscription(db.Model):
@@ -226,6 +241,9 @@ class Food(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(160), nullable=False, unique=True)
+    # JSON array stored as text for SQLite/PostgreSQL portability, e.g.
+    # ["chapati", "phulka"].  The catalogue matcher normalizes it.
+    aliases = db.Column(db.Text, nullable=False, default="[]")
     serving = db.Column(db.String(60), nullable=False, default="100 g")
     calories = db.Column(db.Integer, nullable=False, default=0)
     protein = db.Column(db.Integer, nullable=False, default=0)

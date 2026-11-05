@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -32,6 +33,10 @@ class Config:
     SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV", "development").lower() == "production"
     REMEMBER_COOKIE_HTTPONLY = True
     REMEMBER_COOKIE_SECURE = SESSION_COOKIE_SECURE
+    # Mobile Safari can evict a session cookie when a PWA is not opened for a
+    # few days. Flask-Login's signed remember cookie restores the account.
+    REMEMBER_COOKIE_DURATION = timedelta(days=int(os.getenv("REMEMBER_COOKIE_DAYS", "90")))
+    REMEMBER_COOKIE_SAMESITE = os.getenv("REMEMBER_COOKIE_SAMESITE", "Lax")
     # fiT-X AI coach (Google AI Studio / Gemini). Leave GEMINI_API_KEY empty to
     # fall back to the built-in rule-based coach.
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -40,6 +45,9 @@ class Config:
     # Gemini call fails (overloaded model, quota, outage). Leave empty to skip.
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
     GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+    # Redis is shared by both Render workers for rate-limit counters. Leave
+    # empty locally to use Flask-Limiter's in-memory development fallback.
+    RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     # Workout reminder emails via SMTP (Brevo relay, Gmail, or any provider).
     # Brevo: verify the sender email, generate an SMTP key at app.brevo.com, and
     # use smtp-relay.brevo.com port 2525 from Render (free Render blocks 587).

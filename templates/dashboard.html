@@ -795,6 +795,7 @@
             <div class="grid grid-cols-3 gap-4 mb-4">
               <form method="POST" action="{{ url_for('dashboard.water_add') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="idempotency_key" value="{{ idempotency_key() }}">
                 <input type="hidden" name="amount_ml" value="250">
                 <button type="submit" class="w-full glass p-3 rounded-lg hover:bg-white/10 active:scale-95 transition text-center border border-white/5">
                   <div class="text-xl font-bold text-blue-400 mb-1">+1</div>
@@ -803,6 +804,7 @@
               </form>
               <form method="POST" action="{{ url_for('dashboard.water_add') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="idempotency_key" value="{{ idempotency_key() }}">
                 <input type="hidden" name="amount_ml" value="500">
                 <button type="submit" class="w-full glass p-3 rounded-lg hover:bg-white/10 active:scale-95 transition text-center border border-white/5">
                   <div class="text-xl font-bold text-blue-400 mb-1">+2</div>
@@ -811,6 +813,7 @@
               </form>
               <form method="POST" action="{{ url_for('dashboard.water_add') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="idempotency_key" value="{{ idempotency_key() }}">
                 <input type="hidden" name="amount_ml" value="1000">
                 <button type="submit" class="w-full glass p-3 rounded-lg hover:bg-white/10 active:scale-95 transition text-center border border-white/5">
                   <div class="text-xl font-bold text-blue-400 mb-1">+4</div>
@@ -1338,6 +1341,7 @@
       {% endif %}
       <form id="coachForm" action="{{ url_for('dashboard.coach_message') }}" method="POST" class="p-4 border-t border-white/5 bg-black/30">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="idempotency_key" value="{{ idempotency_key() }}">
         <div class="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-4 py-3 focus-within:border-green">
           <span class="text-gray-600 text-xs font-mono">›</span>
           <input id="coachInput" type="text" name="message" placeholder="Ask coach..." autocomplete="off" required class="flex-1 bg-transparent text-xs outline-none placeholder:text-gray-600" />
@@ -1401,6 +1405,7 @@
     <p class="text-xs text-gray-400 mb-6">Name plus calories (or macros — kcal is computed as 4/4/9 per gram).</p>
     <form action="{{ url_for('dashboard.meals_add') }}" method="POST" class="space-y-4">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="idempotency_key" value="{{ idempotency_key() }}">
       <input type="hidden" name="meal_type" id="mealTypeInput" value="snack">
       <div>
         <label class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2 block">Food / Meal</label>

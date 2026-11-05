@@ -3,16 +3,17 @@ from pathlib import Path
 
 import click
 from flask import Flask, current_app
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy import func, select
 
 from .config import Config
 from .admin import admin_bp
 from .challenges import challenges_bp
 from .dashboard import dashboard_bp
-from .extensions import db, login_manager, migrate, oauth
+from .extensions import db, limiter, login_manager, migrate, oauth
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
 from .routes import main_bp
-from .security import generate_csrf_token, validate_csrf_request
+from .security import generate_csrf_token, generate_idempotency_key, validate_csrf_request
 from .seo import JSONLD_GRAPH, SITE_URL
 
 
@@ -43,11 +44,23 @@ def create_app(config_class: type[Config] = Config) -> Flask:
         static_folder=str(root_dir / "static"),
     )
     app.config.from_object(config_class)
+    if not app.config["DEBUG"] and not os.getenv("SECRET_KEY"):
+        raise RuntimeError("SECRET_KEY must be set when FLASK_ENV=production.")
+    # Render terminates TLS at its proxy. Trust exactly that one hop so Flask
+    # sees HTTPS and marks Secure cookies correctly.
+    if not app.config["DEBUG"]:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
     login_manager.init_app(app)
+    if limiter is not None:
+        limiter.init_app(app)
+
+    @app.errorhandler(429)
+    def rate_limit_exceeded(_error):
+        return "Too many requests. Please wait a moment and try again.", 429
 
     if migrate is not None:
         migrate.init_app(app, db)
@@ -55,6 +68,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
     app.before_request(validate_csrf_request)
     app.after_request(add_security_headers)
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
+    app.jinja_env.globals["idempotency_key"] = generate_idempotency_key
     app.context_processor(inject_seo_globals)
 
     if oauth is not None:
@@ -99,6 +113,8 @@ def create_app(config_class: type[Config] = Config) -> Flask:
             'ALTER TABLE "user" ADD COLUMN macro_protein_override INTEGER',
             'ALTER TABLE "user" ADD COLUMN macro_carbs_override INTEGER',
             'ALTER TABLE "user" ADD COLUMN macro_fats_override INTEGER',
+            'ALTER TABLE coach_message ADD COLUMN raw_model_json TEXT',
+            "ALTER TABLE food ADD COLUMN aliases TEXT DEFAULT '[]'",
         ):
             try:
                 db.session.execute(db.text(statement))

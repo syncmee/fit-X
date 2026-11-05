@@ -33,13 +33,15 @@ import requests
 from flask import Blueprint, current_app, flash, has_request_context, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import delete, func, select
+from sqlalchemy.exc import IntegrityError
 
-from .extensions import db
+from .extensions import db, limiter
 from .challenges import _day_qualifies, _joinable, challenge_visible_to, progress_view, run_daily_maintenance, update_challenges
 from .models import (
     Challenge,
     CoachMessage,
     Food,
+    IdempotencyKey,
     MealEntry,
     PushSubscription,
     ScheduledWorkout,
@@ -308,6 +310,18 @@ def _load_bmi_reference_rows() -> dict[int, list[dict[str, float]]]:
     return rows
 
 
+# Compatibility re-exports while callers migrate to app.health.  Keeping these
+# names here avoids a behavior-changing import migration in the first split PR.
+from .health import (  # noqa: E402
+    ACTIVITY_LEVEL_LABELS,
+    DEFAULT_BMI_SUMMARY,
+    DEFAULT_CALORIE_TARGET,
+    build_bmi_summary,
+    calculate_bmi,
+    estimate_calorie_target,
+)
+
+
 # ============================================================
 # fiT-X coach (rule-based natural language logging)
 # ============================================================
@@ -373,6 +387,27 @@ CARBS_PATTERN = re.compile(r"\b(\d{1,3})\s*(?:g\s*)?(?:carbs|carbohydrates|carb|
 FATS_PATTERN = re.compile(r"\b(\d{1,3})\s*(?:g\s*)?(?:fats|fat|f)\b", re.IGNORECASE)
 
 COACH_CHAT_HISTORY_LIMIT = 12
+_AI_CIRCUIT_FAILURES: dict[str, tuple[int, float]] = {}
+_AI_CIRCUIT_COOLDOWN_SECONDS = 60
+
+
+def _provider_available(name: str) -> bool:
+    """Open a short circuit after repeated provider failures.
+
+    This prevents every request from waiting through an already-known provider
+    outage; the rules coach remains available immediately.
+    """
+    failures, opened_at = _AI_CIRCUIT_FAILURES.get(name, (0, 0.0))
+    return not (failures >= 2 and monotonic() - opened_at < _AI_CIRCUIT_COOLDOWN_SECONDS)
+
+
+def _record_provider_failure(name: str) -> None:
+    failures, _opened_at = _AI_CIRCUIT_FAILURES.get(name, (0, 0.0))
+    _AI_CIRCUIT_FAILURES[name] = (failures + 1, monotonic())
+
+
+def _record_provider_success(name: str) -> None:
+    _AI_CIRCUIT_FAILURES.pop(name, None)
 
 
 @dataclass
@@ -396,12 +431,15 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
     # model would answer it conversationally and the setting would never save.
     if _looks_like_environment_answer(cleaned_message.lower()):
         return process_coach_message_rules(user, cleaned_message, now)
-    if current_app.config.get("GEMINI_API_KEY", ""):
+    if current_app.config.get("GEMINI_API_KEY", "") and _provider_available("gemini"):
         ai_attempted = True
         started = monotonic()
         try:
-            return process_coach_message_ai(user, cleaned_message, now, provider_name="gemini")
+            outcome = process_coach_message_ai(user, cleaned_message, now, provider_name="gemini")
+            _record_provider_success("gemini")
+            return outcome
         except Exception as exc:
+            _record_provider_failure("gemini")
             # Drop any partial writes from the failed attempt so the fallback
             # starts from a clean session; keep the attempt as telemetry
             # (committed immediately so later rollbacks can't drop it).
@@ -413,14 +451,17 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
             ))
             db.session.commit()
             current_app.logger.warning("Gemini coach failed; trying Groq fallback.", exc_info=True)
-    if current_app.config.get("GROQ_API_KEY", ""):
+    if current_app.config.get("GROQ_API_KEY", "") and _provider_available("groq"):
         ai_attempted = True
         started = monotonic()
         try:
-            return process_coach_message_ai(
+            outcome = process_coach_message_ai(
                 user, cleaned_message, now, provider=_groq_generate, provider_name="groq"
             )
+            _record_provider_success("groq")
+            return outcome
         except Exception as exc:
+            _record_provider_failure("groq")
             db.session.rollback()
             db.session.add(CoachMessage(
                 role="error", content=str(exc)[:200], user=user,
@@ -1583,6 +1624,24 @@ def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
     return max(minimum, min(parsed, maximum))
 
 
+def _claim_idempotency_key(user: User, form_key: str | None) -> bool:
+    """Reserve a submitted form token in the caller's transaction.
+
+    A unique database constraint, rather than an in-memory cache, makes this
+    work across Render's two gunicorn workers and survives a process restart.
+    """
+    key = (form_key or "").strip()
+    if not key or len(key) > 64:
+        return False
+    try:
+        with db.session.begin_nested():
+            db.session.add(IdempotencyKey(user_id=user.id, key=key))
+            db.session.flush()
+        return True
+    except IntegrityError:
+        return False
+
+
 def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[str], list[str]]:
     applied: list[str] = []
     challenge_notes: list[str] = []
@@ -1758,6 +1817,7 @@ def process_coach_message_ai(
         had_error=False,
         prompt_tokens=usage.get("prompt"),
         completion_tokens=usage.get("completion"),
+        raw_model_json=json.dumps(result, ensure_ascii=False),
     ))
     return CoachOutcome(reply=reply, action="ai")
 
@@ -1895,10 +1955,12 @@ def _build_weeks_minutes_history(user: User, local_now: datetime, weeks: int = 8
     today = effective_date(local_now)
     this_week_monday = today - timedelta(days=today.weekday())
 
+    earliest = datetime.combine(this_week_monday - timedelta(weeks=weeks - 1), time.min)
     rows = db.session.execute(
         select(ScheduledWorkout.scheduled_for, ScheduledWorkout.duration_minutes, ScheduledWorkout.status).where(
             ScheduledWorkout.user_id == user.id,
             ScheduledWorkout.status == "completed",
+            ScheduledWorkout.scheduled_for >= earliest,
         )
     ).all()
 
@@ -1917,22 +1979,23 @@ def _build_weeks_minutes_history(user: User, local_now: datetime, weeks: int = 8
 
 
 def _build_heatmap_levels(user: User, local_now: datetime, days: int = 84) -> list[int]:
+    today = effective_date(local_now)
+    start = datetime.combine(today - timedelta(days=days - 1), time.min)
     weight_dates = {
         effective_date(row[0])
         for row in db.session.execute(
-            select(WeightLog.date).where(WeightLog.user_id == user.id)
+            select(WeightLog.date).where(WeightLog.user_id == user.id, WeightLog.date >= start)
         ).all()
         if row[0] is not None
     }
     meal_dates = {
         effective_date(row[0])
         for row in db.session.execute(
-            select(MealEntry.logged_at).where(MealEntry.user_id == user.id)
+            select(MealEntry.logged_at).where(MealEntry.user_id == user.id, MealEntry.logged_at >= start)
         ).all()
         if row[0] is not None
     }
 
-    today = effective_date(local_now)
     levels: list[int] = []
     for offset in range(days - 1, -1, -1):
         day = today - timedelta(days=offset)
@@ -2401,8 +2464,12 @@ def dashboard():
 
 @dashboard_bp.route("/coach/message", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute; 100 per day", key_func=lambda: str(current_user.id)) if limiter is not None else (lambda view: view)
 def coach_message():
     raw_message = request.form.get("message", "")
+    if not _claim_idempotency_key(current_user, request.form.get("idempotency_key")):
+        flash("That request was already processed; nothing was added twice.", "warning")
+        return redirect(url_for("dashboard.dashboard", _anchor="coach"))
     try:
         process_coach_message(current_user, raw_message)
         db.session.commit()
@@ -2419,6 +2486,9 @@ def coach_message():
 @dashboard_bp.route("/meals/add", methods=["POST"])
 @login_required
 def meals_add():
+    if not _claim_idempotency_key(current_user, request.form.get("idempotency_key")):
+        flash("That meal was already logged.", "warning")
+        return redirect(url_for("dashboard.dashboard", _anchor="nutrition"))
     name = " ".join((request.form.get("name") or "").split())[:60]
     meal_type = request.form.get("meal_type", "meal")
     if meal_type not in MEAL_TYPE_ORDER:
@@ -2469,6 +2539,9 @@ def meals_delete(entry_id: int):
 @dashboard_bp.route("/water/add", methods=["POST"])
 @login_required
 def water_add():
+    if not _claim_idempotency_key(current_user, request.form.get("idempotency_key")):
+        flash("That water entry was already logged.", "warning")
+        return redirect(url_for("dashboard.dashboard", _anchor="nutrition"))
     amount_ml = _parse_nonnegative_int(request.form.get("amount_ml"), default=0, maximum=5000)
     if amount_ml <= 0:
         flash("Pick an amount to log.", "error")
@@ -3196,3 +3269,10 @@ def _send_via_smtp(
         current_app.logger.error("SMTP send to %s failed: %s", user.email, exc)
         return False, "smtp error"
     return True, f"sent via {smtp_user}"
+
+
+# Phase-2 compatibility exports.  These assignments make the extracted modules
+# authoritative while preserving import paths and test patches for one release.
+from .foods import food_db_matches as _food_db_matches  # noqa: E402
+from .coach.providers import gemini_generate as _gemini_generate, groq_generate as _groq_generate  # noqa: E402
+from .emails import send_via_smtp as _send_via_smtp  # noqa: E402

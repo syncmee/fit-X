@@ -51,9 +51,11 @@ class AdminTestCase(AppContextTestCase):
         self.assertIn("Export CSV", body)
         self.assertEqual(client.get(f"/admin/users/{joe_id}").status_code, 200)
 
-        # CSRF-less POST is rejected
-        self.assertEqual(client.post(f"/admin/users/{joe_id}/status",
-                                     data={"action": "suspend"}).status_code, 400)
+        # CSRF-less POST restarts the login flow instead of returning an
+        # unhelpful 400 (important for expired iOS PWA sessions).
+        response = client.post(f"/admin/users/{joe_id}/status", data={"action": "suspend"})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login", response.headers["Location"])
 
         client.post(f"/admin/users/{joe_id}/status",
                     data={"action": "suspend", "csrf_token": csrf_token(client)})
