@@ -14,25 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          bg: '#0A0A0A',
-          bg2: '#0E0E0E',
-          yellow: '#fef08a',
-          green: '#4ade80',
-        },
-        fontFamily: {
-          sans: ['Inter', 'system-ui', 'sans-serif'],
-          mono: ['JetBrains Mono', 'monospace'],
-        },
-      }
-    }
-  }
-</script>
+<link rel="stylesheet" href="/static/css/app.css?v={{ STATIC_V }}">
+
 <style>
   :root {
     --bg: #0A0A0A;
@@ -352,6 +335,6 @@
   sections.forEach(section => observer.observe(section));
 </script>
 
-<script src="/static/app-install.js" defer></script>
+<script src="/static/app-install.js?v={{ STATIC_V }}" defer></script>
 </body>
 </html>

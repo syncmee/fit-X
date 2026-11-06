@@ -19,27 +19,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          bg: '#0A0A0A',
-          bg2: '#0E0E0E',
-          bg3: '#121212',
-          yellow: '#fef08a',
-          green: '#4ade80',
-        },
-        fontFamily: {
-          sans: ['Inter', 'system-ui', 'sans-serif'],
-          mono: ['JetBrains Mono', 'monospace'],
-        },
-      }
-    }
-  }
-</script>
+<link rel="stylesheet" href="/static/css/app.css?v={{ STATIC_V }}">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@8.7.0" defer></script>
+
 <style>
   :root {
     --bg: #0A0A0A;
@@ -2220,8 +2202,10 @@
     };
   }
 
-  const weightChart = new ApexCharts(document.querySelector('#chart-weight'), buildWeightOptions(WEIGHT_VALUES, WEIGHT_LABELS));
-  weightChart.render();
+  var weightChart = null;
+  function initCharts() {
+    weightChart = new ApexCharts(document.querySelector('#chart-weight'), buildWeightOptions(WEIGHT_VALUES, WEIGHT_LABELS));
+    weightChart.render();
 
   function setWeightRange(range, btn) {
     const size = RANGE_SIZES[range] || WEIGHT_VALUES.length;
@@ -2326,6 +2310,14 @@
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' } }
   };
   new ApexCharts(document.querySelector('#chart-weekly-minutes'), weeklyMinutesOpts).render();
+  }
+  // ApexCharts loads with defer; draw after first paint so the HTML is
+  // on screen before the chart library blocks the main thread.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(initCharts); });
+  } else {
+    requestAnimationFrame(initCharts);
+  }
 
 </script>
 
@@ -2358,7 +2350,7 @@
     <button id="installPopupDismiss" class="w-full text-[11px] font-mono text-gray-500 hover:text-gray-300 py-2 transition">Not now</button>
   </div>
 </div>
-<script src="/static/app-install.js"></script>
+<script src="/static/app-install.js?v={{ STATIC_V }}"></script>
 
 </body>
 </html>

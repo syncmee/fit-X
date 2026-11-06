@@ -14,6 +14,11 @@ except ImportError:  # pragma: no cover - graceful fallback for environments wit
     Migrate = None
 
 try:
+    from flask_compress import Compress
+except ImportError:  # pragma: no cover - compression stays off if the package is missing
+    Compress = None
+
+try:
     from authlib.integrations.flask_client import OAuth
 except ImportError:  # pragma: no cover - Google sign-in stays disabled without authlib
     OAuth = None
@@ -25,6 +30,7 @@ login_manager.login_view = "main.login"
 login_manager.login_message = "Please sign in to continue."
 login_manager.login_message_category = "warning"
 migrate = Migrate() if Migrate is not None else None
+compress = Compress() if Compress is not None else None
 oauth = OAuth() if OAuth is not None else None
 # No storage_uri here: Flask-Limiter reads RATELIMIT_STORAGE_URI from app
 # config, so Render's Redis URI takes effect and memory:// remains the local

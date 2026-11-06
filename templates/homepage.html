@@ -23,29 +23,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com">
-<link rel="preconnect" href="https://cdn.apexcharts.com">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/css/app.css?v={{ STATIC_V }}">
 <script type="application/ld+json">{{ seo_jsonld_graph | tojson }}</script>
-<script src="https://cdn.apexcharts.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          bg: '#0A0A0A',
-          bg2: '#0E0E0E',
-          yellow: '#fef08a',
-          green: '#4ade80',
-        },
-        fontFamily: {
-          sans: ['Inter', 'system-ui', 'sans-serif'],
-          mono: ['JetBrains Mono', 'monospace'],
-        },
-      }
-    }
-  }
-</script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@8.7.0" defer></script>
+
 <style>
   :root {
     --bg: #0A0A0A;
@@ -1598,7 +1581,7 @@
     },
     tooltip: { theme: 'dark', x: { show: false } }
   };
-  if (window.ApexCharts) new ApexCharts(document.querySelector('#heroSparkline'), sparkOpts).render();
+
 
   // ============= Member charts =============
   function makeWeightChart(elId, data, color) {
@@ -1632,11 +1615,7 @@
     if (window.ApexCharts) new ApexCharts(document.querySelector('#' + elId), opts).render();
   }
 
-  // Marcus: 14 weeks, declining from 84.8 to 76.4
-  makeWeightChart('chart-marcus', [84.8, 84.5, 84.1, 83.6, 83.2, 82.7, 82.3, 81.8, 81.1, 80.5, 79.8, 79.0, 78.2, 77.4, 76.8, 76.4], '#4ade80');
 
-  // Aisha: 22 weeks, rising from 52.8 to 58.0
-  makeWeightChart('chart-aisha', [52.8, 53.0, 53.1, 53.4, 53.6, 53.9, 54.1, 54.4, 54.7, 55.0, 55.3, 55.6, 55.9, 56.2, 56.5, 56.8, 57.1, 57.3, 57.5, 57.7, 57.9, 58.0], '#fef08a');
 
   // Daniel: 36 weeks recomp, oscillating around 78
   const danielData = [];
@@ -1674,7 +1653,21 @@
       marker: { show: false }
     }
   };
-  if (window.ApexCharts) new ApexCharts(document.querySelector('#chart-aggregate'), aggOpts).render();
+  function initHomeCharts() {
+    if (!window.ApexCharts) return;
+    new ApexCharts(document.querySelector('#heroSparkline'), sparkOpts).render();
+    // Marcus: 14 weeks, declining from 84.8 to 76.4
+    makeWeightChart('chart-marcus', [84.8, 84.5, 84.1, 83.6, 83.2, 82.7, 82.3, 81.8, 81.1, 80.5, 79.8, 79.0, 78.2, 77.4, 76.8, 76.4], '#4ade80');
+    // Aisha: 22 weeks, rising from 52.8 to 58.0
+    makeWeightChart('chart-aisha', [52.8, 53.0, 53.1, 53.4, 53.6, 53.9, 54.1, 54.4, 54.7, 55.0, 55.3, 55.6, 55.9, 56.2, 56.5, 56.8, 57.1, 57.3, 57.5, 57.7, 57.9, 58.0], '#fef08a');
+    new ApexCharts(document.querySelector('#chart-aggregate'), aggOpts).render();
+  }
+  // ApexCharts loads with defer; draw after first paint.
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(initHomeCharts); });
+  } else {
+    requestAnimationFrame(initHomeCharts);
+  }
 
   // ============= BMI calculator =============
   function calcBMI() {
@@ -1719,6 +1712,6 @@
   }, 4000);
 </script>
 
-<script src="/static/app-install.js" defer></script>
+<script src="/static/app-install.js?v={{ STATIC_V }}" defer></script>
 </body>
 </html>

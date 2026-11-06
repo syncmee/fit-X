@@ -11,7 +11,7 @@ from .config import Config
 from .admin import admin_bp
 from .challenges import challenges_bp
 from .dashboard import dashboard_bp
-from .extensions import db, limiter, login_manager, migrate, oauth
+from .extensions import compress, db, limiter, login_manager, migrate, oauth
 from .models import CoachMessage, MealEntry, ScheduledWorkout, User, WaterLog, WeightLog
 from .routes import main_bp
 from .security import generate_csrf_token, generate_idempotency_key, validate_csrf_request
@@ -65,10 +65,13 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
     if migrate is not None:
         migrate.init_app(app, db)
+    if compress is not None:
+        compress.init_app(app)
 
     app.before_request(validate_csrf_request)
     app.after_request(add_security_headers)
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
+    app.jinja_env.globals["STATIC_V"] = app.config["STATIC_ASSET_VERSION"]
     app.jinja_env.globals["idempotency_key"] = generate_idempotency_key
     app.context_processor(inject_seo_globals)
 

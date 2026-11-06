@@ -28,6 +28,18 @@ class Config:
     # Static assets change rarely; let browsers cache them instead of
     # revalidating on every visit. sw.js update checks cap at 24h regardless.
     SEND_FILE_MAX_AGE_DEFAULT = 60 * 60 * 24 * 30
+    # Cache busting: templates reference /static/...?v={{ STATIC_V }}. Render
+    # exposes the deployed commit, so every deploy gets a fresh URL; the
+    # fallback keeps local development stable between manual bumps.
+    STATIC_ASSET_VERSION = os.getenv("RENDER_GIT_COMMIT") or os.getenv("STATIC_ASSET_VERSION") or "1"
+    # Small HTML/JSON/text responses gzip at level 5; static files are already
+    # pre-minified. Compressing 1 KB documents is wasted CPU.
+    COMPRESS_MIMETYPES = [
+        "text/html", "text/css", "text/plain", "text/xml", "application/json",
+        "application/javascript", "image/svg+xml",
+    ]
+    COMPRESS_MIN_SIZE = 1024
+    COMPRESS_LEVEL = 5
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
     SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV", "development").lower() == "production"
