@@ -204,7 +204,12 @@ class ProviderDeadlineTestCase(AppContextTestCase):
 
         self.assertEqual(remaining_provider_timeout(None, 12), 12)
         self.assertEqual(remaining_provider_timeout(monotonic() + 100, 12), 12)
-        self.assertEqual(remaining_provider_timeout(monotonic() + 5, 45), 5)
+        # Not an exact equality: monotonic() resolution differs per platform
+        # (ns on Linux, ~15 ms on Windows), so the remaining budget is a hair
+        # under the requested 5 s.
+        bounded = remaining_provider_timeout(monotonic() + 5, 45)
+        self.assertGreater(bounded, 4.0)
+        self.assertLessEqual(bounded, 5.0)
         self.assertEqual(remaining_provider_timeout(monotonic() + 0.5, 45), 0.0)
         self.assertEqual(remaining_provider_timeout(monotonic() - 10, 45), 0.0)
 
