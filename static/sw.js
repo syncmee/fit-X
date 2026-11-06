@@ -5,7 +5,7 @@
 // when the network is gone. Only the app shell (/static/*) and known
 // font/chart CDNs use cache-with-refresh, so updates land on the next
 // load. Bump VERSION whenever shipped static assets change.
-const VERSION = "fitx-v1";
+const VERSION = "fitx-v2";  // bumped: built app.css, pinned ApexCharts CDN, WebP screenshots
 
 const PRECACHE = [
   "/static/offline.html",
@@ -25,7 +25,7 @@ const PRECACHE = [
 const CACHEABLE_CDN_HOSTS = new Set([
   "fonts.googleapis.com",
   "fonts.gstatic.com",
-  "cdn.apexcharts.com",
+  "cdn.jsdelivr.net",
 ]);
 
 self.addEventListener("install", (event) => {
