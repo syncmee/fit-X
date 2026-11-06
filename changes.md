@@ -197,6 +197,57 @@ Ran 37 tests ... OK
 
 GitHub Actions Tests run on `2de91d1`: success.
 
+## Phase B: finish the protection work
+
+### Food sanity limits: the app, not the model, decides the numbers
+
+- `app/foods.py` grew the food-domain guards: `PER_UNIT_CEILINGS` (per-food
+  one-meal ceilings — eggs 10, rotis 12, dosa 8, …), `MEAL_ENTRY_CALORIE_CAP`
+  (1500 kcal) and `MEAL_ENTRY_HARD_CAP` (3000 kcal), plus `resolve_food`,
+  `compute_meal_from_catalogue`, and `unit_ceiling_for`.
+- The `log_meal` AI action now carries `quantity` and `unit` (prompt updated).
+  When the named food matches the curated catalogue, calories and macros are
+  **computed from the database** — per-serving values scaled by the portion
+  (mass/volume units scale by the parsed serving grams; countable units treat
+  one unit as one catalogue serving) — and the model's own estimate is
+  discarded for matched foods. Unmatched foods keep the model estimate.
+- Ceilings and the cap **reject or ask, never clamp**: a "2 eggs became 20"
+  misread logs nothing and the coach reply ends with an explicit confirmation
+  question ("Say 'yes, log it' to confirm"). The model can pass
+  `confirmed: true` only after the user explicitly re-confirms; confirmation
+  relaxes limits up to 3× the ceiling / the hard cap, never past them.
+  The regression suite (`tests/test_food_limits.py`) pins the exact "2 eggs
+  → 20" case, the catalogue overrides, kg/g unit scaling, cap and hard-cap
+  behavior, and the confirmation surfaced through `process_coach_message_ai`.
+
+### Idempotency-key cleanup
+
+- `_cleanup_old_idempotency_keys` deletes accepted dedupe tokens older than
+  7 days; it runs once per day inside the existing `/cron/send-reminders`
+  route behind a per-worker date gate (a second worker's pass finds nothing
+  to delete). Tokens are never read after their request completes, so
+  deletion cannot weaken double-submit protection.
+
+### One AI deadline across Gemini and Groq
+
+- `app/coach/providers.py` gained `TOTAL_AI_DEADLINE_SECONDS` (25 s). Each
+  provider's per-request timeout is capped by what remains of the chain-wide
+  budget, and a provider with under 2 s remaining raises immediately, so a
+  hung Gemini no longer pushes the worst case to 12 s + 45 s. The rule-based
+  coach remains the fallback. `process_coach_message` starts the deadline
+  once and passes it through both provider attempts.
+
+## Verification (Phase B)
+
+```text
+.\\.venv\\Scripts\\python.exe -m unittest discover -s tests   (run without .env, mirroring CI)
+Ran 53 tests ... OK
+```
+
+Note: `test_coach`'s meal-branch test now logs an *unmatched* food
+("Chicken momos"); matched foods are DB-computed by design, which its old
+"Dal rice" fixture would have exercised differently.
+
 ## Verification
 
 The full local suite passed with:

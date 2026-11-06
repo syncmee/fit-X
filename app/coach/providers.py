@@ -6,6 +6,8 @@ patch ``app.dashboard._gemini_generate``.
 """
 from __future__ import annotations
 
+from time import monotonic
+
 import requests
 
 
@@ -13,10 +15,36 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GEMINI_TIMEOUT_SECONDS = 12
 AI_TIMEOUT_SECONDS = 45
+# Wall-clock budget shared by the whole Gemini -> Groq fallback chain, so a
+# hung Gemini cannot push the worst-case coach response to
+# GEMINI_TIMEOUT + AI_TIMEOUT (57s). When the deadline is exhausted the
+# caller falls through to the rule-based coach instead of waiting more.
+TOTAL_AI_DEADLINE_SECONDS = 25
+MIN_PROVIDER_TIMEOUT_SECONDS = 2.0
 
 
-def gemini_generate(user, message: str, now):
+def remaining_provider_timeout(deadline: float | None, default: float) -> float:
+    """Per-request timeout capped by the chain-wide remaining deadline."""
+    if deadline is None:
+        return default
+    remaining = deadline - monotonic()
+    if remaining < MIN_PROVIDER_TIMEOUT_SECONDS:
+        return 0.0
+    return min(default, remaining)
+
+
+def _deadline_check(deadline: float | None, provider: str) -> None:
     from app import dashboard as dashboard
+
+    if deadline is not None and deadline - monotonic() < MIN_PROVIDER_TIMEOUT_SECONDS:
+        raise dashboard.CoachAIError(f"AI deadline exhausted before {provider}")
+
+
+def gemini_generate(user, message: str, now, deadline: float | None = None):
+    from app import dashboard as dashboard
+
+    _deadline_check(deadline, "Gemini")
+    timeout = remaining_provider_timeout(deadline, GEMINI_TIMEOUT_SECONDS)
 
     api_key = dashboard.current_app.config.get("GEMINI_API_KEY", "")
     model = dashboard.current_app.config.get("GEMINI_MODEL", "gemini-2.5-flash")
@@ -28,10 +56,11 @@ def gemini_generate(user, message: str, now):
                "contents": contents,
                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 800, "responseMimeType": "application/json"}}
     try:
-        response = requests.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=GEMINI_TIMEOUT_SECONDS)
-        if response.status_code == 503:
+        response = requests.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
+        if response.status_code == 503 and remaining_provider_timeout(deadline, GEMINI_TIMEOUT_SECONDS) > 0:
             dashboard.sleep(2)
-            response = requests.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=GEMINI_TIMEOUT_SECONDS)
+            timeout = remaining_provider_timeout(deadline, GEMINI_TIMEOUT_SECONDS)
+            response = requests.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
     except requests.RequestException as exc:
         raise dashboard.CoachAIError(f"Gemini request failed: {exc}") from exc
     if response.status_code != 200:
@@ -46,8 +75,11 @@ def gemini_generate(user, message: str, now):
     return result
 
 
-def groq_generate(user, message: str, now):
+def groq_generate(user, message: str, now, deadline: float | None = None):
     from app import dashboard as dashboard
+
+    _deadline_check(deadline, "Groq")
+    timeout = remaining_provider_timeout(deadline, AI_TIMEOUT_SECONDS)
 
     api_key = dashboard.current_app.config.get("GROQ_API_KEY", "")
     model = dashboard.current_app.config.get("GROQ_MODEL", "openai/gpt-oss-120b")
@@ -56,7 +88,7 @@ def groq_generate(user, message: str, now):
                     for row in reversed(dashboard._ai_recent_history(user)))
     messages.append({"role": "user", "content": message})
     try:
-        response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 1000, "response_format": {"type": "json_object"}}, timeout=AI_TIMEOUT_SECONDS)
+        response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 1000, "response_format": {"type": "json_object"}}, timeout=timeout)
     except requests.RequestException as exc:
         raise dashboard.CoachAIError(f"Groq request failed: {exc}") from exc
     if response.status_code != 200:

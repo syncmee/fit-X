@@ -111,7 +111,9 @@ class CoachTestCase(AppContextTestCase):
 
         applied, _ = _apply_ai_actions(self._user(), [
             {"type": "log_weight", "weight_kg": 72.4},
-            {"type": "log_meal", "name": "Dal rice", "meal_type": "lunch", "calories": 430,
+            # An unmatched food: the model's own estimate is used (matched
+            # foods are computed from the catalogue — see test_food_limits).
+            {"type": "log_meal", "name": "Chicken momos", "meal_type": "lunch", "calories": 430,
              "protein": 15, "carbs": 72, "fats": 8},
             {"type": "log_water", "amount_ml": 500},
             {"type": "complete_workout", "title": "Run", "duration_minutes": 30},

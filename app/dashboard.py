@@ -21,7 +21,7 @@ import csv
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from functools import lru_cache
 from math import log
 from pathlib import Path
@@ -36,6 +36,8 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 
 from .extensions import db, limiter
+from . import foods as foods_module
+from .coach import providers as providers_module
 from .challenges import _day_qualifies, _joinable, challenge_visible_to, progress_view, run_daily_maintenance, update_challenges
 from .models import (
     Challenge,
@@ -431,11 +433,15 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
     # model would answer it conversationally and the setting would never save.
     if _looks_like_environment_answer(cleaned_message.lower()):
         return process_coach_message_rules(user, cleaned_message, now)
+    # One wall-clock budget for the whole Gemini -> Groq chain (providers.py
+    # caps each per-request timeout by what is left of it).
+    ai_deadline = monotonic() + providers_module.TOTAL_AI_DEADLINE_SECONDS
     if current_app.config.get("GEMINI_API_KEY", "") and _provider_available("gemini"):
         ai_attempted = True
         started = monotonic()
         try:
-            outcome = process_coach_message_ai(user, cleaned_message, now, provider_name="gemini")
+            outcome = process_coach_message_ai(
+                user, cleaned_message, now, provider_name="gemini", deadline=ai_deadline)
             _record_provider_success("gemini")
             return outcome
         except Exception as exc:
@@ -456,7 +462,8 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
         started = monotonic()
         try:
             outcome = process_coach_message_ai(
-                user, cleaned_message, now, provider=_groq_generate, provider_name="groq"
+                user, cleaned_message, now, provider=_groq_generate, provider_name="groq",
+                deadline=ai_deadline,
             )
             _record_provider_success("groq")
             return outcome
@@ -1445,7 +1452,7 @@ You reply with ONLY one JSON object, no markdown fences, matching exactly:
 
 ACTION TYPES (each an object inside "actions"; use an empty array for pure questions):
 1. {{"type":"log_weight","weight_kg":number,"days_ago":0}}  — weight check-in; days_ago 0-7 (1 means yesterday). Valid weight 30-350 kg. Keep the exact value the user said, decimals included (they said 81.9 → send 81.9, never round to 82).
-2. {{"type":"log_meal","name":"short food name","meal_type":"breakfast|lunch|dinner|snack","calories":int,"protein":int,"carbs":int,"fats":int}}  — grams of protein/carbs/fat. If the user gives only macros, set calories = protein*4 + carbs*4 + fats*9. If only calories are given, leave macros 0. Pick meal_type from context (time of day or the user's words).
+2. {{"type":"log_meal","name":"short food name","quantity":number,"unit":"pieces|medium|bowl|cup|grams|ml|serving","meal_type":"breakfast|lunch|dinner|snack","calories":int,"protein":int,"carbs":int,"fats":int,"confirmed":false}}  — quantity is how many of the unit the user ate (default 1): "2 rotis" → quantity 2, unit "pieces"; "200 g rice" → quantity 200, unit "grams". calories/macros are still your per-portion estimate; the app recomputes calories from its own food database when the food matches it, and those values win. If the user gives only macros, set calories = protein*4 + carbs*4 + fats*9. If only calories are given, leave macros 0. Pick meal_type from context (time of day or the user's words). Never set "confirmed" yourself — see RULES.
 3. {{"type":"log_water","amount_ml":int}}  — 100-5000 ml. "a glass" ≈ 250, "a bottle" ≈ 500.
 4. {{"type":"schedule_workout","title":"Activity","days_ahead":0,"time_24h":"18:30","duration_minutes":int,"calories_burned":int,"environment":"gym|home|home_gym"}}  — ANY activity counts: gym, running, cycling, swimming, yoga, pilates, boxing, martial arts, sports, walking. days_ahead 0-30 (0 = today; if that time already passed, use tomorrow). time_24h defaults to the user's words or "18:00". duration 5-240 min. environment is OPTIONAL — set it only when the user's words say where they train ("home workout", "at the gym"); omit otherwise. Estimate calories_burned from the user's weight, duration and intensity (light yoga ≈ 3 kcal/kg/h, brisk walk ≈ 4.3, cycling ≈ 6, running ≈ 10, HIIT/boxing ≈ 9; round to the nearest 10).
 5. {{"type":"complete_workout","title":"Activity","days_ago":0,"duration_minutes":int,"calories_burned":int}}  — the user already finished it. days_ago 0-7. Estimate burn the same way.
@@ -1453,6 +1460,7 @@ ACTION TYPES (each an object inside "actions"; use an empty array for pure quest
 
 RULES:
 - The app already computes the user's official daily calorie target (daily_calorie_target in the context). Treat it as the single source of truth for intake advice — never present a different daily number as the plan. If the user asks for more aggressive or faster pacing, explain the current target and why it is conservative; suggest talking to a professional for anything beyond it.
+- Sanity guard on quantities: the app rejects implausibly large meals (per-food quantity ceilings, a per-entry calorie cap) and asks the user to confirm instead of logging. If your reply was preceded by such a rejection, do not guess a smaller number on your own — the user was asked to confirm or correct the amount. When the user now clearly confirms the original amount ("yes, log it"), repeat the SAME log_meal action unchanged with "confirmed": true. Only an explicit user confirmation sets confirmed to true.
 - The user may phrase anything casually ("had 2 rotis and dal", "did 40 min zone 2", "leg day tomorrow 7am"). Interpret sensibly and fill every field.
 - For any food you can recognize, ESTIMATE the calories and macros yourself from your nutrition knowledge ("7 steamed chicken momos" ≈ 40 kcal / 3g protein each, "1 plain dosa", "a bowl of dal") and log it — never ask the user for calories or macros on recognizable food. Note the estimate briefly in the reply (e.g. "Logged 7 steamed momos, roughly 380 kcal"). Only ask a clarifying question when you genuinely cannot tell what or how much they ate.
 - The user may give partial numbers ("300 kcal rotis", "20g protein shake") — use what they gave and estimate only the missing pieces.
@@ -1624,6 +1632,29 @@ def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
     return max(minimum, min(parsed, maximum))
 
 
+def _parse_quantity(value, default: float = 1.0) -> float:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return default
+    return parsed
+
+
+# Entries in _apply_ai_actions' applied list that were NOT logged and instead
+# need the user's confirmation. process_coach_message_ai moves them into the
+# reply; every other entry stays an internal action record.
+_CONFIRM_PREFIX = "needs confirmation: "
+
+
+def _meal_confirm_question(name: str, quantity: float, unit: str, kcal: int | None) -> str:
+    shown_qty = f"{quantity:g}" if quantity == int(quantity) else f"{quantity:.1f}"
+    kcal_part = f" — that is about {kcal} kcal" if kcal else ""
+    return (
+        f"{_CONFIRM_PREFIX}I did not log {shown_qty} × {name}{kcal_part}, which is unusually "
+        "large for one meal. Say 'yes, log it' to confirm, or tell me the correct amount."
+    )
+
+
 def _claim_idempotency_key(user: User, form_key: str | None) -> str:
     """Reserve a submitted form token in the caller's transaction.
 
@@ -1675,14 +1706,44 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[st
             meal_type = str(action.get("meal_type") or "").lower()
             if meal_type not in MEAL_TYPE_ORDER:
                 meal_type = _default_meal_type(to_user_clock(user, now))
-            protein = _clamp_int(action.get("protein"), 0, 500)
-            carbs = _clamp_int(action.get("carbs"), 0, 800)
-            fats = _clamp_int(action.get("fats"), 0, 300)
-            calories = _clamp_int(action.get("calories"), 0, 10000)
-            if calories == 0 and (protein or carbs or fats):
-                calories = protein * 4 + carbs * 4 + fats * 9
-            if calories <= 0:
-                continue
+            logged_at = to_user_clock(user, now)
+            confirmed = bool(action.get("confirmed"))
+            # The model describes the food; the app decides the numbers.
+            quantity = _parse_quantity(action.get("quantity"))
+            unit = " ".join(str(action.get("unit") or "serving").split()).lower()[:24]
+            catalog_food = foods_module.resolve_food(name)
+            computed = foods_module.compute_meal_from_catalogue(catalog_food, quantity, unit)
+            ceiling = (
+                foods_module.unit_ceiling_for(name)
+                or (catalog_food and foods_module.unit_ceiling_for(catalog_food["name"]))
+            )
+            # Per-unit ceiling: reject and ask instead of logging, and never
+            # accept a "confirmed" quantity beyond triple the ceiling.
+            if ceiling and quantity > ceiling:
+                if not confirmed or quantity > ceiling * 3:
+                    applied.append(_meal_confirm_question(name, quantity, unit, computed and computed["calories"]))
+                    continue
+            if computed:
+                # Catalogue values override the model's own estimate (same
+                # precedence the prompt states for food_database_matches).
+                calories = computed["calories"]
+                protein = computed["protein"]
+                carbs = computed["carbs"]
+                fats = computed["fats"]
+            else:
+                protein = _clamp_int(action.get("protein"), 0, 500)
+                carbs = _clamp_int(action.get("carbs"), 0, 800)
+                fats = _clamp_int(action.get("fats"), 0, 300)
+                calories = _clamp_int(action.get("calories"), 0, 10000)
+                if calories == 0 and (protein or carbs or fats):
+                    calories = protein * 4 + carbs * 4 + fats * 9
+                if calories <= 0:
+                    continue
+            # Per-entry calorie cap: reject or confirm, never clamp.
+            if calories > foods_module.MEAL_ENTRY_CALORIE_CAP:
+                if not confirmed or calories > foods_module.MEAL_ENTRY_HARD_CAP:
+                    applied.append(_meal_confirm_question(name, quantity, unit, calories))
+                    continue
             db.session.add(
                 MealEntry(
                     name=name,
@@ -1691,11 +1752,11 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[st
                     protein=protein,
                     carbs=carbs,
                     fats=fats,
-                    logged_at=to_user_clock(user, now),
+                    logged_at=logged_at,
                     user=user,
                 )
             )
-            challenge_notes.extend(update_challenges(user, {"kind": "meal", "at": to_user_clock(user, now)}))
+            challenge_notes.extend(update_challenges(user, {"kind": "meal", "at": logged_at}))
             applied.append(f"{name} ({calories} kcal)")
 
         elif action_type == "log_water":
@@ -1797,14 +1858,21 @@ def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[st
 
 
 def process_coach_message_ai(
-    user: User, message_text: str, now: datetime, provider=None, provider_name: str = "gemini"
+    user: User, message_text: str, now: datetime, provider=None, provider_name: str = "gemini",
+    deadline: float | None = None,
 ) -> CoachOutcome:
     provider = provider or _gemini_generate
     started = monotonic()
-    result = provider(user, message_text, now)
+    result = provider(user, message_text, now, deadline=deadline)
     latency_ms = int((monotonic() - started) * 1000)
     applied, challenge_notes = _apply_ai_actions(user, result["actions"], now)
+    # Sanity-guarded actions were not logged; the guard question becomes part
+    # of the reply so the user can confirm or correct the amount.
+    confirmations = [a[len(_CONFIRM_PREFIX):] for a in applied if a.startswith(_CONFIRM_PREFIX)]
+    applied = [a for a in applied if not a.startswith(_CONFIRM_PREFIX)]
     reply = result["reply"]
+    if confirmations:
+        reply += " " + " ".join(confirmations)
     if challenge_notes:
         reply += " " + " · ".join(challenge_notes) + "."
     if user.training_environment is None and any(a.startswith("scheduled") for a in applied):
@@ -2737,6 +2805,27 @@ def push_unsubscribe():
     return {"ok": True}
 
 
+# Daily housekeeping gate for old idempotency keys. Module-level, therefore
+# per-worker: the two Gunicorn workers may each run the delete once a day,
+# which is harmless — the second pass finds nothing to delete.
+_idempotency_cleanup_last_date: date | None = None
+
+IDEMPOTENCY_KEY_RETENTION_DAYS = 7
+
+
+def _cleanup_old_idempotency_keys(now: datetime) -> int:
+    """Delete accepted dedupe tokens older than the retention window.
+
+    The table only grows when users submit meal/water/coach forms, but
+    without a cleanup it grows forever. Tokens are never read after their
+    request completes, so deletion cannot affect live double-submit
+    protection (a 7-day window still covers every realistic retry)."""
+    cutoff = now - timedelta(days=IDEMPOTENCY_KEY_RETENTION_DAYS)
+    deleted = db.session.execute(delete(IdempotencyKey).where(IdempotencyKey.created_at < cutoff))
+    db.session.commit()
+    return deleted.rowcount or 0
+
+
 @dashboard_bp.route("/cron/send-reminders", methods=["GET"])
 def cron_send_reminders():
     # GET on purpose: the app-wide CSRF check only guards mutating methods, and
@@ -2748,6 +2837,11 @@ def cron_send_reminders():
     result = _send_due_workout_reminders()
     result["challenge_reminders"] = send_due_challenge_reminders()
     result["engagement_nudges"] = send_due_engagement_nudges()
+    global _idempotency_cleanup_last_date
+    today = datetime.utcnow().date()
+    if _idempotency_cleanup_last_date != today:
+        _idempotency_cleanup_last_date = today
+        result["idempotency_keys_deleted"] = _cleanup_old_idempotency_keys(datetime.utcnow())
     return result
 
 
