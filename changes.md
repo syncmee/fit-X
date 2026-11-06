@@ -341,12 +341,14 @@ server render, which on Render's free tier can include a cold start
 
 Three-layer fix:
 
-- **Branded iOS startup images.** Five `apple-touch-startup-image` PNGs
-  (1290×2796, 1284×2778, 1179×2556, 1170×2532, 828×1792) generated from the
-  trimmed logo on the app background with a soft brand-gradient glow, served
-  from `/static/splash/v2/` and linked with device media queries in
-  dashboard, login, and homepage (the pages the PWA can start on). iOS now
-  shows the fiT-X mark for the whole launch instead of blank.
+- **Branded iOS startup images.** Ten `apple-touch-startup-image` PNGs
+  covering every iPhone generation from SE/8 through the 16/17 series (the
+  first set of five missed the 402×874 and 440×956 devices, which is why a
+  16/17-series iPhone still saw a blank launch), generated from the trimmed
+  logo on the app background with a soft brand-gradient glow, served from
+  `/static/splash/v2/` and linked with device media queries in dashboard,
+  login, and homepage (the pages the PWA can start on). iOS shows the fiT-X
+  mark for the whole launch instead of blank.
 - **Manifest splash color** `#000000` → `#0A0A0A` so the Windows/Android
   splash flows seamlessly into the app's real background.
 - **Service-worker navigation timeout fallback.** Navigations stay
