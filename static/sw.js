@@ -5,7 +5,7 @@
 // when the network is gone. Only the app shell (/static/*) and known
 // font/chart CDNs use cache-with-refresh, so updates land on the next
 // load. Bump VERSION whenever shipped static assets change.
-const VERSION = "fitx-v2";  // bumped: built app.css, pinned ApexCharts CDN, WebP screenshots
+const VERSION = "fitx-v3";  // bumped: navigation timeout fallback + iOS splash assets
 
 const PRECACHE = [
   "/static/offline.html",
@@ -19,6 +19,13 @@ const PRECACHE = [
   "/static/android-chrome-512x512.png",
   "/static/branding/runner.png",
 ];
+
+// Successful navigations live in their own runtime cache so a slow or
+// cold-started launch can paint the user's last dashboard immediately.
+const NAV_CACHE = VERSION + "-nav";
+// How long a navigation may hold the screen blank before we show the cached
+// page (while the fresh response keeps loading in the background).
+const NAV_TIMEOUT_MS = 2500;
 
 // CDNs the app shell depends on; responses from them are opaque but
 // safe to store and serve.
@@ -52,10 +59,47 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
 
-  // App navigations: network-first, offline page as the last resort.
+  // App navigations: network-first with a timeout — a cold-started server
+  // (Render free tier sleeps) or a weak network used to hold the launch
+  // screen blank for the whole wait. If we have the user's last copy of this
+  // page, paint it after the timeout; the fresh response still lands in the
+  // background and is stored for the next launch.
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/static/offline.html")),
+      (async () => {
+        const navCache = await caches.open(NAV_CACHE);
+        const network = fetch(request);
+        // Keep the background fetch alive and refresh the cache even when we
+        // have already answered from the cache.
+        network
+          .then((response) => {
+            if (response && response.ok && !response.redirected) {
+              navCache.put(request, response.clone());
+            }
+          })
+          .catch(() => {});
+        const timedOut = new Promise((resolve) =>
+          setTimeout(() => resolve(null), NAV_TIMEOUT_MS),
+        );
+        let fresh = null;
+        try {
+          fresh = await Promise.race([network, timedOut]);
+        } catch (_err) {
+          fresh = null;
+        }
+        if (fresh && fresh.ok && !fresh.redirected) {
+          navCache.put(request, fresh.clone());
+          return fresh;
+        }
+        if (fresh && fresh.ok && fresh.redirected) return fresh;
+        const cached = await navCache.match(request);
+        if (cached) return cached;
+        try {
+          return await network;
+        } catch (_err) {
+          return caches.match("/static/offline.html");
+        }
+      })(),
     );
     return;
   }

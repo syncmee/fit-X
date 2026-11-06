@@ -328,6 +328,40 @@ Changes:
 **Re-run the three live Lighthouse reports after the next Render deploy to
 record production numbers.**
 
+## Phase D follow-up: PWA launch black screen
+
+**What the black screen was:** the manifest declared
+`background_color: #000000`, so Windows/Android painted a pure-black launch
+splash, and iOS (which ignores manifest splashes) had no
+`apple-touch-startup-image` at all — just blank. Either way the blank held
+for the whole first network response: `start_url` is `/dashboard` and
+navigations were strictly network-first, so every launch waited on a full
+server render, which on Render's free tier can include a cold start
+(tens of seconds after the service sleeps).
+
+Three-layer fix:
+
+- **Branded iOS startup images.** Five `apple-touch-startup-image` PNGs
+  (1290×2796, 1284×2778, 1179×2556, 1170×2532, 828×1792) generated from the
+  trimmed logo on the app background with a soft brand-gradient glow, served
+  from `/static/splash/v2/` and linked with device media queries in
+  dashboard, login, and homepage (the pages the PWA can start on). iOS now
+  shows the fiT-X mark for the whole launch instead of blank.
+- **Manifest splash color** `#000000` → `#0A0A0A` so the Windows/Android
+  splash flows seamlessly into the app's real background.
+- **Service-worker navigation timeout fallback.** Navigations stay
+  network-first (fresh data wins) but with a 2.5 s budget: past that, the
+  SW paints the user's last copy of that page from a dedicated
+  `fitx-v3-nav` runtime cache while the fresh response continues loading in
+  the background and refreshes the cache. Redirect responses (the
+  logged-out 302 to /login) are never cached, error responses still fall
+  back to `offline.html`, and a first-ever launch (nothing cached) waits
+  for the network as before. SW version bumped to `fitx-v3`.
+
+Effect: repeat launches paint instantly (cached page + splash), first-ever
+launches show the branded splash instead of black, and a sleeping server no
+longer holds an empty screen.
+
 ## Verification (Phase B)
 
 ```text

@@ -8,7 +8,7 @@
   "display": "standalone",
   "display_override": ["standalone"],
   "orientation": "portrait",
-  "background_color": "#000000",
+  "background_color": "#0A0A0A",
   "theme_color": "#0A0A0A",
   "lang": "en",
   "dir": "ltr",
