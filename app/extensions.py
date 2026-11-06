@@ -26,4 +26,7 @@ login_manager.login_message = "Please sign in to continue."
 login_manager.login_message_category = "warning"
 migrate = Migrate() if Migrate is not None else None
 oauth = OAuth() if OAuth is not None else None
-limiter = Limiter(key_func=get_remote_address, default_limits=[], storage_uri="memory://") if Limiter else None
+# No storage_uri here: Flask-Limiter reads RATELIMIT_STORAGE_URI from app
+# config, so Render's Redis URI takes effect and memory:// remains the local
+# fallback via Config's default.
+limiter = Limiter(key_func=get_remote_address, default_limits=[]) if Limiter else None

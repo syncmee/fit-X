@@ -6,6 +6,7 @@ from sqlalchemy import func, or_, select
 from .extensions import db, limiter, oauth
 from .models import GoogleIdentity, User, WeightLog
 from .seo import LLMS_TXT, ROBOTS_TXT, SITEMAP_LASTMOD, SITEMAP_PAGES, SITE_URL
+from .security import clear_login_failures, login_blocked_for_email, record_login_failure
 from .validation import validate_login_form, validate_onboarding_form, validate_signup_form
 
 main_bp = Blueprint("main", __name__)
@@ -83,7 +84,8 @@ def legacy_test_page():
 
 
 @main_bp.route("/login", methods=["GET", "POST"])
-@limiter.limit("10 per minute") if limiter is not None else (lambda view: view)
+# POST only: rendering the form should not consume an IP's attempt budget.
+@limiter.limit("10 per minute", methods=["POST"]) if limiter is not None else (lambda view: view)
 def login():
     if current_user.is_authenticated:
         # A remembered/restored session must not skip onboarding — finishing it
@@ -146,7 +148,14 @@ def login():
             select(User).where(func.lower(User.email) == cleaned_data["email"])
         ).scalar_one_or_none()
 
+        # Per-email failed-attempt counter: an attacker cycling IPs still hits
+        # this, while one user's typos do not lock a shared office IP.
+        if login_blocked_for_email(cleaned_data["email"]):
+            flash("Too many failed sign-in attempts for this account. Please try again in 15 minutes.", "error")
+            return render_template("login.html", active_section=active_section), 429
+
         if user is None or not user.check_password(cleaned_data["password"]):
+            record_login_failure(cleaned_data["email"])
             flash("Invalid email or password.", "error")
             return render_template("login.html", active_section=active_section), 401
 
@@ -160,6 +169,7 @@ def login():
         # inactive period; the checkbox remains accepted for old clients.
         login_user(user, remember=True)
         session.permanent = True
+        clear_login_failures(cleaned_data["email"])
 
         if not user.onboarding:
             return redirect(url_for("main.onboarding"))

@@ -1624,22 +1624,26 @@ def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
     return max(minimum, min(parsed, maximum))
 
 
-def _claim_idempotency_key(user: User, form_key: str | None) -> bool:
+def _claim_idempotency_key(user: User, form_key: str | None) -> str:
     """Reserve a submitted form token in the caller's transaction.
 
-    A unique database constraint, rather than an in-memory cache, makes this
-    work across Render's two gunicorn workers and survives a process restart.
+    Returns "claimed" when this request may proceed, "duplicate" when the same
+    token was already used (a genuine double submit), and "missing" when the
+    form carried no usable token at all — e.g. an open tab rendered before the
+    field existed. A unique database constraint, rather than an in-memory
+    cache, makes this work across Render's two gunicorn workers and survives a
+    process restart.
     """
     key = (form_key or "").strip()
     if not key or len(key) > 64:
-        return False
+        return "missing"
     try:
         with db.session.begin_nested():
             db.session.add(IdempotencyKey(user_id=user.id, key=key))
             db.session.flush()
-        return True
+        return "claimed"
     except IntegrityError:
-        return False
+        return "duplicate"
 
 
 def _apply_ai_actions(user: User, actions: list, now: datetime) -> tuple[list[str], list[str]]:
@@ -2462,14 +2466,30 @@ def dashboard():
     return render_template("dashboard.html", **_build_dashboard_context())
 
 
+def _idempotency_redirect(status: str, anchor: str, duplicate_message: str):
+    """Turn an idempotency status into a redirect response, or None to proceed."""
+    if status == "claimed":
+        return None
+    if status == "missing":
+        # An old open tab submitted a form rendered before the hidden key
+        # existed. That is not a duplicate log — say so instead of "already
+        # processed", and make the user reload so the new form ships the key.
+        flash("This page was open in an old tab. Please refresh the page and try again.", "warning")
+    else:
+        flash(duplicate_message, "warning")
+    return redirect(url_for("dashboard.dashboard", _anchor=anchor))
+
+
 @dashboard_bp.route("/coach/message", methods=["POST"])
 @login_required
 @limiter.limit("10 per minute; 100 per day", key_func=lambda: str(current_user.id)) if limiter is not None else (lambda view: view)
 def coach_message():
     raw_message = request.form.get("message", "")
-    if not _claim_idempotency_key(current_user, request.form.get("idempotency_key")):
-        flash("That request was already processed; nothing was added twice.", "warning")
-        return redirect(url_for("dashboard.dashboard", _anchor="coach"))
+    resp = _idempotency_redirect(
+        _claim_idempotency_key(current_user, request.form.get("idempotency_key")),
+        "coach", "That request was already processed; nothing was added twice.")
+    if resp:
+        return resp
     try:
         process_coach_message(current_user, raw_message)
         db.session.commit()
@@ -2486,9 +2506,11 @@ def coach_message():
 @dashboard_bp.route("/meals/add", methods=["POST"])
 @login_required
 def meals_add():
-    if not _claim_idempotency_key(current_user, request.form.get("idempotency_key")):
-        flash("That meal was already logged.", "warning")
-        return redirect(url_for("dashboard.dashboard", _anchor="nutrition"))
+    resp = _idempotency_redirect(
+        _claim_idempotency_key(current_user, request.form.get("idempotency_key")),
+        "nutrition", "That meal was already logged.")
+    if resp:
+        return resp
     name = " ".join((request.form.get("name") or "").split())[:60]
     meal_type = request.form.get("meal_type", "meal")
     if meal_type not in MEAL_TYPE_ORDER:
@@ -2539,9 +2561,11 @@ def meals_delete(entry_id: int):
 @dashboard_bp.route("/water/add", methods=["POST"])
 @login_required
 def water_add():
-    if not _claim_idempotency_key(current_user, request.form.get("idempotency_key")):
-        flash("That water entry was already logged.", "warning")
-        return redirect(url_for("dashboard.dashboard", _anchor="nutrition"))
+    resp = _idempotency_redirect(
+        _claim_idempotency_key(current_user, request.form.get("idempotency_key")),
+        "nutrition", "That water entry was already logged.")
+    if resp:
+        return resp
     amount_ml = _parse_nonnegative_int(request.form.get("amount_ml"), default=0, maximum=5000)
     if amount_ml <= 0:
         flash("Pick an amount to log.", "error")

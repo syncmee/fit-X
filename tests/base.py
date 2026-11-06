@@ -12,6 +12,14 @@ def make_config() -> type[Config]:
         SQLALCHEMY_DATABASE_URI = "sqlite:///" + tempfile.mktemp(suffix=".db").replace("\\", "/")
         SECRET_KEY = "test-secret"
         TESTING = True
+        # Dummy SMTP credentials so email paths behave the same with and
+        # without a local .env file. CI has no .env, and empty SMTP_USER makes
+        # the announce route silently skip email delivery, which broke the
+        # announce tests. Tests that assert delivery patch _send_via_smtp, so
+        # nothing here touches a real SMTP server.
+        SMTP_USER = "test-user@test.dev"
+        SMTP_APP_PASSWORD = "dummy-password"
+        SMTP_FROM = "test-from@test.dev"
 
     return TestConfig
 
