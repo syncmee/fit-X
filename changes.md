@@ -147,6 +147,56 @@ dedicated UI regression test suite and one isolated interaction at a time.
   trigram/full-text ranking; adding PostgreSQL-only indexes before the
   production database is confirmed would make the app's SQLite fallback fail.
 
+## Phase A: fix what's broken (complete, minus Render env)
+
+### CI hermetic tests
+
+- The Tests workflow was red because CI has no `.env`: with empty `SMTP_USER`
+  the admin announce route silently skips email delivery, so the three
+  announce tests (which patch `_send_via_smtp` and assert delivery) failed,
+  one with a `KeyError` on the never-filled capture dict.
+- `tests/base.py` TestConfig now carries dummy `SMTP_USER`,
+  `SMTP_APP_PASSWORD`, and `SMTP_FROM`. Tests that assert delivery still patch
+  `_send_via_smtp`, so nothing touches a real SMTP server. GitHub Actions
+  needs no secrets or environment variables; the run is green on `2de91d1`.
+
+### Limiter storage follows config
+
+- `extensions.py` no longer hardcodes `storage_uri="memory://"` in the
+  `Limiter(...)` constructor (which would override app config). Flask-Limiter
+  now reads `RATELIMIT_STORAGE_URI`, so Render's Redis URI will take effect
+  while `memory://` stays the local fallback via `Config`.
+
+### Idempotency: missing key is not a duplicate
+
+- `_claim_idempotency_key` returns `claimed` / `duplicate` / `missing`
+  instead of a bool. A form with no usable token (an old open tab rendered
+  before the hidden field existed) now says "please refresh the page" instead
+  of the misleading "already processed", and writes no dedupe row. Genuine
+  duplicates keep the "already processed / already logged" messages. Covered
+  by `tests/test_login_limits.py`.
+
+### Login limits
+
+- The 10/minute IP limit on `/login` now applies to POST only, so rendering
+  the form does not consume an IP's attempt budget.
+- Added a per-email failed-attempt counter in `app/security.py`: 5 failures
+  within 15 minutes blocks further sign-in attempts for that address (HTTP
+  429), a success clears it. It complements the IP limit — an attacker cycling
+  IPs still trips a per-account counter, while one user's typos do not lock a
+  shared office IP. Counters are per-process by design (documented in the
+  module); sharing them via Redis is a later hardening step, not needed for
+  the current threat model.
+
+## Verification (Phase A)
+
+```text
+.\\.venv\\Scripts\\python.exe -m unittest discover -s tests   (run without .env, mirroring CI)
+Ran 37 tests ... OK
+```
+
+GitHub Actions Tests run on `2de91d1`: success.
+
 ## Verification
 
 The full local suite passed with:
