@@ -364,6 +364,20 @@ Effect: repeat launches paint instantly (cached page + splash), first-ever
 launches show the branded splash instead of black, and a sleeping server no
 longer holds an empty screen.
 
+## Fixes after the PWA launch work
+
+- **Stray comment text at the top of the page.** The splash-link edit left an
+  orphaned second line of an HTML comment
+  (`so branded startup images stand in while /dashboard loads. -->`) outside
+  a comment, which browsers rendered as visible text above the dashboard
+  (login/homepage too). Removed in all three templates.
+- **Session Queue empty state misaligned.** The timeline container reserved
+  40 px of left padding for the timeline avatar nodes, but the empty state
+  has no nodes — so the dashed box sat indented relative to the
+  "Session Queue" heading and the History list. The padding is now applied
+  only when there are upcoming workouts (`pl-10` conditional in
+  dashboard.html).
+
 ## Verification (Phase B)
 
 ```text

@@ -21,7 +21,6 @@
 <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" href="/static/splash/v2/ios-1170x2532.png">
 <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" href="/static/splash/v2/ios-1125x2436.png">
 <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" href="/static/splash/v2/ios-750x1334.png">
-     so branded startup images stand in while /dashboard loads. -->
 <link rel="manifest" href="/static/manifest.json">
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(function () {});</script>
 <meta name="theme-color" content="#0A0A0A">
@@ -918,7 +917,7 @@
             </div>
 
             <!-- Timeline Container -->
-            <div class="relative pl-10 space-y-6">
+            <div class="relative space-y-6 {{ 'pl-10' if upcoming_workouts else '' }}">
               {% for workout in upcoming_workouts %}
               <div class="relative group">
                 <!-- Timeline Node -->
