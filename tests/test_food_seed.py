@@ -34,7 +34,7 @@ class FoodSeedTestCase(AppContextTestCase):
 
     def test_matcher_uses_dataset_aliases(self):
         from app.admin import seed_indian_foods_from_csv
-        from app.dashboard import _food_db_matches
+        from app.foods import food_db_matches as _food_db_matches
 
         seed_indian_foods_from_csv()
         names = {m["name"] for m in _food_db_matches("2 roti and masala dosa")}
@@ -49,7 +49,7 @@ class FoodSeedTestCase(AppContextTestCase):
 
     def test_matcher_results_are_most_specific_first(self):
         from app.admin import seed_indian_foods_from_csv
-        from app.dashboard import _food_db_matches
+        from app.foods import food_db_matches as _food_db_matches
 
         seed_indian_foods_from_csv()
         matches = _food_db_matches("plain dosa with sambar")

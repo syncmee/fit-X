@@ -98,14 +98,15 @@ class AdminTestCase(AppContextTestCase):
         self.assertIn("challenge.publish", actions)
 
     def test_announce_tool_audits_and_targets(self):
-        from app import dashboard as dash_mod
+        from app import emails as emails_mod
+        from app import push as push_mod
         from app.models import AuditLog
 
         make_user(self.app, name="sleepy", email="sleepy@test.dev", last_active_at=None)
         client = admin_client(self.app)
         sent = []
-        dash_mod._send_web_push = lambda user, **kw: (sent.append(f"push:{user.email}") or True)
-        dash_mod._send_via_smtp = lambda *a, **k: (sent.append(f"email:{a[0].email}"), (True, "ok"))[1]
+        push_mod.send_web_push = lambda user, **kw: (sent.append(f"push:{user.email}") or True)
+        emails_mod.send_via_smtp = lambda *a, **k: (sent.append(f"email:{a[0].email}"), (True, "ok"))[1]
 
         r = client.post("/admin/announce", data={
             "title": "Hello", "body": "World", "audience": "all",
@@ -120,14 +121,15 @@ class AdminTestCase(AppContextTestCase):
             AuditLog.action == "announce.send")))
 
     def test_inactive_segment_only_reaches_stale_users(self):
-        from app import dashboard as dash_mod
+        from app import emails as emails_mod
+        from app import push as push_mod
 
         make_user(self.app, name="sleepy", email="sleepy@test.dev", last_active_at=None)
         make_user(self.app, name="fresh", email="fresh@test.dev",
                   last_active_at=datetime.utcnow())
         client = admin_client(self.app)
         emailed = []
-        dash_mod._send_via_smtp = lambda user, *a, **k: (emailed.append(user.email), (True, "ok"))[1]
+        emails_mod.send_via_smtp = lambda user, *a, **k: (emailed.append(user.email), (True, "ok"))[1]
 
         client.post("/admin/announce", data={
             "title": "Come back", "body": "We miss you.", "audience": "inactive_7d",
@@ -137,12 +139,13 @@ class AdminTestCase(AppContextTestCase):
         self.assertNotIn("fresh@test.dev", emailed)
 
     def test_custom_html_email_is_personalized(self):
-        from app import dashboard as dash_mod
+        from app import emails as emails_mod
+        from app import push as push_mod
 
         make_user(self.app, name="joe", email="joe@test.dev")
         client = admin_client(self.app)
         captured = {}
-        dash_mod._send_via_smtp = lambda user, subj, plain, html, su, sp: (
+        emails_mod.send_via_smtp = lambda user, subj, plain, html, su, sp: (
             captured.update(plain=plain, html=html, subject=subj), (True, "ok"))[1]
 
         r = client.post("/admin/announce", data={
@@ -159,10 +162,11 @@ class AdminTestCase(AppContextTestCase):
         self.assertIn("Hey adminuser!", captured["plain"])  # plain-text fallback generated
 
     def test_custom_html_syntax_error_is_reported_not_sent(self):
-        from app import dashboard as dash_mod
+        from app import emails as emails_mod
+        from app import push as push_mod
 
         client = admin_client(self.app)
-        dash_mod._send_via_smtp = lambda *a, **k: (True, "ok")
+        emails_mod.send_via_smtp = lambda *a, **k: (True, "ok")
         r = client.post("/admin/announce", data={
             "title": "Broken", "body": "x", "audience": "all",
             "channels": ["email"], "template_style": "custom",

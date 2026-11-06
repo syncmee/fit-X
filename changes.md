@@ -237,6 +237,47 @@ GitHub Actions Tests run on `2de91d1`: success.
   coach remains the fallback. `process_coach_message` starts the deadline
   once and passes it through both provider attempts.
 
+## Phase C: dashboard.py is routes and context building only
+
+`dashboard.py` went from 3,396 lines to 1,225: the fifteen dashboard routes,
+the dashboard page context builders, the AI/rules dispatch logic, and the
+route-level form helpers (idempotency claim, cleanup gate). Everything else
+now lives in its domain module:
+
+- `app/coach/__init__.py` — shared primitives: `CoachOutcome`, `CoachAIError`,
+  `ENVIRONMENT_ASK`.
+- `app/coach/prompt.py` — AI context assembly, system prompt, per-fiT-X-day
+  chat memory (prune + recent history), and `parse_coach_json`. Meal/week
+  context totals remain dashboard context builders and are late-imported (the
+  same cycle-avoidance pattern the providers already used).
+- `app/coach/actions.py` — `apply_actions` (the structured AI-action writer)
+  with the food sanity limits, plus the shared `default_meal_type` and
+  `sync_current_weight` helpers. `MEAL_TYPE_ORDER` moved to `app/models.py`
+  next to `MealEntry`.
+- `app/coach/rules.py` — the full rule-based coach: intent matchers, the
+  weight/water/meal/workout log parsers, schedule/progress/challenge lookups,
+  the environment chip handler, and `process_coach_message_rules`.
+- `app/coach/providers.py` — now imports prompt/history/parse from
+  `app.coach.prompt` directly instead of reaching into dashboard.
+- `app/cron.py` — the real implementations behind the old delegating facade:
+  `send_workout_reminders`, `send_challenge_reminders`, `send_engagement_nudges`
+  (with their email builders and engagement-window helpers), and
+  `cleanup_old_idempotency_keys` with the per-day gate inside it. Emails and
+  pushes are referenced as modules (`emails_module.send_via_smtp`,
+  `push_module.send_web_push`) so patches target the source of truth.
+- `app/push.py` — `send_web_push` and the hand-built ES256 VAPID header signer.
+- Legacy originals deleted: the duplicate BMI/health math block, the duplicate
+  food matcher, the duplicate `_gemini_generate`/`_groq_generate` transports,
+  and the duplicate SMTP sender. `app/admin.py` now imports
+  `emails.send_via_smtp` / `push.send_web_push` directly.
+
+Test patches were moved to the authoritative locations: `tests/test_coach.py`
+and `tests/test_food_limits.py` patch `app.coach.providers.gemini_generate` /
+`groq_generate` (the dispatcher reads them through `providers_module` for
+exactly that reason), email/push patches in `tests/test_admin.py` target
+`app.emails` / `app.push`, and `_food_db_matches` imports are now
+`app.foods.food_db_matches`.
+
 ## Verification (Phase B)
 
 ```text

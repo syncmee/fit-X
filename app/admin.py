@@ -890,7 +890,8 @@ def _announce_form_fields() -> tuple[str, str, str, str]:
 def announce_preview():
     """Render the announcement for the admin's own data and return it as a
     page, so custom HTML can be designed and checked before sending."""
-    from .dashboard import _send_via_smtp, _send_web_push  # noqa: F401 (parity with send path)
+    from .emails import send_via_smtp as _send_via_smtp  # noqa: F401 (parity with send path)
+    from .push import send_web_push as _send_web_push
 
     title, body, template_style, custom_html = _announce_form_fields()
     if not title or not body:
@@ -912,7 +913,8 @@ def announce_preview():
 @admin_bp.route("/announce", methods=["GET", "POST"])
 @admin_required
 def announce():
-    from .dashboard import _send_via_smtp, _send_web_push
+    from .emails import send_via_smtp as _send_via_smtp
+    from .push import send_web_push as _send_web_push
 
     if request.method == "POST":
         title, body, template_style, custom_html = _announce_form_fields()

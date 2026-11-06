@@ -134,6 +134,9 @@ class CoachMessage(db.Model):
         return f"<CoachMessage {self.role} {self.created_at}>"
 
 
+MEAL_TYPE_ORDER = ("breakfast", "lunch", "dinner", "snack")
+
+
 class MealEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)

@@ -31,7 +31,7 @@ class FoodLimitsTestCase(AppContextTestCase):
         return db.session.scalars(select(User).where(User.id == self.joe_id)).one()
 
     def _apply(self, actions):
-        from app.dashboard import _apply_ai_actions
+        from app.coach.actions import apply_actions as _apply_ai_actions
 
         return _apply_ai_actions(self._user(), actions, NOW)
 
@@ -53,7 +53,7 @@ class FoodLimitsTestCase(AppContextTestCase):
 
     def test_confirmation_via_reply_flow(self):
         """process_coach_message_ai moves the guard question into the reply."""
-        from app import dashboard as dash_mod
+        from app.coach import providers as providers_mod
         from app.dashboard import process_coach_message_ai
 
         def fake_provider(user, message, now, deadline=None):
@@ -62,7 +62,7 @@ class FoodLimitsTestCase(AppContextTestCase):
                  "calories": 1560, "protein": 0, "carbs": 0, "fats": 0},
             ], "usage": {}}
 
-        dash_mod._gemini_generate = fake_provider
+        providers_mod.gemini_generate = fake_provider
         self.app.config["GEMINI_API_KEY"] = "fake"
         outcome = process_coach_message_ai(self._user(), "had 20 eggs", NOW)
         db.session.flush()
@@ -180,16 +180,23 @@ class FoodsHelperTestCase(AppContextTestCase):
 
 class IdempotencyCleanupTestCase(AppContextTestCase):
     def test_cleanup_deletes_only_old_keys(self):
-        from app.dashboard import _cleanup_old_idempotency_keys
+        from datetime import datetime as dt
+
+        from app import cron as cron_mod
+
+        # Reset the per-day gate so this test's run is not skipped.
+        cron_mod._idempotency_cleanup_last_date = None
+        self.addCleanup(setattr, cron_mod, "_idempotency_cleanup_last_date", None)
 
         self.joe_id = make_user(self.app, name="joe", email="joe@test.dev")
+        now = dt.utcnow()
         db.session.add(IdempotencyKey(user_id=self.joe_id, key="old",
-                                      created_at=NOW - timedelta(days=8)))
+                                      created_at=now - timedelta(days=8)))
         db.session.add(IdempotencyKey(user_id=self.joe_id, key="recent",
-                                      created_at=NOW - timedelta(days=1)))
+                                      created_at=now - timedelta(days=1)))
         db.session.commit()
 
-        deleted = _cleanup_old_idempotency_keys(NOW)
+        deleted = cron_mod.cleanup_old_idempotency_keys()
 
         self.assertEqual(deleted, 1)
         remaining = {k.key for k in db.session.scalars(select(IdempotencyKey)).all()}

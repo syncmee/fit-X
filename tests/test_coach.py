@@ -37,20 +37,20 @@ class CoachTestCase(AppContextTestCase):
         return db.session.scalars(select(User).where(User.id == self.joe_id)).one()
 
     def test_food_db_matches_include_comma_heads(self):
-        from app.dashboard import _food_db_matches
+        from app.foods import food_db_matches
 
-        matches = {m["name"]: m["calories"] for m in _food_db_matches("had two rotis with dal")}
+        matches = {m["name"]: m["calories"] for m in food_db_matches("had two rotis with dal")}
         self.assertEqual(matches.get("Roti"), 100)
         self.assertEqual(matches.get("Dal, cooked"), 116)
-        self.assertEqual(_food_db_matches("nothing relevant"), [])
+        self.assertEqual(food_db_matches("nothing relevant"), [])
 
     def test_food_db_matches_explicit_aliases(self):
         from app.models import Food
-        from app.dashboard import _food_db_matches
+        from app.foods import food_db_matches
 
         db.session.add(Food(name="Whole wheat roti", aliases='["chapati", "phulka"]', serving="1 medium", calories=110))
         db.session.commit()
-        self.assertEqual(_food_db_matches("two chapatis")[0]["name"], "Whole wheat roti")
+        self.assertEqual(food_db_matches("two chapatis")[0]["name"], "Whole wheat roti")
 
     def test_rule_coach_join_updates_participations(self):
         from app.dashboard import process_coach_message
@@ -72,13 +72,13 @@ class CoachTestCase(AppContextTestCase):
         self.assertTrue(all(m.provider == "rules" for m in assistant))
 
     def test_fallback_leaves_telemetry_and_hides_errors(self):
-        from app import dashboard as dash_mod
+        from app.coach import providers as providers_mod
         from app.dashboard import process_coach_message
 
         self.app.config["GEMINI_API_KEY"] = "fake"
         self.app.config["GROQ_API_KEY"] = "fake"
-        dash_mod._gemini_generate = self._boom
-        dash_mod._groq_generate = self._boom
+        providers_mod.gemini_generate = self._boom
+        providers_mod.groq_generate = self._boom
 
         process_coach_message(self._user(), "how am i doing", datetime.utcnow())
         roles = {r.role for r in db.session.scalars(select(CoachMessage)).all()}
@@ -88,12 +88,12 @@ class CoachTestCase(AppContextTestCase):
         self.assertTrue(all(e.had_error for e in errors))
 
     def _boom(self, *a, **k):
-        from app.dashboard import CoachAIError
+        from app.coach import CoachAIError
 
         raise CoachAIError("simulated outage")
 
     def test_apply_ai_actions_join(self):
-        from app.dashboard import _apply_ai_actions
+        from app.coach.actions import apply_actions as _apply_ai_actions
 
         applied, _ = _apply_ai_actions(
             self._user(), [{"type": "join_challenge", "challenge_title": "30-Day Streak"}],
@@ -107,7 +107,7 @@ class CoachTestCase(AppContextTestCase):
 
     def test_apply_ai_actions_logs_weight_meal_water_and_workout(self):
         """The structured-action boundary accepts each supported log branch."""
-        from app.dashboard import _apply_ai_actions
+        from app.coach.actions import apply_actions as _apply_ai_actions
 
         applied, _ = _apply_ai_actions(self._user(), [
             {"type": "log_weight", "weight_kg": 72.4},
