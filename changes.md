@@ -278,6 +278,56 @@ exactly that reason), email/push patches in `tests/test_admin.py` target
 `app.emails` / `app.push`, and `_food_db_matches` imports are now
 `app.foods.food_db_matches`.
 
+## Phase D: speed (Lighthouse-driven)
+
+Full numbers and methodology: `docs/lighthouse/phase-d-results.md`.
+Mobile, throttled, Lighthouse 12. Local before/after used the same harness
+(a `git worktree` at the pre-change commit serving through the same Flask dev
+server), so those rows are directly comparable; live Render baselines are
+also recorded.
+
+Headline (local baseline → after):
+
+| Page | Performance | FCP | LCP | TBT |
+|---|---|---|---|---|
+| Homepage | 75 → 79 | 3.6s → 3.7s | 4.6s → 3.7s | — |
+| Login | 89 → 88–96 (noise band) | 2.7s → 2.8s | 2.8s → 2.8s | 0 → 0 |
+| Dashboard | **49 → 81** | 5.1s → **2.4s** | 6.1s → **3.4s** | 650ms → **260ms** |
+
+Changes:
+
+- **Built Tailwind CSS.** `cdn.tailwindcss.com` — a ~300 KB runtime JIT
+  compiled in the browser on every page view — is replaced by a committed,
+  minified 32 KB `static/css/app.css` built from the identical theme config.
+  `package.json` pins `tailwindcss@3.4.17`; `npm run build:css` regenerates
+  after template changes (content scanning covers templates, Python, and
+  static JS). All seven templates swapped; page-local `<style>` blocks and
+  the shared custom classes (`.grad-*`, `.glass`, `.tracking-tighter-2`)
+  are unchanged.
+- **ApexCharts pinned and deferred.** One URL everywhere
+  (`cdn.jsdelivr.net/npm/apexcharts@8.7.0`, replacing an unpinned URL split
+  across jsdelivr and cdn.apexcharts.com), `defer`, and chart constructors
+  run in `requestAnimationFrame` after first paint. Onboarding's chart was
+  already user-triggered. `sw.js` caches jsdelivr now; SW version bumped.
+- **Flask-Compress**: brotli/gzip for HTML/CSS/JSON/JS over 1 KB
+  (verified `Content-Encoding: br` locally; live Render previously sent
+  responses uncompressed).
+- **Cache busting**: `/static/css/app.css?v={{ STATIC_V }}` and the same for
+  `app-install.js`; `STATIC_V` is `RENDER_GIT_COMMIT` on Render, so each
+  deploy gets a fresh URL alongside the existing 30-day static cache.
+- **Screenshots to WebP**: PWA install screenshots 397 KB → 58 KB, manifest
+  updated. All content images already had `loading="lazy" decoding="async"`
+  inside fixed-size containers (CLS 0), and the homepage LCP element is text,
+  so no `fetchpriority` image change applied.
+- **Fonts verified**: Inter 400–900 and JetBrains Mono 400–600 are all
+  actually used (thin/light are not) — nothing to trim.
+- Not in scope but visible in the reports: login accessibility 62
+  (contrast issues) predates this phase; dashboard SEO 58 on localhost is a
+  measurement artifact (no sitemap/robots at 127.0.0.1).
+
+**Re-run the three live Lighthouse reports after the next Render deploy to
+record production numbers.**
+
 ## Verification (Phase B)
 
 ```text
