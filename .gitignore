@@ -39,3 +39,7 @@ fitness-app-b0wl.onrender.com-audit/pages/
 node_modules/
 instance/_lh_cookie.txt
 instance/_lh_cookie_base.txt
+
+# Local-only project docs (kept on disk, never shipped)
+changes.md
+workflow.md
