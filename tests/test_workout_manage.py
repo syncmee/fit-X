@@ -66,7 +66,9 @@ class WorkoutManageTestCase(AppContextTestCase):
 
     # --- edit -------------------------------------------------------------
 
-    def test_edit_updates_title_time_and_duration(self):
+    def test_edit_moves_session_date_and_time_only(self):
+        """Editing moves the slot; the plan itself (title, duration) is
+        immutable — to change exercises the user removes and re-schedules."""
         workout = self._make_session()
         new_day = (datetime.utcnow() + timedelta(days=3)).strftime("%Y-%m-%d")
         r = self._post(f"/workouts/{workout.id}/edit", {
@@ -74,15 +76,17 @@ class WorkoutManageTestCase(AppContextTestCase):
         })
         self.assertEqual(r.status_code, 302)
         updated = db.session.get(ScheduledWorkout, workout.id)
-        self.assertEqual(updated.title, "Pull Day")
-        self.assertEqual(updated.duration_minutes, 45)
+        # The slot moved...
         self.assertEqual(updated.scheduled_for.strftime("%H:%M"), "07:30")
+        # ...the plan did not.
+        self.assertEqual(updated.title, "Push Day")
+        self.assertEqual(updated.duration_minutes, 60)
 
     def test_edit_to_past_is_rejected(self):
         workout = self._make_session()
         past = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
         self._post(f"/workouts/{workout.id}/edit", {
-            "title": "Push Day", "date": past, "time": "07:30", "duration": "60",
+            "date": past, "time": "07:30",
         })
         updated = db.session.get(ScheduledWorkout, workout.id)
         self.assertEqual(updated.scheduled_for, self.future)
@@ -90,7 +94,7 @@ class WorkoutManageTestCase(AppContextTestCase):
     def test_edit_invalid_date_is_rejected(self):
         workout = self._make_session()
         self._post(f"/workouts/{workout.id}/edit", {
-            "title": "Push Day", "date": "not-a-date", "time": "07:30", "duration": "60",
+            "date": "not-a-date", "time": "07:30",
         })
         updated = db.session.get(ScheduledWorkout, workout.id)
         self.assertEqual(updated.scheduled_for, self.future)
@@ -99,7 +103,7 @@ class WorkoutManageTestCase(AppContextTestCase):
         workout = self._make_session(user=self._user("mallory@test.dev"))
         new_day = (datetime.utcnow() + timedelta(days=3)).strftime("%Y-%m-%d")
         self._post(f"/workouts/{workout.id}/edit", {
-            "title": "Hacked", "date": new_day, "time": "07:30", "duration": "60",
+            "date": new_day, "time": "07:30",
         })
         updated = db.session.get(ScheduledWorkout, workout.id)
         self.assertEqual(updated.title, "Push Day")
@@ -108,19 +112,24 @@ class WorkoutManageTestCase(AppContextTestCase):
         workout = self._make_session(status="completed")
         new_day = (datetime.utcnow() + timedelta(days=3)).strftime("%Y-%m-%d")
         self._post(f"/workouts/{workout.id}/edit", {
-            "title": "Rewrite history", "date": new_day, "time": "07:30", "duration": "60",
+            "date": new_day, "time": "07:30",
         })
         updated = db.session.get(ScheduledWorkout, workout.id)
         self.assertEqual(updated.title, "Push Day")
 
     # --- card UI ----------------------------------------------------------
 
-    def test_card_shows_edit_and_cancel_actions(self):
+    def test_card_shows_edit_and_done_but_no_standalone_cancel(self):
         self._make_session()
         page = self.client.get("/dashboard").get_data(as_text=True)
         self.assertIn("EDIT", page)
-        self.assertIn("CANCEL", page)
-        self.assertIn(f"/workouts/{db.session.scalar(select(func.max(ScheduledWorkout.id)))}/edit", page)
+        self.assertIn("MARK DONE", page)
+        latest = db.session.scalar(select(func.max(ScheduledWorkout.id)))
+        self.assertIn(f"/workouts/{latest}/edit", page)
+        # CANCEL is no longer a card-level button; removal lives inside the
+        # edit panel as "Remove session".
+        self.assertNotIn(">CANCEL<", page)
+        self.assertIn("Remove session", page)
 
 
 if __name__ == "__main__":

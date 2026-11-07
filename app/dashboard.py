@@ -1086,10 +1086,8 @@ def workout_edit(workout_id: int):
         flash("Completed workouts are part of your history and cannot be edited.", "error")
         return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
-    title = " ".join((request.form.get("title") or workout.title).split())[:80] or workout.title
-    duration = _parse_nonnegative_int(
-        request.form.get("duration"), default=workout.duration_minutes, maximum=300)
-    duration = max(5, duration)
+    # Only the slot is editable: title/duration/exercises are the plan itself.
+    # To change those, the user removes the session and schedules a new one.
     try:
         scheduled_for = datetime.strptime(
             f"{request.form.get('date', '').strip()} {request.form.get('time', '').strip()}",
@@ -1102,11 +1100,9 @@ def workout_edit(workout_id: int):
         flash("Sessions must be scheduled for a future time.", "error")
         return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
-    workout.title = title
-    workout.duration_minutes = duration
     workout.scheduled_for = scheduled_for
     db.session.commit()
-    flash(f"Session updated: {title} — {scheduled_for.strftime('%a %d %b, %H:%M')} ({duration} min).", "success")
+    flash(f"Session moved to {scheduled_for.strftime('%a %d %b, %H:%M')}.", "success")
     return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
 
