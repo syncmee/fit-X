@@ -948,12 +948,47 @@
                         </div>
                       </div>
                       
-                      <form method="POST" action="{{ url_for('dashboard.workout_done', workout_id=workout.id) }}">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="text-[10px] font-mono font-bold text-green border border-green/30 hover:bg-green hover:text-black px-3 py-1.5 rounded-lg transition-all">
-                          MARK DONE
-                        </button>
-                      </form>
+                      <div class="flex flex-col items-end gap-1.5 shrink-0">
+                        <div class="flex items-center gap-1.5">
+                          <form method="POST" action="{{ url_for('dashboard.workout_done', workout_id=workout.id) }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-[10px] font-mono font-bold text-green border border-green/30 hover:bg-green hover:text-black px-3 py-1.5 rounded-lg transition-all">
+                              MARK DONE
+                            </button>
+                          </form>
+                          <button type="button" onclick="document.getElementById('edit-session-{{ workout.id }}').classList.toggle('hidden')" class="text-[10px] font-mono font-bold text-gray-400 border border-white/10 hover:text-white hover:border-white/30 px-3 py-1.5 rounded-lg transition-all">
+                            EDIT
+                          </button>
+                          <form method="POST" action="{{ url_for('dashboard.workout_delete', workout_id=workout.id) }}"
+                                onsubmit="return confirm({{ ('Remove ' ~ workout.title ~ ' from your queue?') | tojson }});">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="text-[10px] font-mono font-bold text-gray-500 border border-white/10 hover:text-red-400 hover:border-red-400/40 px-3 py-1.5 rounded-lg transition-all">
+                              CANCEL
+                            </button>
+                          </form>
+                        </div>
+                        <div id="edit-session-{{ workout.id }}" class="hidden w-64 glass rounded-xl border border-white/10 p-3" style="color-scheme: dark;">
+                          <form method="POST" action="{{ url_for('dashboard.workout_edit', workout_id=workout.id) }}" class="space-y-2">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="text" name="title" value="{{ workout.title }}" maxlength="80" required
+                                   class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
+                            <div class="grid grid-cols-2 gap-2">
+                              <input type="date" name="date" value="{{ workout.scheduled_for.strftime('%Y-%m-%d') }}" required
+                                     class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
+                              <input type="time" name="time" value="{{ workout.scheduled_for.strftime('%H:%M') }}" required
+                                     class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
+                            </div>
+                            <div class="flex items-center gap-2">
+                              <input type="number" name="duration" value="{{ workout.duration_minutes }}" min="5" max="300" required
+                                     class="w-20 bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
+                              <span class="text-[10px] font-mono text-gray-500">min</span>
+                              <button type="submit" class="ml-auto grad-bg text-black text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition">
+                                SAVE
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      </div>
                     </div>
 
                     {% set session_plan = upcoming_plans.get(workout.id) %}

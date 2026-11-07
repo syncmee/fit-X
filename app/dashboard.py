@@ -1055,6 +1055,60 @@ def workout_done(workout_id: int):
     return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
 
 
+@dashboard_bp.route("/workouts/<int:workout_id>/delete", methods=["POST"])
+@login_required
+def workout_delete(workout_id: int):
+    workout = db.session.get(ScheduledWorkout, workout_id)
+    if workout is None or workout.user_id != current_user.id:
+        flash("That workout does not exist.", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+    # Completed sessions are history and feed challenge contributions; only
+    # queued sessions can be removed.
+    if workout.status != "scheduled":
+        flash("Completed workouts are part of your history and cannot be deleted.", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+    title = workout.title
+    db.session.delete(workout)
+    db.session.commit()
+    flash(f"Scheduled session {title!r} removed.", "success")
+    return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+
+
+@dashboard_bp.route("/workouts/<int:workout_id>/edit", methods=["POST"])
+@login_required
+def workout_edit(workout_id: int):
+    workout = db.session.get(ScheduledWorkout, workout_id)
+    if workout is None or workout.user_id != current_user.id:
+        flash("That workout does not exist.", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+    if workout.status != "scheduled":
+        flash("Completed workouts are part of your history and cannot be edited.", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+
+    title = " ".join((request.form.get("title") or workout.title).split())[:80] or workout.title
+    duration = _parse_nonnegative_int(
+        request.form.get("duration"), default=workout.duration_minutes, maximum=300)
+    duration = max(5, duration)
+    try:
+        scheduled_for = datetime.strptime(
+            f"{request.form.get('date', '').strip()} {request.form.get('time', '').strip()}",
+            "%Y-%m-%d %H:%M",
+        )
+    except ValueError:
+        flash("Pick a valid date and time (for example 2026-11-10 at 07:00).", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+    if scheduled_for < user_now(current_user) - timedelta(minutes=5):
+        flash("Sessions must be scheduled for a future time.", "error")
+        return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+
+    workout.title = title
+    workout.duration_minutes = duration
+    workout.scheduled_for = scheduled_for
+    db.session.commit()
+    flash(f"Session updated: {title} — {scheduled_for.strftime('%a %d %b, %H:%M')} ({duration} min).", "success")
+    return redirect(url_for("dashboard.dashboard", _anchor="workouts"))
+
+
 REMINDER_WINDOW_MINUTES = 45
 
 
