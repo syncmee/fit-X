@@ -960,33 +960,34 @@
                             </button>
                           </form>
                         </div>
-                        <div id="edit-session-{{ workout.id }}" class="hidden w-60 glass rounded-xl border border-white/10 p-3" style="color-scheme: dark;">
-                          <form method="POST" action="{{ url_for('dashboard.workout_edit', workout_id=workout.id) }}" class="space-y-2">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <div class="text-[9px] font-mono uppercase tracking-wider text-gray-500">Move session</div>
-                            <div class="grid grid-cols-2 gap-2">
-                              <input type="date" name="date" value="{{ workout.scheduled_for.strftime('%Y-%m-%d') }}" required
-                                     class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
-                              <input type="time" name="time" value="{{ workout.scheduled_for.strftime('%H:%M') }}" required
-                                     class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
-                            </div>
-                            <div class="flex justify-end">
-                              <button type="submit" class="grad-bg text-black text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition">
-                                SAVE
-                              </button>
-                            </div>
-                          </form>
-                          <form method="POST" action="{{ url_for('dashboard.workout_delete', workout_id=workout.id) }}"
-                                class="mt-2 pt-2 border-t border-white/5"
-                                onsubmit="return confirm({{ ('Remove ' ~ workout.title ~ ' from your queue? To change the exercises, remove it and schedule a new session.') | tojson }});">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="text-[10px] font-mono text-gray-500 hover:text-red-400 transition">
-                              Remove session
-                            </button>
-                          </form>
-                        </div>
                       </div>
                     </div>
+
+                      <div id="edit-session-{{ workout.id }}" class="hidden mt-3 w-full sm:w-60 sm:ml-auto glass rounded-xl border border-white/10 p-3" style="color-scheme: dark;">
+                        <form method="POST" action="{{ url_for('dashboard.workout_edit', workout_id=workout.id) }}" class="space-y-2">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <div class="text-[9px] font-mono uppercase tracking-wider text-gray-500">Move session</div>
+                          <div class="grid grid-cols-2 gap-2">
+                            <input type="date" name="date" value="{{ workout.scheduled_for.strftime('%Y-%m-%d') }}" required
+                                   class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
+                            <input type="time" name="time" value="{{ workout.scheduled_for.strftime('%H:%M') }}" required
+                                   class="w-full bg-bg3 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white outline-none focus:border-white/30">
+                          </div>
+                          <div class="flex justify-end">
+                            <button type="submit" class="grad-bg text-black text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg hover:opacity-90 transition">
+                              SAVE
+                            </button>
+                          </div>
+                        </form>
+                        <form method="POST" action="{{ url_for('dashboard.workout_delete', workout_id=workout.id) }}"
+                              class="mt-2 pt-2 border-t border-white/5"
+                              onsubmit="return confirm({{ ('Remove ' ~ workout.title ~ ' from your queue? To change the exercises, remove it and schedule a new session.') | tojson }});">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="submit" class="text-[10px] font-mono text-gray-500 hover:text-red-400 transition">
+                            Remove session
+                          </button>
+                        </form>
+                      </div>
 
                     {% set session_plan = upcoming_plans.get(workout.id) %}
                     {% if session_plan %}
