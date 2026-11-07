@@ -16,10 +16,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger reminder cron
+        # Free-repo GitHub schedules fire hours apart in practice, so this
+        # ping often wakes a cold-started Render service. Retry a few times
+        # so one slow boot does not skip the whole reminder cycle.
         run: |
-          curl -sS -f --max-time 90 \
-            "$FITX_APP_URL/cron/send-reminders" \
-            -H "X-Cron-Secret: $FITX_CRON_SECRET"
+          for i in 1 2 3; do
+            if curl -sS -f --max-time 90 \
+              "$FITX_APP_URL/cron/send-reminders" \
+              -H "X-Cron-Secret: $FITX_CRON_SECRET"; then
+              exit 0
+            fi
+            echo "attempt $i failed; retrying in 30s"
+            sleep 30
+          done
+          echo "all 3 attempts failed"
+          exit 1
         env:
           FITX_APP_URL: ${{ secrets.FITX_APP_URL }}
           FITX_CRON_SECRET: ${{ secrets.FITX_CRON_SECRET }}
