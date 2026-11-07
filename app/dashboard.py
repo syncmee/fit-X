@@ -44,6 +44,7 @@ from .cron import send_challenge_reminders as send_due_challenge_reminders
 from .cron import send_engagement_nudges as send_due_engagement_nudges
 from .cron import send_workout_reminders as _send_due_workout_reminders
 from .coach.rules import COACH_QUICK_STARTS, _looks_like_environment_answer, process_coach_message_rules
+from .coach.actions import _clamp_int
 from .coach.actions import apply_actions as _apply_ai_actions
 from .coach.actions import CONFIRM_PREFIX as _CONFIRM_PREFIX
 from .coach.actions import default_meal_type as _default_meal_type

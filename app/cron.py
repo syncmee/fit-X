@@ -31,6 +31,13 @@ from app.plans import build_plan
 from app.timeutil import APP_DAY_START, effective_date, effective_today, to_user_clock, user_now
 
 
+def _logging_streak(logs, user):
+    """Weight-log streak via the dashboard context helper (Phase C split)."""
+    from app import dashboard
+
+    return dashboard._logging_streak(logs, user)
+
+
 _idempotency_cleanup_last_date: date | None = None
 
 

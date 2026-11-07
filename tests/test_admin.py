@@ -105,7 +105,11 @@ class AdminTestCase(AppContextTestCase):
         make_user(self.app, name="sleepy", email="sleepy@test.dev", last_active_at=None)
         client = admin_client(self.app)
         sent = []
+        _orig = push_mod.send_web_push
+        self.addCleanup(setattr, push_mod, "send_web_push", _orig)
         push_mod.send_web_push = lambda user, **kw: (sent.append(f"push:{user.email}") or True)
+        _orig = emails_mod.send_via_smtp
+        self.addCleanup(setattr, emails_mod, "send_via_smtp", _orig)
         emails_mod.send_via_smtp = lambda *a, **k: (sent.append(f"email:{a[0].email}"), (True, "ok"))[1]
 
         r = client.post("/admin/announce", data={
@@ -129,6 +133,8 @@ class AdminTestCase(AppContextTestCase):
                   last_active_at=datetime.utcnow())
         client = admin_client(self.app)
         emailed = []
+        _orig = emails_mod.send_via_smtp
+        self.addCleanup(setattr, emails_mod, "send_via_smtp", _orig)
         emails_mod.send_via_smtp = lambda user, *a, **k: (emailed.append(user.email), (True, "ok"))[1]
 
         client.post("/admin/announce", data={
@@ -145,6 +151,8 @@ class AdminTestCase(AppContextTestCase):
         make_user(self.app, name="joe", email="joe@test.dev")
         client = admin_client(self.app)
         captured = {}
+        _orig = emails_mod.send_via_smtp
+        self.addCleanup(setattr, emails_mod, "send_via_smtp", _orig)
         emails_mod.send_via_smtp = lambda user, subj, plain, html, su, sp: (
             captured.update(plain=plain, html=html, subject=subj), (True, "ok"))[1]
 
@@ -166,6 +174,8 @@ class AdminTestCase(AppContextTestCase):
         from app import push as push_mod
 
         client = admin_client(self.app)
+        _orig = emails_mod.send_via_smtp
+        self.addCleanup(setattr, emails_mod, "send_via_smtp", _orig)
         emails_mod.send_via_smtp = lambda *a, **k: (True, "ok")
         r = client.post("/admin/announce", data={
             "title": "Broken", "body": "x", "audience": "all",
