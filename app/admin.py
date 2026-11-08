@@ -524,6 +524,39 @@ def _food_from_form(food: Food, form) -> list[str]:
     return errors
 
 
+def seed_staple_foods_from_csv() -> int:
+    """Seed the food database from app/data/staple_foods.csv (~127 common
+    Indian + Western staples, per-100 g values). Each row carries unit_grams
+    (JSON mapping unit words to gram weights) and semicolon-separated
+    aliases. Skips names already present; returns rows added."""
+    path = Path(__file__).parent / "data" / "staple_foods.csv"
+    if not path.exists():
+        return 0
+    existing = {n.lower() for n in db.session.scalars(select(Food.name)).all()}
+    added = 0
+    with open(path, encoding="utf-8", newline="") as f:
+        for row in csv.DictReader(f):
+            name = (row.get("Name") or "").strip()
+            if not name or name.lower() in existing:
+                continue
+            try:
+                kcal = int(round(float(row.get("Calories (kcal)") or 0)))
+                protein = round(float(row.get("Protein (g)") or 0), 2)
+                carbs = round(float(row.get("Carbohydrates (g)") or 0), 2)
+                fats = round(float(row.get("Fats (g)") or 0), 2)
+                unit_grams = json.dumps(json.loads(row.get("unit_grams") or "{}"))
+                aliases = json.dumps([a.strip() for a in (row.get("aliases") or "").split(";") if a.strip()])
+            except (TypeError, ValueError, json.JSONDecodeError):
+                continue
+            db.session.add(Food(name=name, serving="100 g", calories=kcal,
+                                protein=protein, carbs=carbs, fats=fats,
+                                unit_grams=unit_grams, aliases=aliases))
+            existing.add(name.lower())
+            added += 1
+    db.session.commit()
+    return added
+
+
 def _content_routes(resource: str, model):
     """Register list/new/edit/delete routes for one content model. Both
     resources share the same shape, so the handlers are built once here."""

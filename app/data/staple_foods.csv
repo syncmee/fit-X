@@ -1,0 +1,128 @@
+Name,Calories (kcal),Protein (g),Carbohydrates (g),Fats (g),unit_grams,aliases
+Egg white,52,10.9,0.7,0.2,"{""egg white"":33,""safeda"":33}",albumen
+"Egg, boiled",155,12.6,1.1,10.6,"{""boiled egg"":50,""anda"":50,""boiled anda"":50}",hard boiled egg
+Omelette,154,10.9,1.0,11.7,"{""omelette"":120,""anda fry"":120,""fried egg"":100}",omelet
+"Milk, full cream",62,3.2,4.8,3.3,"{""glass"":240,""cup"":240,""katori"":150,""doodh"":240}",full cream milk;whole milk; buffalo milk
+"Milk, toned",49,3.1,4.9,1.7,"{""glass"":240,""cup"":240,""doodh"":240}",toned milk;skimmed milk;double toned milk
+"Curd, plain",98,3.5,4.7,3.3,"{""katori"":150,""cup"":150,""dahi"":150,""bowl"":200}",dahi;yogurt plain;plain yogurt;thayir
+Buttermilk,31,1.3,2.7,1.1,"{""glass"":240,""chaas"":240,""bowl"":240}",chaas;mattha;lassi namkin;salted lassi
+"Lassi, sweet",115,2.6,20.0,2.5,"{""glass"":250,""lassi glass"":250}",sweet lassi
+"Paneer, low fat",190,24.0,3.5,7.5,"{""katori"":100,""piece"":30}",low fat paneer
+Khoya,387,14.6,26.0,25.6,"{""piece"":30,""katori"":100}",mawa;khoa
+Ghee,900,0.0,0.0,100.0,"{""tsp"":5,""teaspoon"":5,""tbsp"":12,""katori"":100}",clarified butter;desi ghee
+Butter,717,0.9,0.1,81.1,"{""tsp"":5,""teaspoon"":5,""tbsp"":12,""pat"":10}",makhan;amul butter
+Malai,720,2.0,3.0,77.0,"{""tbsp"":15,""katori"":60}",cream fresh;fresh cream;cream
+Mango,60,0.8,15.0,0.4,"{""mango"":200,""aam"":200,""slice"":80}",aam;alphonso
+Orange,45,0.9,11.3,0.1,"{""orange"":131,""santra"":131}",santra;mosambi;sweet lime
+Papaya,43,0.5,10.8,0.3,"{""cup"":145,""papita"":145,""bowl"":145}",papita
+Guava,68,2.6,14.3,1.0,"{""guava"":100,""amrood"":100,""piece"":100}",amrood
+Watermelon,30,0.6,7.6,0.2,"{""bowl"":280,""slice"":280,""tarbooz"":280}",tarbooz;tarbuj
+Muskmelon,34,0.8,8.2,0.2,"{""bowl"":200,""kharbuja"":200}",kharbuja;cantaloupe
+Pomegranate,83,1.7,18.7,1.2,"{""bowl"":150,""anar"":150}",anar
+Grapes,71,0.7,18.4,0.2,"{""bowl"":120,""angoor"":120}",angoor
+Pineapple,50,0.5,13.0,0.1,"{""bowl"":165,""ananas"":165}",ananas
+Strawberry,32,0.7,7.7,0.3,"{""piece"":12,""bowl"":150}",strawberries
+Chikoo,94,0.5,21.4,1.1,"{""chikoo"":150,""piece"":150}",sapota;sapodilla;chiku
+Dates,282,2.5,75.0,0.4,"{""date"":24,""khajur"":24,""piece"":24}",khajur
+Raisins,299,3.2,79.2,0.5,"{""tbsp"":10,""kishmish"":10}",kishmish
+"Coconut, dried",660,6.9,23.0,64.5,"{""piece"":30,""kopra"":30}",kopra;nariyal dry;dried coconut
+Coconut water,19,0.7,3.7,0.2,"{""glass"":240,""nariyal pani"":240}",nariyal pani;tender coconut water
+Amla,44,0.9,10.2,0.6,"{""amla"":50,""piece"":50}",indian gooseberry
+Sattu,413,20.6,54.0,6.5,"{""glass"":40,""katori"":50}",roasted gram flour;roasted chana powder
+Muesli,374,9.0,72.0,6.5,"{""bowl"":45,""katori"":45}",granola
+Cornflakes,378,7.0,84.0,0.9,"{""bowl"":30,""katori"":30}",corn flakes
+"Dalia, dry",340,10.5,75.5,1.3,"{""katori"":40}",broken wheat;bulgur raw
+Suji,360,12.7,72.8,1.1,"{""katori"":40,""cup"":100}",rava;semolina;sooji
+Besan,387,21.7,57.8,6.7,"{""katori"":40,""cup"":100}",gram flour;chickpea flour;besan flour
+Atta,341,11.7,67.0,1.7,"{""katori"":40,""cup"":120}",whole wheat flour;wheat flour;gehun ka atta
+Maida,347,8.6,75.0,1.1,"{""katori"":40,""cup"":120}",refined flour;all purpose flour
+Rice flour,359,5.6,80.0,1.4,"{""katori"":40}",chawal ka atta
+Sago,348,0.2,87.0,0.1,"{""katori"":40}",sabudana;tapioca pearls;javvarisi
+"Sabudana, cooked",124,0.4,31.0,0.1,"{""katori"":150,""bowl"":150}",tapioca cooked
+Moong dal,347,24.0,63.0,1.2,"{""katori"":45,""cup"":100}",mung bean;green gram;moong
+Toor dal,343,22.3,61.5,1.5,"{""katori"":45,""cup"":100}",arhar dal;tur dal;pigeon pea;tuvar dal
+Masoor dal,352,25.1,63.0,1.1,"{""katori"":45,""cup"":100}",red lentil;masoor
+Chana dal,352,20.8,61.0,4.3,"{""katori"":45,""cup"":100}",bengal gram;split chickpeas
+Urad dal,341,25.2,61.0,1.4,"{""katori"":45,""cup"":100}",black gram;urad;udad dal
+Rajma,333,23.5,60.4,0.8,"{""katori"":45,""cup"":100}",kidney beans;rajmah
+Kabuli chana,364,19.3,61.0,6.0,"{""katori"":45,""cup"":100}",chickpeas raw;chole raw;kabuli channa
+"Sprouts, moong",30,3.0,5.9,0.2,"{""katori"":100,""bowl"":100}",moong sprouts;sprouted moong;bean sprouts
+"Peas, green",81,5.4,14.5,0.4,"{""katori"":100,""bowl"":100}",matar;green peas
+Peanuts,567,25.8,16.1,49.2,"{""handful"":28,""katori"":60,""piece"":1}",groundnut;moongphali;mungfali
+Almonds,579,21.2,21.6,49.9,"{""handful"":28,""piece"":1.2,""badam"":1.2}",badam
+Cashews,553,18.2,30.2,43.8,"{""handful"":28,""piece"":1.6,""kaju"":1.6}",kaju;cashew nuts
+Walnuts,654,15.2,13.7,65.2,"{""handful"":28,""piece"":2.5,""akhrot"":2.5}",akhrot;walnut halves
+Pistachios,560,20.2,27.2,45.3,"{""handful"":28,""piece"":0.7,""pista"":0.7}",pista;pistachio
+Flax seeds,534,18.3,28.9,42.2,"{""tbsp"":10}",alsi;flaxseed;linseed
+Chia seeds,486,16.5,42.1,30.7,"{""tbsp"":12}",chia
+Pumpkin seeds,559,30.2,10.7,49.0,"{""tbsp"":10}",pepitas
+"Chicken, thigh",209,25.8,0.0,10.9,"{""piece"":90,""thigh piece"":90}",chicken leg;murgh thigh
+"Chicken, whole (with skin)",215,27.3,0.0,11.0,"{""piece"":100}",whole chicken;chicken with skin
+"Mutton, cooked",294,25.3,0.0,20.6,"{""piece"":100,""bowl"":150}",goat meat;lambs;lamb cooked;mutton
+"Mutton, raw",143,20.8,0.0,6.5,"{""piece"":100}",goat meat raw;lamb raw
+Prawns,99,24.0,0.2,0.3,"{""piece"":10,""bowl"":100}",shrimp;jhinga
+Rohu fish,97,16.6,0.0,3.6,"{""piece"":100,""bowl"":100}",rohu;carp;rohu machli
+Pomfret,92,18.5,0.0,1.9,"{""piece"":100}",white pomfret;paplet
+"Tuna, canned in water",116,25.5,0.0,0.8,"{""tin"":100,""bowl"":100}",canned tuna;tuna
+Tofu,76,8.1,1.9,4.8,"{""block"":300,""katori"":100}",bean curd;soy paneer
+Soya chunks,345,52.0,33.0,0.5,"{""katori"":30,""cup"":50}",soy chunks;meal maker;soya granules;nutrela
+Tempeh,192,20.3,7.6,10.8,"{""katori"":100}",tempe
+"Potato, sweet",86,1.6,20.1,0.1,"{""medium"":150,""shakarkandi"":150}",shakarkandi;sweet potato
+Onion,40,1.1,9.3,0.1,"{""medium"":110,""piece"":110,""pyaz"":110}",pyaz;onions
+Tomato,18,0.9,3.9,0.2,"{""medium"":123,""piece"":123,""tamatar"":123}",tamatar;tomatoes
+Cucumber,15,0.7,3.6,0.1,"{""cucumber"":150,""half"":75,""kheera"":150}",kheera;kakdi
+Carrot,41,0.9,9.6,0.2,"{""carrot"":61,""piece"":61,""gajar"":61}",gajar;carrots
+Beetroot,43,1.6,9.6,0.2,"{""beetroot"":100,""chukandar"":100}",chukandar;beet
+Spinach,23,2.9,3.6,0.4,"{""bunch"":100,""katori"":30,""palak"":100}",palak
+Fenugreek leaves,50,4.4,6.4,0.9,"{""bunch"":100,""katori"":30}",methi;methi leaves
+Cauliflower,25,1.9,5.0,0.3,"{""cup"":100,""gobhi"":100}",gobhi;cauliflower florets
+Cabbage,25,1.3,5.8,0.1,"{""cup"":100,""pattagobhi"":100}",patta gobhi;cabbage
+Okra,33,1.9,7.0,0.2,"{""katori"":100,""bhindi"":100}",bhindi;lady finger;ladyfinger
+Brinjal,25,1.0,6.0,0.2,"{""katori"":100,""baingan"":100}",baingan;eggplant;aubergine
+Capsicum,26,1.0,6.0,0.3,"{""capsicum"":120,""piece"":120}",bell pepper;shimla mirch;shimla mirchi
+Bottle gourd,14,0.6,3.4,0.1,"{""katori"":100,""lauki"":100}",lauki;ghiya;dudhi
+Ridge gourd,20,0.6,4.4,0.2,"{""katori"":100,""turai"":100}",turai;torai
+Bitter gourd,17,1.0,3.7,0.2,"{""katori"":100,""karela"":100}",karela;bitter melon
+Tinda,20,0.6,4.2,0.2,"{""katori"":100}",apple gourd;round gourd
+Mushroom,22,3.1,3.3,0.3,"{""katori"":100,""piece"":15}",button mushroom;mushrooms
+Broccoli,34,2.8,6.6,0.4,"{""cup"":91,""bowl"":91}",broccoli florets
+French beans,35,1.8,7.9,0.2,"{""katori"":100,""beans"":100}",green beans;farasbin;string beans
+Garlic,149,6.4,33.1,0.5,"{""clove"":3}",lahsun;garlic clove
+Ginger,80,1.8,17.8,0.8,"{""inch"":6,""piece"":10}",adrak;ginger root
+Green chilli,29,1.9,6.7,0.4,"{""chilli"":3,""piece"":3}",hari mirch;green chili
+Coriander leaves,23,2.1,3.7,0.5,"{""bunch"":30,""katori"":8}",cilantro;dhania;dhaniya
+Mint leaves,44,3.3,8.0,0.7,"{""bunch"":25,""katori"":8}",pudina;mint
+Curry leaves,40,4.0,6.0,0.9,"{""bunch"":20}",kadi patta;curry leaf
+Lemon,29,1.1,9.3,0.3,"{""lemon"":60,""piece"":60,""nimbu"":60}",nimbu;lemons
+Sugar,387,0.0,100.0,0.0,"{""tsp"":5,""teaspoon"":5,""tbsp"":12,""cube"":4}",cheeni;shakkar;white sugar
+Honey,304,0.3,82.4,0.0,"{""tsp"":7,""teaspoon"":7,""tbsp"":21}",shahad
+Jaggery,383,0.1,98.0,0.1,"{""piece"":10,""tsp"":7,""gud"":10}",gud;gur;panela
+Rock salt,0,0.0,0.0,0.0,"{""tsp"":6,""pinch"":0.5}",sendha namak;kala namak;black salt
+"Coffee, black",2,0.3,0.0,0.0,"{""cup"":150,""mug"":240}",black coffee;espresso;koppi
+Green tea,1,0.0,0.2,0.0,"{""cup"":150}",green tea cup
+Cola,41,0.0,10.6,0.0,"{""can"":330,""glass"":250,""bottle"":300}",soft drink;pepsi;coca cola;coke
+Orange juice,45,0.7,10.4,0.2,"{""glass"":240,""bottle"":250}",santra juice;fresh orange juice
+Apple juice,46,0.1,11.3,0.1,"{""glass"":240}",apple juice glass
+Mango juice,60,0.3,15.0,0.1,"{""glass"":240,""bottle"":250}",mango drink;aam ras;maaza
+Soy milk,54,3.3,6.0,1.8,"{""glass"":240,""cup"":240}",soya milk;soy milk glass
+Almond milk,15,0.6,0.6,1.2,"{""glass"":240,""cup"":240}",badam milk unsweetened;almond milk unsweetened
+"Pasta, cooked",158,5.8,30.9,0.9,"{""cup"":140,""plate"":250,""bowl"":200}",spaghetti cooked;macaroni cooked;pasta
+"Noodles, cooked",138,2.7,24.0,3.5,"{""bowl"":200,""plate"":250}",hakka noodles;chow mein;noodles boiled
+French fries,312,3.4,41.4,15.1,"{""small"":70,""medium"":110,""large"":160}",fries;potato fries;chips fries
+Potato chips,536,7.0,53.0,34.0,"{""small pack"":30,""bowl"":30}",chips packet;crisps;lays
+"Pizza, cheese",266,11.4,33.0,10.0,"{""slice"":100}",cheese pizza;margherita
+Burger,268,13.6,28.0,12.0,"{""burger"":150,""piece"":150}",cheeseburger;veg burger;chicken burger
+"Sandwich, grilled",240,8.0,33.0,8.0,"{""sandwich"":150,""piece"":150}",veg sandwich;grilled sandwich;cheese sandwich
+Ice cream,207,3.5,23.8,11.0,"{""scoop"":66,""cup"":100,""bowl"":150}",vanilla ice cream;icecream
+Milk chocolate,535,7.6,59.4,30.0,"{""bar"":40,""piece"":10}",chocolate bar;cadbury;chocolates
+Dark chocolate,546,4.9,61.0,31.0,"{""bar"":40,""piece"":10}",dark choc
+"Biscuit, marie",440,7.0,76.0,10.0,"{""biscuit"":6,""packet"":150}",marie biscuit;parle g;glucose biscuit;parle-g
+"Cookies, chocolate chip",480,5.7,63.0,22.0,"{""cookie"":16,""piece"":16}",chocochip cookie;cookies
+Whey protein,375,78.0,7.0,4.0,"{""scoop"":30}",whey;protein powder;protein scoop
+Mayonnaise,680,1.0,1.5,75.0,"{""tbsp"":14,""tsp"":4.7}",mayo
+Ketchup,101,1.2,25.0,0.1,"{""tbsp"":17,""tsp"":5.7}",tomato ketchup;sauce tomato
+Olive oil,884,0.0,0.0,100.0,"{""tsp"":4.5,""teaspoon"":4.5,""tbsp"":13.5}",extra virgin olive oil
+Vegetable oil,884,0.0,0.0,100.0,"{""tsp"":4.5,""teaspoon"":4.5,""tbsp"":13.5}",refined oil;cooking oil;sunflower oil;mustard oil
+Beer,43,0.5,3.6,0.0,"{""bottle"":330,""pint"":500,""can"":500}",lager;beer bottle
+"Wine, red",85,0.1,2.6,0.0,"{""glass"":150}",red wine;wine glass
+Whisky,250,0.0,0.1,0.0,"{""peg"":60,""shot"":44}",whiskey;scotch;vodka;rum;gin
