@@ -413,8 +413,9 @@
     },
     {
       "phrase": "chole bhature",
-      "top1": "Chole, cooked",
+      "top1": "Chole bhature",
       "top5": [
+        "Chole bhature",
         "Chole, cooked"
       ]
     },
@@ -509,6 +510,14 @@
       "top5": [
         "Sweet Potato",
         "Potato, sweet"
+      ]
+    },
+    {
+      "phrase": "paneer bhurji",
+      "top1": "Paneer bhurji",
+      "top5": [
+        "Paneer bhurji",
+        "Paneer"
       ]
     }
   ],
@@ -728,6 +737,86 @@
       "range": [
         140,
         210
+      ]
+    },
+    {
+      "phrase": "log 3 eggs",
+      "food": "Egg",
+      "range": [
+        200,
+        260
+      ]
+    },
+    {
+      "phrase": "add 3 eggs to lunch",
+      "food": "Egg",
+      "range": [
+        200,
+        260
+      ]
+    },
+    {
+      "phrase": "please log 3 eggs",
+      "food": "Egg",
+      "range": [
+        200,
+        260
+      ]
+    },
+    {
+      "phrase": "add 2 rotis to lunch",
+      "food": "Roti",
+      "range": [
+        180,
+        280
+      ]
+    },
+    {
+      "phrase": "please log 1 banana",
+      "food": "Banana",
+      "range": [
+        80,
+        130
+      ]
+    },
+    {
+      "phrase": "log 2 chapaties",
+      "food": "Roti",
+      "range": [
+        180,
+        280
+      ]
+    },
+    {
+      "phrase": "please add 2 boiled eggs to breakfast",
+      "food": "Egg",
+      "range": [
+        120,
+        180
+      ]
+    },
+    {
+      "phrase": "log 1 katori dal",
+      "food": "Dal, cooked",
+      "range": [
+        140,
+        210
+      ]
+    },
+    {
+      "phrase": "1 katori paneer bhurji",
+      "food": "Paneer bhurji",
+      "range": [
+        320,
+        420
+      ]
+    },
+    {
+      "phrase": "1 plate chole bhature",
+      "food": "Chole bhature",
+      "range": [
+        550,
+        700
       ]
     }
   ],

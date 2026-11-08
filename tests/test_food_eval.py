@@ -133,22 +133,25 @@ class FoodEvalTestCase(AppContextTestCase):
         for phrase, want, got in h_failures:
             print(f"    held-out miss: {phrase!r} want {want!r} got {got}")
 
-        # Portion cases: the fast path must fire and land inside the range.
+        # Portion cases: the fast path must fire, land inside the range and,
+        # when the case names a food, match it.
         portions = eval_data.get("portion_cases", [])
         p_ok = 0
         p_failures = []
         for case in portions:
             result = try_fast_meal(case["phrase"])
             lo, hi = case["range"]
-            if result and lo <= result["calories"] <= hi:
+            in_range = result and lo <= result["calories"] <= hi
+            food_ok = result and (not case.get("food") or result["name"] == case["food"])
+            if in_range and food_ok:
                 p_ok += 1
             else:
                 got = f"{result['calories']} kcal ({result['name']})" if result else "no fast-path result"
-                p_failures.append((case["phrase"], f"{lo}-{hi}", got))
+                p_failures.append((case["phrase"], f"{case.get('food', 'any food')} {lo}-{hi}", got))
         p_total = len(portions)
         pp = p_ok / p_total if p_total else 1.0
         print(f"portion cases (fast path): {p_total}")
-        print(f"  in range: {p_ok}/{p_total} = {pp:.0%}")
+        print(f"  in range + right food: {p_ok}/{p_total} = {pp:.0%}")
         for phrase, want, got in p_failures:
             print(f"    portion miss: {phrase!r} want {want} got {got}")
 
