@@ -95,7 +95,7 @@ def groq_generate(user, message: str, now, deadline: float | None = None):
                     for row in reversed(prompt_module.recent_history(user)))
     messages.append({"role": "user", "content": message})
     try:
-        response = _SESSION.post(GROQ_API_URL, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 1000, "response_format": {"type": "json_object"}}, timeout=timeout)
+        response = _SESSION.post(GROQ_API_URL, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 600, "response_format": {"type": "json_object"}}, timeout=timeout)
     except requests.RequestException as exc:
         raise CoachAIError(f"Groq request failed: {exc}") from exc
     if response.status_code != 200:
