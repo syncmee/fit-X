@@ -2121,6 +2121,14 @@
       // Build the payload BEFORE disabling the input — FormData silently
       // drops disabled fields, which would send an empty message.
       const payload = new FormData(coachForm);
+      // A fresh idempotency token per message: the chat no longer reloads, so
+      // the server-rendered page-load token would collide on the second
+      // message ("already processed"). True double submits still reuse one
+      // key — a browser retry resends the exact same payload.
+      const freshKey = (window.crypto && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10);
+      payload.set('idempotency_key', freshKey);
 
       coachForm.dataset.busy = '1';
       input.disabled = true;

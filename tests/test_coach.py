@@ -172,6 +172,15 @@ class CoachRouteJsonTestCase(AppContextTestCase):
         self.assertFalse(body["ok"])
         self.assertTrue(body["error"])
 
+    def test_fetch_second_message_with_rotated_key_succeeds(self):
+        # The chat no longer reloads, so the client rotates the idempotency
+        # token per message — two back-to-back messages must both land.
+        first = self._post("log 1 egg", key="rotate-1")
+        self.assertEqual(first.status_code, 200)
+        second = self._post("log 1 egg", key="rotate-2")
+        self.assertEqual(second.status_code, 200)
+        self.assertTrue(second.get_json()["ok"])
+
     def test_fetch_duplicate_idempotency_returns_409_json(self):
         first = self._post("log 1 egg", key="dup-key")
         self.assertEqual(first.status_code, 200)
