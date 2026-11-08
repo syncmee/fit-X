@@ -598,11 +598,15 @@ _UNIT_WORDS = {
 _QUANTITY_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*([a-z]{1,12})?\b")
 
 # Words that may surround the food mention in a simple log ("had 2 rotis",
-# "2 katori dahi for breakfast") without making the message complex.
+# "log 3 eggs", "add 2 rotis to lunch") without making the message complex.
 _EXTRA_FILLER = {
     "breakfast", "lunch", "dinner", "snack", "meal", "food", "morning",
     "evening", "night", "took", "drank", "drunk", "eating", "quick", "today",
     "homemade", "steamed", "boiled", "fried", "raw", "roasted", "grilled",
+    # logging verbs and the politeness / connective filler around them
+    "log", "logged", "add", "added", "put", "track", "record", "enter",
+    "save", "please", "pls", "plz", "my", "me", "to", "for", "in", "of",
+    "the", "a", "an",
 }
 
 
