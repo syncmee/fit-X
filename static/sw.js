@@ -5,7 +5,7 @@
 // when the network is gone. Only the app shell (/static/*) and known
 // font/chart CDNs use cache-with-refresh, so updates land on the next
 // load. Bump VERSION whenever shipped static assets change.
-const VERSION = "fitx-v3";  // bumped: navigation timeout fallback + iOS splash assets
+const VERSION = "fitx-v4";  // bumped: in-app navigations never answered from a stale cached page
 
 const PRECACHE = [
   "/static/offline.html",
@@ -69,6 +69,30 @@ self.addEventListener("fetch", (event) => {
       (async () => {
         const navCache = await caches.open(NAV_CACHE);
         const network = fetch(request);
+        // In-app navigation (a form submit's redirect, a link tap): the user
+        // is already inside the app, so the page MUST reflect what they just
+        // did. Answering from the cache after the timeout showed the
+        // dashboard from before their coach message. Wait for the network;
+        // use the cache only if it actually fails.
+        let inApp = false;
+        try {
+          inApp = !!request.referrer &&
+            new URL(request.referrer).origin === self.location.origin;
+        } catch (_err) {
+          inApp = false;
+        }
+        if (inApp) {
+          try {
+            const response = await network;
+            if (response && response.ok && !response.redirected) {
+              navCache.put(request, response.clone());
+            }
+            return response;
+          } catch (_err) {
+            const cachedCopy = await navCache.match(request);
+            return cachedCopy || caches.match("/static/offline.html");
+          }
+        }
         // Keep the background fetch alive and refresh the cache even when we
         // have already answered from the cache.
         network
