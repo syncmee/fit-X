@@ -170,8 +170,15 @@ class FoodsHelperTestCase(AppContextTestCase):
                 "protein_g": 3, "carbs_g": 28, "fats_g": 0}
         self.assertEqual(compute_meal_from_catalogue(food, 200, "grams")["calories"], 260)
         self.assertEqual(compute_meal_from_catalogue(food, 0.2, "kg")["calories"], 260)
-        self.assertEqual(compute_meal_from_catalogue(food, 2, "bowls")["calories"], 260)
         self.assertEqual(compute_meal_from_catalogue(food, 300, "grams")["calories"], 390)
+        # Per-100 g rows without a matching unit weight cannot derive a count
+        # portion (the old "1 bowl = one catalogue serving" treated every cup
+        # of rice as 100 g) — None so the caller falls back to the LLM.
+        self.assertIsNone(compute_meal_from_catalogue(food, 2, "bowls"))
+        self.assertIsNone(compute_meal_from_catalogue(food, 1, "pieces"))
+        # With a unit weight the count portion is derivable again.
+        rice_units = {**food, "unit_grams": {"bowl": 150}}
+        self.assertEqual(compute_meal_from_catalogue(rice_units, 2, "bowls")["calories"], 390)
         # A portion beyond ~50 servings is not derivable as a real meal.
         self.assertIsNone(compute_meal_from_catalogue(food, 6000, "grams"))
         self.assertIsNone(compute_meal_from_catalogue(None, 2, "pieces"))

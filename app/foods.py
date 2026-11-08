@@ -470,6 +470,7 @@ def compute_meal_from_catalogue(food: dict | None, quantity: float, unit: str) -
         unit = "ml"
 
     multiplier = None
+    basis = None  # what the multiplier was derived from
     # unit_grams: quantity of a named unit x its gram weight, on top of a
     # per-100 g base ("2 rotis" x 40 g / 100 g).
     unit_grams = food.get("unit_grams") or {}
@@ -483,6 +484,7 @@ def compute_meal_from_catalogue(food: dict | None, quantity: float, unit: str) -
         for candidate in (unit, singular_unit, singular_unit.rstrip("s")):
             if candidate in unit_grams:
                 multiplier = quantity * unit_grams[candidate] / 100.0
+                basis = "unit_grams"
                 break
 
     if multiplier is None:
@@ -491,8 +493,16 @@ def compute_meal_from_catalogue(food: dict | None, quantity: float, unit: str) -
             if not per_serving:
                 return None
             multiplier = quantity / per_serving
+            basis = "mass"
+        elif _serving_grams(food.get("serving")) == 100.0:
+            # Per-100 g rows are the bulk of the catalogue: treating a bare
+            # count as "one catalogue serving" would log 100 g per egg/roti/
+            # cup. No matching unit weight = no derivable portion; the caller
+            # falls back to the LLM (or asks), per the docstring.
+            return None
         else:
             multiplier = quantity
+            basis = "serving"
     if multiplier <= 0 or multiplier > 50:
         return None
     return {
@@ -500,6 +510,8 @@ def compute_meal_from_catalogue(food: dict | None, quantity: float, unit: str) -
         "protein": round(food["protein_g"] * multiplier),
         "carbs": round(food["carbs_g"] * multiplier),
         "fats": round(food["fats_g"] * multiplier),
+        "basis": basis,
+        "multiplier": round(multiplier, 4),
     }
 
 
@@ -600,12 +612,16 @@ def try_fast_meal(message_text: str) -> dict | None:
             computed = compute_meal_from_catalogue(food, quantity, candidate)
             if computed:
                 break
-        if computed is None:
-            per_100g = _serving_grams(food["serving"]) == 100.0
-            if per_100g and not food["unit_grams"]:
-                return None
-            computed = compute_meal_from_catalogue(food, quantity, "serving")
-    if not computed or computed["calories"] > MEAL_ENTRY_CALORIE_CAP:
+    if not computed:
+        return None
+    # Gate: the portion must be grounded — derived from unit_grams, an
+    # explicit g/ml quantity, or a real per-serving food. A bare count on a
+    # per-100 g row has no derivable portion (compute returns None since the
+    # portion fix), and the belt-and-braces guard below keeps that true even
+    # if the portion logic changes.
+    if computed.get("basis") == "serving" and _serving_grams(food["serving"]) == 100.0:
+        return None
+    if computed["calories"] > MEAL_ENTRY_CALORIE_CAP:
         return None
 
     return {
