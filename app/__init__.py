@@ -218,6 +218,7 @@ def register_cli_commands(app: Flask) -> None:
         Idempotent — existing names are skipped."""
         from .admin import (
             seed_exercises_from_json,
+            seed_food_aliases_from_json,
             seed_indian_foods_from_csv,
             seed_staple_foods_from_csv,
             seed_starter_foods,
@@ -228,7 +229,8 @@ def register_cli_commands(app: Flask) -> None:
             foods = seed_starter_foods()
             staples = seed_staple_foods_from_csv()
             indian = seed_indian_foods_from_csv()
-        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {staples} staples + {indian} indian.")
+            aliases = seed_food_aliases_from_json()
+        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {staples} staples + {indian} indian. Alias rows updated: {aliases}.")
 
     @app.cli.command("seed-challenges")
     def seed_challenges_command() -> None:

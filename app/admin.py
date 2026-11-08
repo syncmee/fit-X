@@ -424,6 +424,21 @@ def seed_starter_foods() -> int:
 INDIAN_FOOD_CSV = Path(__file__).parent / "data" / "indian_food_nutrition_processed.csv"
 
 
+_BRACKET_RE = re.compile(r"\(([^()]+)\)")
+
+
+def _bracket_aliases(name: str) -> list[str]:
+    """Hindi/English alternates hidden in dish names like
+    'Hot tea (Garam Chai)' -> ['Garam Chai']. Numbers and single
+    characters are ignored."""
+    out = []
+    for match in _BRACKET_RE.findall(name):
+        alias = " ".join(match.split())
+        if len(alias) >= 2 and not alias.isdigit():
+            out.append(alias)
+    return out
+
+
 def seed_indian_foods_from_csv() -> int:
     """Seed the food database from the Indian food nutrition dataset
     (app/data/indian_food_nutrition_processed.csv — ~1,014 dishes, per-100 g
@@ -446,11 +461,45 @@ def seed_indian_foods_from_csv() -> int:
             except (TypeError, ValueError):
                 continue
             db.session.add(Food(name=name, serving="100 g", calories=kcal,
-                                protein=protein, carbs=carbs, fats=fats))
+                                protein=protein, carbs=carbs, fats=fats,
+                                aliases=json.dumps(_bracket_aliases(name))))
             existing.add(name.lower())
             added += 1
     db.session.commit()
     return added
+
+
+def seed_food_aliases_from_json() -> int:
+    """Merge hand-curated aliases (app/data/food_aliases.json) into matching
+    Food rows — {canonical name: [aliases]}. Existing aliases are kept;
+    duplicates skipped. Returns rows updated. Also backfills bracket aliases
+    (e.g. 'Garam Chai') onto rows seeded before they existed."""
+    path = Path(__file__).parent / "data" / "food_aliases.json"
+    updated = 0
+    if path.exists():
+        mapping = json.loads(path.read_text(encoding="utf-8"))
+        by_lower = {n.lower(): n for n in db.session.scalars(select(Food.name)).all()}
+        for canonical, aliases in mapping.items():
+            name = by_lower.get(canonical.lower())
+            if not name:
+                continue
+            food = db.session.scalars(select(Food).where(Food.name == name)).one()
+            current = json.loads(food.aliases or "[]")
+            merged = list(current)
+            for alias in aliases:
+                if alias.lower() not in {a.lower() for a in current}:
+                    merged.append(alias)
+            if merged != current:
+                food.aliases = json.dumps(merged)
+                updated += 1
+    # Backfill bracket aliases on rows seeded before extraction existed.
+    for food in db.session.scalars(select(Food).where(Food.aliases == "[]")).all():
+        aliases = _bracket_aliases(food.name)
+        if aliases:
+            food.aliases = json.dumps(aliases)
+            updated += 1
+    db.session.commit()
+    return updated
 
 
 def _content_page(stmt, model) -> tuple:
