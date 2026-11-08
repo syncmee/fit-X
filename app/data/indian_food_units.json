@@ -44,6 +44,31 @@
     "paratha": 80,
     "piece": 80
   },
+  "Poori": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Spinach poori (Palak poori)": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Methi poori": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Dal stuffed poori": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Potato stuffed poori (Aloo ki poori)": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
   "Tandoori parantha/paratha": {
     "paratha": 80,
     "piece": 80
@@ -131,6 +156,11 @@
     "vada": 35,
     "piece": 35
   },
+  "Sweet poori (Meethi poori)": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
   "Sweet split chickpea roti (Sweet channa dal roti/Puranpoli)": {
     "roti": 40,
     "chapati": 40,
@@ -152,6 +182,26 @@
   "Methi parantha/paratha": {
     "paratha": 80,
     "piece": 80
+  },
+  "Bathua poori": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Gram flour poori (Besan poori)": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Beetroot poori (Chukandar ki poori)": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
+  },
+  "Peas poori (Matar ki poori)": {
+    "puri": 35,
+    "poori": 35,
+    "piece": 35
   },
   "Cumin pulao (Jeera/Zeera pulao)": {
     "plate": 280,

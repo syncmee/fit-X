@@ -21,11 +21,11 @@ OUT = REPO / "app" / "data" / "indian_food_units.json"
 
 # (pattern, exclusions, unit_grams) — first match wins, so most specific first.
 PATTERNS = [
-    (r"\bbhel\b.*\bpuri\b|\bsev puri\b|\bpani puri\b", None, None),  # snack mixes, not fried puri
+    (r"\bbhel\b.*\b(puri|poori)\b|\bsev puri\b|\bpani puri\b", None, None),  # snack mixes, not fried puri
     (r"\bpapad\b", None, None),
     (r"\bparatha\b|\bparantha\b", None, {"paratha": 80, "piece": 80}),
     (r"\broti\b|\bchapati\b|\bphulka\b", None, {"roti": 40, "chapati": 40, "piece": 40}),
-    (r"\bpuri\b", None, {"puri": 35, "piece": 35}),
+    (r"\bpoori\b|\bpuri\b", None, {"puri": 35, "poori": 35, "piece": 35}),
     (r"\bnaan\b|\bkulcha\b", None, {"naan": 90, "piece": 90}),
     (r"\bidli\b", None, {"idli": 45, "piece": 45}),
     (r"\bdosa\b|\bdose\b", None, {"dosa": 85, "piece": 85}),

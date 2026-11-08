@@ -66,9 +66,14 @@ class FoodEvalTestCase(AppContextTestCase):
         seed_indian_foods_from_csv()
         seed_food_aliases_from_json()
 
-        from app.foods import food_db_matches
+        from app.admin import apply_default_unit_grams, seed_food_data_fixes
+        apply_default_unit_grams()
+        seed_food_data_fixes()
 
-        cases = json.loads(EVAL_PATH.read_text(encoding="utf-8"))["cases"]
+        from app.foods import food_db_matches, try_fast_meal
+
+        eval_data = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+        cases = eval_data["cases"]
 
         # Reference rows for the legacy matcher (same catalogue, old keys).
         from app.models import Food
@@ -103,9 +108,50 @@ class FoodEvalTestCase(AppContextTestCase):
 
         total = len(cases)
         p1, p5 = top1 / total, top5 / total
-        print(f"\nfood eval: {total} cases")
+        print(f"\nfood eval (tuned set): {total} cases")
         print(f"  top-1: {top1}/{total} = {p1:.0%} (target >= {TOP1_TARGET:.0%})")
         print(f"  top-5: {top5}/{total} = {p5:.0%} (target >= {TOP5_TARGET:.0%})")
+
+        # Held-out phrases: authored separately, never tuned against.
+        heldout = eval_data.get("heldout", [])
+        h_top1 = h_top5 = 0
+        h_failures = []
+        for case in heldout:
+            got = [m["name"] for m in food_db_matches(case["phrase"], limit=5)]
+            hit1 = bool(got) and got[0] == case["top1"]
+            hit5 = any(name in got for name in case["top5"])
+            h_top1 += hit1
+            h_top5 += hit5
+            if not (hit1 and hit5):
+                h_failures.append((case["phrase"], case["top1"], got[:3]))
+        h_total = len(heldout)
+        hp1 = h_top1 / h_total if h_total else 1.0
+        hp5 = h_top5 / h_total if h_total else 1.0
+        print(f"food eval (held-out): {h_total} cases")
+        print(f"  top-1: {h_top1}/{h_total} = {hp1:.0%} (target >= {TOP1_TARGET:.0%})")
+        print(f"  top-5: {h_top5}/{h_total} = {hp5:.0%} (target >= {TOP5_TARGET:.0%})")
+        for phrase, want, got in h_failures:
+            print(f"    held-out miss: {phrase!r} want {want!r} got {got}")
+
+        # Portion cases: the fast path must fire and land inside the range.
+        portions = eval_data.get("portion_cases", [])
+        p_ok = 0
+        p_failures = []
+        for case in portions:
+            result = try_fast_meal(case["phrase"])
+            lo, hi = case["range"]
+            if result and lo <= result["calories"] <= hi:
+                p_ok += 1
+            else:
+                got = f"{result['calories']} kcal ({result['name']})" if result else "no fast-path result"
+                p_failures.append((case["phrase"], f"{lo}-{hi}", got))
+        p_total = len(portions)
+        pp = p_ok / p_total if p_total else 1.0
+        print(f"portion cases (fast path): {p_total}")
+        print(f"  in range: {p_ok}/{p_total} = {pp:.0%}")
+        for phrase, want, got in p_failures:
+            print(f"    portion miss: {phrase!r} want {want} got {got}")
+
         print(f"  latency: {avg_ms:.3f} ms/message (budget < {LATENCY_BUDGET_MS} ms)")
         legacy_top1 = sum(
             1 for c in cases
@@ -122,6 +168,9 @@ class FoodEvalTestCase(AppContextTestCase):
 
         self.assertGreaterEqual(p1, TOP1_TARGET, f"top-1 {p1:.0%} below target")
         self.assertGreaterEqual(p5, TOP5_TARGET, f"top-5 {p5:.0%} below target")
+        self.assertGreaterEqual(hp1, TOP1_TARGET, f"held-out top-1 {hp1:.0%} below target")
+        self.assertGreaterEqual(hp5, TOP5_TARGET, f"held-out top-5 {hp5:.0%} below target")
+        self.assertEqual(p_failures, [], f"portion cases out of range: {p_failures}")
         self.assertLess(avg_ms, LATENCY_BUDGET_MS, "matcher over latency budget")
 
 

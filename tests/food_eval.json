@@ -316,8 +316,9 @@
     },
     {
       "phrase": "chiken breest",
-      "top1": "Chicken Breast",
+      "top1": "Chicken breast, cooked",
       "top5": [
+        "Chicken breast, cooked",
         "Chicken Breast",
         "Chicken, thigh"
       ]
@@ -508,6 +509,383 @@
       "top5": [
         "Sweet Potato",
         "Potato, sweet"
+      ]
+    }
+  ],
+  "portion_cases": [
+    {
+      "phrase": "3 eggs",
+      "range": [
+        200,
+        260
+      ]
+    },
+    {
+      "phrase": "2 rotis",
+      "range": [
+        180,
+        280
+      ]
+    },
+    {
+      "phrase": "1 plate mutton biryani",
+      "range": [
+        400,
+        700
+      ]
+    },
+    {
+      "phrase": "1 cup chai",
+      "range": [
+        60,
+        120
+      ]
+    },
+    {
+      "phrase": "1 banana",
+      "range": [
+        80,
+        130
+      ]
+    },
+    {
+      "phrase": "200 g chicken breast",
+      "range": [
+        280,
+        360
+      ]
+    },
+    {
+      "phrase": "2 boiled eggs",
+      "range": [
+        120,
+        180
+      ]
+    },
+    {
+      "phrase": "3 idli",
+      "range": [
+        140,
+        220
+      ]
+    },
+    {
+      "phrase": "1 glass milk",
+      "range": [
+        130,
+        175
+      ]
+    },
+    {
+      "phrase": "1 katori dal",
+      "range": [
+        140,
+        210
+      ]
+    },
+    {
+      "phrase": "200 g rice",
+      "range": [
+        230,
+        290
+      ]
+    },
+    {
+      "phrase": "2 dosas",
+      "range": [
+        220,
+        320
+      ]
+    },
+    {
+      "phrase": "40 g oats",
+      "range": [
+        130,
+        180
+      ]
+    },
+    {
+      "phrase": "4 chapatis",
+      "range": [
+        350,
+        460
+      ]
+    },
+    {
+      "phrase": "1 plate vegetable biryani",
+      "range": [
+        380,
+        560
+      ]
+    },
+    {
+      "phrase": "150 ml milk",
+      "range": [
+        80,
+        110
+      ]
+    },
+    {
+      "phrase": "2 chapaties",
+      "range": [
+        180,
+        280
+      ]
+    },
+    {
+      "phrase": "1 katori curd",
+      "range": [
+        70,
+        120
+      ]
+    },
+    {
+      "phrase": "1 bowl dahi",
+      "range": [
+        70,
+        130
+      ]
+    },
+    {
+      "phrase": "2 cups chai",
+      "range": [
+        120,
+        200
+      ]
+    },
+    {
+      "phrase": "1 pack maggi",
+      "range": [
+        260,
+        360
+      ]
+    },
+    {
+      "phrase": "1 omelette",
+      "range": [
+        150,
+        220
+      ]
+    },
+    {
+      "phrase": "3 egg whites",
+      "range": [
+        40,
+        70
+      ]
+    },
+    {
+      "phrase": "100 g chicken breast",
+      "range": [
+        145,
+        185
+      ]
+    },
+    {
+      "phrase": "10 almonds",
+      "range": [
+        50,
+        95
+      ]
+    },
+    {
+      "phrase": "5 cashews",
+      "range": [
+        30,
+        60
+      ]
+    },
+    {
+      "phrase": "1 katori rajma",
+      "range": [
+        150,
+        220
+      ]
+    },
+    {
+      "phrase": "2 puris",
+      "range": [
+        130,
+        210
+      ]
+    },
+    {
+      "phrase": "1 glass buttermilk",
+      "range": [
+        55,
+        95
+      ]
+    },
+    {
+      "phrase": "1 katori chole",
+      "range": [
+        200,
+        300
+      ]
+    },
+    {
+      "phrase": "1 bowl dal",
+      "range": [
+        140,
+        210
+      ]
+    }
+  ],
+  "heldout": [
+    {
+      "phrase": "1 katori rajma",
+      "top1": "Rajma, cooked",
+      "top5": [
+        "Rajma, cooked",
+        "Rajma"
+      ]
+    },
+    {
+      "phrase": "2 parathas",
+      "top1": "Plain parantha/paratha",
+      "top5": [
+        "Plain parantha/paratha",
+        "Paneer parantha/paratha"
+      ]
+    },
+    {
+      "phrase": "1 bowl sambar",
+      "top1": "Sambar",
+      "top5": [
+        "Sambar"
+      ]
+    },
+    {
+      "phrase": "1 plate noodles",
+      "top1": "Noodles, cooked",
+      "top5": [
+        "Noodles, cooked"
+      ]
+    },
+    {
+      "phrase": "10 almonds",
+      "top1": "Almonds",
+      "top5": [
+        "Almonds"
+      ]
+    },
+    {
+      "phrase": "5 cashews",
+      "top1": "Cashews",
+      "top5": [
+        "Cashews"
+      ]
+    },
+    {
+      "phrase": "2 walnuts",
+      "top1": "Walnuts",
+      "top5": [
+        "Walnuts"
+      ]
+    },
+    {
+      "phrase": "bhindi fry",
+      "top1": "Okra",
+      "top5": [
+        "Okra",
+        "Crispy okra/Crispy lady's fingers (Karare bhindi)"
+      ]
+    },
+    {
+      "phrase": "2 katori poha",
+      "top1": "Poha",
+      "top5": [
+        "Poha"
+      ]
+    },
+    {
+      "phrase": "1 bowl palak paneer",
+      "top1": "Spinach paneer (Palak paneer)",
+      "top5": [
+        "Spinach paneer (Palak paneer)",
+        "Paneer"
+      ]
+    },
+    {
+      "phrase": "chicken curry",
+      "top1": "Chicken curry",
+      "top5": [
+        "Chicken curry",
+        "Chicken Breast"
+      ]
+    },
+    {
+      "phrase": "1 katori dal tadka",
+      "top1": "Dal, cooked",
+      "top5": [
+        "Dal, cooked",
+        "Dal tadka"
+      ]
+    },
+    {
+      "phrase": "masala maggi",
+      "top1": "Instant noodles, cooked (Maggi)",
+      "top5": [
+        "Instant noodles, cooked (Maggi)"
+      ]
+    },
+    {
+      "phrase": "2 toast",
+      "top1": "Bread, white",
+      "top5": [
+        "Bread, white",
+        "Cheese toast"
+      ]
+    },
+    {
+      "phrase": "1 glass lassi",
+      "top1": "Lassi, sweet",
+      "top5": [
+        "Lassi, sweet",
+        "Buttermilk"
+      ]
+    },
+    {
+      "phrase": "grilled fish",
+      "top1": "Rohu fish",
+      "top5": [
+        "Rohu fish",
+        "Pomfret",
+        "Fried fish (Indian style) (Tali hui machli)",
+        "Tuna, canned in water"
+      ]
+    },
+    {
+      "phrase": "1 plate idli",
+      "top1": "Idli",
+      "top5": [
+        "Idli"
+      ]
+    },
+    {
+      "phrase": "soya chunk curry",
+      "top1": "Soya chunks",
+      "top5": [
+        "Soya chunks",
+        "Soya chunks korma (Nutrinugget korma)"
+      ]
+    },
+    {
+      "phrase": "1 bowl dahi",
+      "top1": "Curd, whole milk",
+      "top5": [
+        "Curd, whole milk",
+        "Curd, plain"
+      ]
+    },
+    {
+      "phrase": "1 mutton kebab",
+      "top1": "Mutton seekh kebab",
+      "top5": [
+        "Mutton seekh kebab",
+        "Shammi kebab",
+        "Mutton chops",
+        "Chicken kebab"
       ]
     }
   ]

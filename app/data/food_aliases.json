@@ -110,10 +110,13 @@
     "badam giri"
   ],
   "Bread, white": [
-    "bread slice",
     "bread",
+    "bread slice",
+    "bread slices",
     "double roti",
-    "bread slices"
+    "plain toast",
+    "toast",
+    "toasts"
   ],
   "Potato, boiled": [
     "aloo",
@@ -423,5 +426,12 @@
   "Apple, raw": [
     "apples raw",
     "seb raw"
+  ],
+  "Poori": [
+    "puri",
+    "puris",
+    "poori",
+    "poories",
+    "fried puri"
   ]
 }

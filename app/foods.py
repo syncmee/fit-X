@@ -406,13 +406,23 @@ def resolve_food(name: str | None) -> dict | None:
 
 # First matching pattern wins; exclusions keep snack mixes from inheriting
 # the fried-piece weights of their pattern word.
+#
+# Nut piece weights (grams per piece) — "10 almonds" is ~12 g, not
+# 10 catalogue servings.
+_NUT_UNIT_PATTERNS: list[tuple[str, float]] = [
+    (r"\balmond\b|\bbadam\b", 1.2),
+    (r"\bcashew\b|\bkaju\b", 1.6),
+    (r"\bwalnut\b|\bakhrot\b", 2.5),
+    (r"\bpistachio\b|\bpista\b", 0.7),
+    (r"\bpeanut\b|\bgroundnut\b|\bmungfali\b|\bmoongphali\b", 0.7),
+]
+
 _DEFAULT_UNIT_PATTERNS: list[tuple[str, dict[str, float] | None]] = [
-    (r"\bbhel\b.*\bpuri\b|\bsev puri\b|\bpani puri\b", None),
-    (r"\bbhel\b.*\bpuri\b|\bsev puri\b|\bpani puri\b", None),
+    (r"\bbhel\b.*\b(puri|poori)\b|\bsev puri\b|\bpani puri\b", None),
     (r"\bpapad\b|\bpapadam\b", None),
     (r"\bparatha\b|\bparantha\b", {"paratha": 80, "piece": 80}),
     (r"\broti\b|\bchapati\b|\bphulka\b", {"roti": 40, "chapati": 40, "piece": 40}),
-    (r"\bpuri\b", {"puri": 35, "piece": 35}),
+    (r"\bpoori\b|\bpuri\b", {"puri": 35, "poori": 35, "piece": 35}),
     (r"\bnaan\b|\bkulcha\b", {"naan": 90, "piece": 90}),
     (r"\bidli\b", {"idli": 45, "piece": 45}),
     (r"\bdosa\b|\bdose\b", {"dosa": 85, "piece": 85}),
@@ -420,6 +430,8 @@ _DEFAULT_UNIT_PATTERNS: list[tuple[str, dict[str, float] | None]] = [
     (r"\bvada\b|\bwada\b", {"vada": 35, "piece": 35}),
     (r"\bbiryani\b|\bbiriyani\b|\bpulao\b|\bpilaf\b|\bkhichdi\b|\bkhichri\b|\bkhitchdi\b", {"plate": 280, "bowl": 250, "katori": 150}),
     (r"\bchai\b|\btea\b", {"cup": 150, "glass": 150}),
+    (r"\bcurd\b|\bdahi\b|\byogurt\b|\byoghurt\b|\blassi\b", {"katori": 150, "cup": 150, "bowl": 150}),
+    (r"\bdal\b|\bdaal\b|\brajma\b|\bchole\b|\bchana\b|\bbeans\b|\bsprouts\b", {"katori": 150, "bowl": 150, "cup": 150}),
     (r"\bmilk\b", {"glass": 240, "cup": 240}),
     (r"\bpancakes?\b", {"pancake": 77, "piece": 77}),
     (r"\bbread\b|\bpizza\b|\bsandwich\b", {"slice": 28, "piece": 100}),
@@ -435,9 +447,13 @@ def default_unit_grams_for(name: str) -> dict[str, float] | None:
     150 g, biryani plate ~280 g, ...). Only rows without their own
     unit_grams fall back to this; explicit data always wins.
     """
-    lowered = (name or "").lower()
+    # Plural names ("Almonds", "Cashews") must match singular patterns.
+    lowered = _phrase(name or "")
     if not lowered:
         return None
+    for nut_pattern, piece_grams in _NUT_UNIT_PATTERNS:
+        if re.search(nut_pattern, lowered):
+            return {"piece": piece_grams, "handful": 28}
     if re.search(r"\begg(s)?\b", lowered):
         return {"egg": 50, "eggs": 50, "piece": 50}
     for pattern, grams in _DEFAULT_UNIT_PATTERNS:
@@ -526,11 +542,12 @@ def compute_meal_from_catalogue(food: dict | None, quantity: float, unit: str) -
             unit_grams = json.loads(unit_grams)
         except json.JSONDecodeError:
             unit_grams = {}
-    if unit_grams and _serving_grams(food.get("serving")) == 100.0:
+    serving_base = _serving_grams(food.get("serving"))
+    if unit_grams and serving_base:
         singular_unit = _singular(unit)
         for candidate in (unit, singular_unit, singular_unit.rstrip("s")):
             if candidate in unit_grams:
-                multiplier = quantity * unit_grams[candidate] / 100.0
+                multiplier = quantity * unit_grams[candidate] / serving_base
                 basis = "unit_grams"
                 break
 
@@ -654,11 +671,22 @@ def try_fast_meal(message_text: str) -> dict | None:
     if unit_word and unit_word in _MASS_UNIT_WORDS:
         computed = compute_meal_from_catalogue(food, quantity, unit_word)
     else:
-        candidates = ([unit_word] if unit_word else []) + list(reversed(span_tokens))
+        # Try every plausible unit candidate and prefer a grounded basis:
+        # a unit_grams hit beats the bare count ("10 almonds" -> 10 pieces,
+        # not 10 catalogue servings). The span phrase first so multi-word
+        # units ("egg white") match before their individual words.
+        candidates = ([unit_word] if unit_word else []) + [" ".join(span_tokens)] + list(reversed(span_tokens)) + ["piece"]
+        fallback = None
         for candidate in candidates:
-            computed = compute_meal_from_catalogue(food, quantity, candidate)
-            if computed:
-                break
+            result = compute_meal_from_catalogue(food, quantity, candidate)
+            if not result:
+                continue
+            if result.get("basis") == "serving":
+                fallback = fallback or result
+                continue
+            computed = result
+            break
+        computed = computed or fallback
     if not computed:
         return None
     # Gate: the portion must be grounded — derived from unit_grams, an
