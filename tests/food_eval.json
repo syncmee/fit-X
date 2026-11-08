@@ -1,0 +1,514 @@
+{
+  "cases": [
+    {
+      "phrase": "had 2 eggs",
+      "top1": "Egg",
+      "top5": [
+        "Egg",
+        "Egg, boiled"
+      ]
+    },
+    {
+      "phrase": "2 boiled eggs for breakfast",
+      "top1": "Egg",
+      "top5": [
+        "Egg",
+        "Egg, boiled",
+        "Boiled egg (Ubla anda)"
+      ]
+    },
+    {
+      "phrase": "egg white omelette",
+      "top1": "Egg white",
+      "top5": [
+        "Egg white",
+        "Omelette",
+        "French omelette/omlet"
+      ]
+    },
+    {
+      "phrase": "1 banana",
+      "top1": "Banana",
+      "top5": [
+        "Banana"
+      ]
+    },
+    {
+      "phrase": "a glass of milk",
+      "top1": "Milk, whole",
+      "top5": [
+        "Milk, whole",
+        "Milk, full cream",
+        "Milk, toned"
+      ]
+    },
+    {
+      "phrase": "1 katori curd",
+      "top1": "Curd, whole milk",
+      "top5": [
+        "Curd, whole milk",
+        "Curd, plain"
+      ]
+    },
+    {
+      "phrase": "1 bowl rice",
+      "top1": "White Rice, cooked",
+      "top5": [
+        "White Rice, cooked",
+        "Brown Rice, cooked",
+        "Boiled rice (Uble chawal)"
+      ]
+    },
+    {
+      "phrase": "an apple",
+      "top1": "Apple",
+      "top5": [
+        "Apple"
+      ]
+    },
+    {
+      "phrase": "100 g paneer",
+      "top1": "Paneer",
+      "top5": [
+        "Paneer",
+        "Paneer, low fat"
+      ]
+    },
+    {
+      "phrase": "2 rotis",
+      "top1": "Roti",
+      "top5": [
+        "Roti",
+        "Chapati/Roti"
+      ]
+    },
+    {
+      "phrase": "1 katori dal",
+      "top1": "Dal, cooked",
+      "top5": [
+        "Dal, cooked",
+        "Mixed dal",
+        "Moong dal"
+      ]
+    },
+    {
+      "phrase": "oats for breakfast",
+      "top1": "Oats, dry",
+      "top5": [
+        "Oats, dry",
+        "Oats burfi",
+        "Apple oats chia seed smoothie"
+      ]
+    },
+    {
+      "phrase": "grilled chicken breast",
+      "top1": "Chicken Breast",
+      "top5": [
+        "Chicken Breast",
+        "Chicken, thigh"
+      ]
+    },
+    {
+      "phrase": "1 tsp ghee",
+      "top1": "Ghee",
+      "top5": [
+        "Ghee"
+      ]
+    },
+    {
+      "phrase": "2 tsp sugar in tea",
+      "top1": "Sugar",
+      "top5": [
+        "Sugar"
+      ]
+    },
+    {
+      "phrase": "2 chapaties with sabzi",
+      "top1": "Roti",
+      "top5": [
+        "Roti",
+        "Chapati/Roti"
+      ]
+    },
+    {
+      "phrase": "3 idlis and sambar",
+      "top1": "Sambar",
+      "top5": [
+        "Sambar",
+        "Idli"
+      ]
+    },
+    {
+      "phrase": "1 plate poha",
+      "top1": "Poha",
+      "top5": [
+        "Poha"
+      ]
+    },
+    {
+      "phrase": "masala dosa",
+      "top1": "Masala dosa",
+      "top5": [
+        "Masala dosa"
+      ]
+    },
+    {
+      "phrase": "plain dosa",
+      "top1": "Plain dosa",
+      "top5": [
+        "Plain dosa",
+        "Dosa"
+      ]
+    },
+    {
+      "phrase": "2 anda",
+      "top1": "Egg",
+      "top5": [
+        "Egg",
+        "Boiled egg (Ubla anda)",
+        "Egg curry (Anda curry)"
+      ]
+    },
+    {
+      "phrase": "1 kela",
+      "top1": "Banana",
+      "top5": [
+        "Banana"
+      ]
+    },
+    {
+      "phrase": "1 glass doodh",
+      "top1": "Milk, whole",
+      "top5": [
+        "Milk, whole",
+        "Milk, full cream",
+        "Saffron milk (Kesariya doodh)"
+      ]
+    },
+    {
+      "phrase": "1 katori dahi",
+      "top1": "Curd, whole milk",
+      "top5": [
+        "Curd, whole milk",
+        "Curd, plain",
+        "Dahi vadas/Dahi bhalla"
+      ]
+    },
+    {
+      "phrase": "1 bowl chawal",
+      "top1": "White Rice, cooked",
+      "top5": [
+        "White Rice, cooked",
+        "Boiled rice (Uble chawal)",
+        "Brown Rice, cooked"
+      ]
+    },
+    {
+      "phrase": "a cup of garam chai",
+      "top1": "Hot tea (Garam Chai)",
+      "top5": [
+        "Hot tea (Garam Chai)"
+      ]
+    },
+    {
+      "phrase": "100 g panner",
+      "top1": "Paneer",
+      "top5": [
+        "Paneer",
+        "Paneer, low fat"
+      ]
+    },
+    {
+      "phrase": "2 roti and dal",
+      "top1": "Roti",
+      "top5": [
+        "Roti",
+        "Chapati/Roti",
+        "Dal, cooked"
+      ]
+    },
+    {
+      "phrase": "2 chapati",
+      "top1": "Roti",
+      "top5": [
+        "Roti",
+        "Chapati/Roti"
+      ]
+    },
+    {
+      "phrase": "1 tsp gud",
+      "top1": "Jaggery",
+      "top5": [
+        "Jaggery"
+      ]
+    },
+    {
+      "phrase": "1 katori sabudana",
+      "top1": "Sago",
+      "top5": [
+        "Sago",
+        "Sabudana, cooked"
+      ]
+    },
+    {
+      "phrase": "kheera salad",
+      "top1": "Cucumber",
+      "top5": [
+        "Cucumber"
+      ]
+    },
+    {
+      "phrase": "1 glass chaas",
+      "top1": "Buttermilk",
+      "top5": [
+        "Buttermilk",
+        "Lassi, sweet"
+      ]
+    },
+    {
+      "phrase": "2 badam",
+      "top1": "Almonds",
+      "top5": [
+        "Almonds"
+      ]
+    },
+    {
+      "phrase": "1 katori palak sabzi",
+      "top1": "Spinach",
+      "top5": [
+        "Spinach",
+        "Fenugreek leaves"
+      ]
+    },
+    {
+      "phrase": "chiken sandwhich",
+      "top1": "Chicken sandwich",
+      "top5": [
+        "Chicken sandwich",
+        "Chicken sandwich (toasted)",
+        "Chicken Breast"
+      ]
+    },
+    {
+      "phrase": "omlete",
+      "top1": "Omelette",
+      "top5": [
+        "Omelette",
+        "French omelette/omlet"
+      ]
+    },
+    {
+      "phrase": "bannana smoothie",
+      "top1": "Apple oats chia seed smoothie",
+      "top5": [
+        "Apple oats chia seed smoothie",
+        "Banana",
+        "Banana appam"
+      ]
+    },
+    {
+      "phrase": "dossa",
+      "top1": "Masala dosa",
+      "top5": [
+        "Masala dosa",
+        "Dosa"
+      ]
+    },
+    {
+      "phrase": "chiken breest",
+      "top1": "Chicken Breast",
+      "top5": [
+        "Chicken Breast",
+        "Chicken, thigh"
+      ]
+    },
+    {
+      "phrase": "paneer paratha",
+      "top1": "Paneer parantha/paratha",
+      "top5": [
+        "Paneer parantha/paratha",
+        "Paneer"
+      ]
+    },
+    {
+      "phrase": "chiken momo",
+      "top1": "Chicken Breast",
+      "top5": [
+        "Chicken Breast",
+        "Chicken, thigh",
+        "Chicken, whole (with skin)"
+      ]
+    },
+    {
+      "phrase": "griled chiken",
+      "top1": "Chicken Breast",
+      "top5": [
+        "Chicken Breast",
+        "Chicken, whole (with skin)",
+        "Chicken, thigh"
+      ]
+    },
+    {
+      "phrase": "3 eggplants",
+      "top1": "Brinjal",
+      "top5": [
+        "Brinjal",
+        "Eggplant/Brinjal rice (Vangi bhat)"
+      ]
+    },
+    {
+      "phrase": "eggplant curry",
+      "top1": "Brinjal",
+      "top5": [
+        "Brinjal",
+        "Eggplant/Brinjal rice (Vangi bhat)"
+      ]
+    },
+    {
+      "phrase": "egg curry",
+      "top1": "Egg curry (Anda curry)",
+      "top5": [
+        "Egg curry (Anda curry)",
+        "Egg"
+      ]
+    },
+    {
+      "phrase": "1 scoop ice cream",
+      "top1": "Ice cream",
+      "top5": [
+        "Ice cream"
+      ]
+    },
+    {
+      "phrase": "small pack chips",
+      "top1": "Potato chips",
+      "top5": [
+        "Potato chips",
+        "French fries"
+      ]
+    },
+    {
+      "phrase": "1 cup coffee",
+      "top1": "Coffee, black",
+      "top5": [
+        "Coffee, black",
+        "Instant coffee"
+      ]
+    },
+    {
+      "phrase": "chicken soup",
+      "top1": "Chicken consomme (Clear chicken soup)",
+      "top5": [
+        "Chicken consomme (Clear chicken soup)",
+        "Chicken sweet corn soup"
+      ]
+    },
+    {
+      "phrase": "2 slices bread",
+      "top1": "Bread, white",
+      "top5": [
+        "Bread, white"
+      ]
+    },
+    {
+      "phrase": "chole bhature",
+      "top1": "Chole, cooked",
+      "top5": [
+        "Chole, cooked"
+      ]
+    },
+    {
+      "phrase": "rajma chawal",
+      "top1": "Rajma, cooked",
+      "top5": [
+        "Rajma, cooked",
+        "White Rice, cooked"
+      ]
+    },
+    {
+      "phrase": "5 almonds",
+      "top1": "Almonds",
+      "top5": [
+        "Almonds"
+      ]
+    },
+    {
+      "phrase": "1 bowl pasta",
+      "top1": "Pasta, cooked",
+      "top5": [
+        "Pasta, cooked",
+        "Noodles, cooked"
+      ]
+    },
+    {
+      "phrase": "2 french fries",
+      "top1": "French fries",
+      "top5": [
+        "French fries",
+        "Potato chips"
+      ]
+    },
+    {
+      "phrase": "1 can coke",
+      "top1": "Cola",
+      "top5": [
+        "Cola"
+      ]
+    },
+    {
+      "phrase": "tofu bhurji",
+      "top1": "Tofu",
+      "top5": [
+        "Tofu"
+      ]
+    },
+    {
+      "phrase": "soya chunks curry",
+      "top1": "Soya chunks",
+      "top5": [
+        "Soya chunks"
+      ]
+    },
+    {
+      "phrase": "1 katori moong dal",
+      "top1": "Moong dal",
+      "top5": [
+        "Moong dal",
+        "Sprouts, moong",
+        "Dal moong"
+      ]
+    },
+    {
+      "phrase": "150 ml milk",
+      "top1": "Milk, whole",
+      "top5": [
+        "Milk, whole",
+        "Milk, full cream",
+        "Milk, toned"
+      ]
+    },
+    {
+      "phrase": "2 medjool dates",
+      "top1": "Dates",
+      "top5": [
+        "Dates"
+      ]
+    },
+    {
+      "phrase": "1 bowl sprouts",
+      "top1": "Sprouts, moong",
+      "top5": [
+        "Sprouts, moong",
+        "Moong dal"
+      ]
+    },
+    {
+      "phrase": "150 g sweet potato",
+      "top1": "Sweet Potato",
+      "top5": [
+        "Sweet Potato",
+        "Potato, sweet"
+      ]
+    }
+  ]
+}
