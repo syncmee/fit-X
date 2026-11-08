@@ -1,0 +1,275 @@
+{
+  "Chapati/Roti": {
+    "roti": 40,
+    "chapati": 40,
+    "piece": 40
+  },
+  "Plain parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Potato parantha/paratha (Aloo ka parantha/paratha)": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Radish parantha/paratha (Mooli ka parantha/paratha)": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Cauliflower parantha/paratha (Phoolgobhi ka parantha/paratha)": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Dal parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Sprouted moong parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Pea parantha/paratha (Matar ka parantha/paratha)": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Keema parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Paneer parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Besan and spinach parantha/paratha (Besan aur palak ka parantha/paratha)": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Tandoori parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Plain pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Mixed vegetable pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Mushroom pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Sprouted moong pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Paneer pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Peanut pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Navratan pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Green chickpeas pulao (Choliya pulao/Hare chane ka pulao)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Mutton biryani/biriyani": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Vegetable biryani/biriyani": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Naan": {
+    "naan": 90,
+    "piece": 90
+  },
+  "Idli": {
+    "idli": 45,
+    "piece": 45
+  },
+  "Masala dosa": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Semolina dosa (Suji/Rava dosa)": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Onion tomato uttapam": {
+    "uttapam": 110,
+    "piece": 110
+  },
+  "Makki ki roti": {
+    "roti": 40,
+    "chapati": 40,
+    "piece": 40
+  },
+  "Masala vada": {
+    "vada": 35,
+    "piece": 35
+  },
+  "Peanut sago vada (Sabudana mungfali vada)": {
+    "vada": 35,
+    "piece": 35
+  },
+  "Sweet split chickpea roti (Sweet channa dal roti/Puranpoli)": {
+    "roti": 40,
+    "chapati": 40,
+    "piece": 40
+  },
+  "Paushtik roti": {
+    "roti": 40,
+    "chapati": 40,
+    "piece": 40
+  },
+  "Semolina carrot vada (Suji gajar vada)": {
+    "vada": 35,
+    "piece": 35
+  },
+  "Onion-green chilli parantha/paratha (Pyaaz aur hari mirch ka parantha/paratha)": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Methi parantha/paratha": {
+    "paratha": 80,
+    "piece": 80
+  },
+  "Cumin pulao (Jeera/Zeera pulao)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Peas pulao (Matar pulao)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Split bengal gram dal and vegetable pulao (Channa dal and vegetable pulao)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Black channa pulao/ Bengal gram pulao (Kale chane ka pulao)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Mutton pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Chicken pulao": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Plain khitchdi (Plain khichri/khichdi)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Instant idli (with semolina)": {
+    "idli": 45,
+    "piece": 45
+  },
+  "Plain dosa": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Masala dosa mixed vegetable fillings": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Masala dosa paneer fillings": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Uttapam": {
+    "uttapam": 110,
+    "piece": 110
+  },
+  "Plain urad dal vada (Uzunne vada/Minapa garelu/Ulundu vadai/Medu vada)": {
+    "vada": 35,
+    "piece": 35
+  },
+  "Masala urad dal vada": {
+    "vada": 35,
+    "piece": 35
+  },
+  "Rice dal porridge (Chawal dal ki khichdi/khichri)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Spinach khichri (Palak khichri/khichdi)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Fermented bengal gram vada (Khameerikrit/Ufna hua channa dal ka vada)": {
+    "vada": 35,
+    "piece": 35
+  },
+  "Soya roti": {
+    "roti": 40,
+    "chapati": 40,
+    "piece": 40
+  },
+  "Poshtik khichdi/khichri": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Semolina idli (Suji/Rava idli)": {
+    "idli": 45,
+    "piece": 45
+  },
+  "Sago khitchdi/khichri (Sabudana khitchdi/khichri)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Moong bean dosa (Pesarattu)": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Quinoa khichdi/khichri": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Jowar dosa": {
+    "dosa": 85,
+    "piece": 85
+  },
+  "Vegetable khichdi/khichri": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  },
+  "Cracked wheat khichri/khichdi (Dalia khichri/khichdi)": {
+    "plate": 280,
+    "bowl": 250,
+    "katori": 150
+  }
+}

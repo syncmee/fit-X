@@ -1,6 +1,6 @@
 Name,Calories (kcal),Protein (g),Carbohydrates (g),Fats (g),unit_grams,aliases
 Egg white,52,10.9,0.7,0.2,"{""egg white"":33,""safeda"":33}",albumen
-"Egg, boiled",155,12.6,1.1,10.6,"{""boiled egg"":50,""anda"":50,""boiled anda"":50}",hard boiled egg
+"Egg, boiled",155,12.6,1.1,10.6,"{""egg"":50,""eggs"":50,""boiled egg"":50,""anda"":50,""boiled anda"":50}",hard boiled egg
 Omelette,154,10.9,1.0,11.7,"{""omelette"":120,""anda fry"":120,""fried egg"":100}",omelet
 "Milk, full cream",62,3.2,4.8,3.3,"{""glass"":240,""cup"":240,""katori"":150,""doodh"":240}",full cream milk;whole milk; buffalo milk
 "Milk, toned",49,3.1,4.9,1.7,"{""glass"":240,""cup"":240,""doodh"":240}",toned milk;skimmed milk;double toned milk

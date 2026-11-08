@@ -217,6 +217,7 @@ def register_cli_commands(app: Flask) -> None:
         database (starter foods, staples, the Indian food nutrition dataset).
         Idempotent — existing names are skipped."""
         from .admin import (
+            apply_default_unit_grams,
             seed_exercises_from_json,
             seed_food_aliases_from_json,
             seed_indian_foods_from_csv,
@@ -230,7 +231,8 @@ def register_cli_commands(app: Flask) -> None:
             staples = seed_staple_foods_from_csv()
             indian = seed_indian_foods_from_csv()
             aliases = seed_food_aliases_from_json()
-        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {staples} staples + {indian} indian. Alias rows updated: {aliases}.")
+            units = apply_default_unit_grams()
+        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {staples} staples + {indian} indian. Alias rows updated: {aliases}. Unit-gram rows updated: {units}.")
 
     @app.cli.command("seed-challenges")
     def seed_challenges_command() -> None:

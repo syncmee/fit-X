@@ -398,6 +398,52 @@ def resolve_food(name: str | None) -> dict | None:
     return index["entries"][index["phrase_entry"][pairs[0][1]]]
 
 
+
+# ============================================================
+# Default per-unit gram weights by dish-name pattern
+# ============================================================
+
+# First matching pattern wins; exclusions keep snack mixes from inheriting
+# the fried-piece weights of their pattern word.
+_DEFAULT_UNIT_PATTERNS: list[tuple[str, dict[str, float] | None]] = [
+    (r"\bbhel\b.*\bpuri\b|\bsev puri\b|\bpani puri\b", None),
+    (r"\bbhel\b.*\bpuri\b|\bsev puri\b|\bpani puri\b", None),
+    (r"\bpapad\b|\bpapadam\b", None),
+    (r"\bparatha\b|\bparantha\b", {"paratha": 80, "piece": 80}),
+    (r"\broti\b|\bchapati\b|\bphulka\b", {"roti": 40, "chapati": 40, "piece": 40}),
+    (r"\bpuri\b", {"puri": 35, "piece": 35}),
+    (r"\bnaan\b|\bkulcha\b", {"naan": 90, "piece": 90}),
+    (r"\bidli\b", {"idli": 45, "piece": 45}),
+    (r"\bdosa\b|\bdose\b", {"dosa": 85, "piece": 85}),
+    (r"\buttapam\b", {"uttapam": 110, "piece": 110}),
+    (r"\bvada\b|\bwada\b", {"vada": 35, "piece": 35}),
+    (r"\bbiryani\b|\bbiriyani\b|\bpulao\b|\bpilaf\b|\bkhichdi\b|\bkhichri\b|\bkhitchdi\b", {"plate": 280, "bowl": 250, "katori": 150}),
+    (r"\bchai\b|\btea\b", {"cup": 150, "glass": 150}),
+    (r"\bmilk\b", {"glass": 240, "cup": 240}),
+    (r"\bpancakes?\b", {"pancake": 77, "piece": 77}),
+    (r"\bbread\b|\bpizza\b|\bsandwich\b", {"slice": 28, "piece": 100}),
+    (r"\brice\b", {"cup": 150, "katori": 150, "bowl": 150}),
+]
+
+
+def default_unit_grams_for(name: str) -> dict[str, float] | None:
+    """Generic per-unit gram weights for a catalogue name, by pattern.
+
+    Covers the common Indian + Western units the CSV rows lack (egg ~50 g,
+    roti/chapati 40 g, idli 45 g, dosa 85 g, chai cup 150 g, rice cup/katori
+    150 g, biryani plate ~280 g, ...). Only rows without their own
+    unit_grams fall back to this; explicit data always wins.
+    """
+    lowered = (name or "").lower()
+    if not lowered:
+        return None
+    if re.search(r"\begg(s)?\b", lowered):
+        return {"egg": 50, "eggs": 50, "piece": 50}
+    for pattern, grams in _DEFAULT_UNIT_PATTERNS:
+        if re.search(pattern, lowered):
+            return grams
+    return None
+
 # ============================================================
 # AI meal-action sanity limits
 #

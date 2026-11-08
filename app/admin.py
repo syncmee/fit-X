@@ -24,6 +24,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import delete, func, or_, select, update
 
 from .extensions import db
+from .foods import default_unit_grams_for
 from .challenges import (
     CHALLENGE_METRICS,
     CHALLENGE_STATUSES,
@@ -415,7 +416,8 @@ def seed_starter_foods() -> int:
         if name in existing:
             continue
         db.session.add(Food(name=name, serving=serving, calories=kcal,
-                            protein=p, carbs=c, fats=f))
+                            protein=p, carbs=c, fats=f,
+                            unit_grams=json.dumps(default_unit_grams_for(name) or {})))
         added += 1
     db.session.commit()
     return added
@@ -437,6 +439,40 @@ def _bracket_aliases(name: str) -> list[str]:
         if len(alias) >= 2 and not alias.isdigit():
             out.append(alias)
     return out
+
+
+def _load_indian_food_units() -> dict:
+    path = Path(__file__).parent / "data" / "indian_food_units.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+INDIAN_FOOD_UNITS = _load_indian_food_units()
+
+
+def apply_default_unit_grams() -> int:
+    """Give already-seeded Food rows without unit weights their per-unit
+    grams: the generated Indian-dish map first, then the generic name
+    patterns (roti 40, egg 50, chai cup 150, rice katori 150, ...).
+    Explicit unit_grams always win. Returns rows updated."""
+    updated = 0
+    for food in db.session.scalars(select(Food)).all():
+        try:
+            current = json.loads(food.unit_grams or "{}")
+        except json.JSONDecodeError:
+            current = {}
+        if current:
+            continue
+        grams = INDIAN_FOOD_UNITS.get(food.name) or default_unit_grams_for(food.name)
+        if grams:
+            food.unit_grams = json.dumps(grams)
+            updated += 1
+    if updated:
+        from .foods import invalidate_food_index
+        invalidate_food_index()
+    db.session.commit()
+    return updated
 
 
 def seed_indian_foods_from_csv() -> int:
@@ -462,7 +498,8 @@ def seed_indian_foods_from_csv() -> int:
                 continue
             db.session.add(Food(name=name, serving="100 g", calories=kcal,
                                 protein=protein, carbs=carbs, fats=fats,
-                                aliases=json.dumps(_bracket_aliases(name))))
+                                aliases=json.dumps(_bracket_aliases(name)),
+                                unit_grams=json.dumps(INDIAN_FOOD_UNITS.get(name, {}))))
             existing.add(name.lower())
             added += 1
     db.session.commit()
