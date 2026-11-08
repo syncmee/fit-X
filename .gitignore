@@ -43,3 +43,6 @@ instance/_lh_cookie_base.txt
 # Local-only project docs (kept on disk, never shipped)
 changes.md
 workflow.md
+
+# Local-only brag tracking file
+.brag_ts
