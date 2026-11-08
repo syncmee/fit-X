@@ -99,11 +99,11 @@
       "reason": "soup: fat recalculated from kcal, protein capped"
     },
     "Poori": {
-      "calories": 236,
-      "protein": 1.35,
-      "carbs": 8.22,
-      "fats": 22.0,
-      "reason": "fried-class fat capped at 22 g"
+      "calories": 392,
+      "protein": 7.0,
+      "carbs": 46.0,
+      "fats": 20.0,
+      "reason": "spot-check: CSV macros were per-piece; per-100 g set (piece 35 g ~ 137 kcal)"
     },
     "Spinach poori (Palak poori)": {
       "calories": 235,
@@ -134,11 +134,11 @@
       "reason": "fried-class fat capped at 22 g"
     },
     "Bhatura": {
-      "calories": 274,
-      "protein": 1.63,
-      "carbs": 10.73,
-      "fats": 25.0,
-      "reason": "fried-class fat capped at 25 g"
+      "calories": 390,
+      "protein": 6.0,
+      "carbs": 42.0,
+      "fats": 22.0,
+      "reason": "spot-check: per-piece macros; per-100 g set"
     },
     "Paneer kofta curry": {
       "calories": 167,
@@ -246,11 +246,11 @@
       "reason": "fried-class fat capped at 20 g"
     },
     "Chicken kebab": {
-      "calories": 199,
-      "protein": 3.71,
-      "carbs": 1.11,
-      "fats": 20.0,
-      "reason": "fried-class fat capped at 20 g"
+      "calories": 206,
+      "protein": 18.0,
+      "carbs": 2.0,
+      "fats": 14.0,
+      "reason": "spot-check: chicken protein per-piece in CSV; per-100 g set"
     },
     "Fried fish (Indian style) (Tali hui machli)": {
       "calories": 174,
@@ -715,11 +715,11 @@
       "reason": "kcal recomputed from macros"
     },
     "Banana chips (Kele ke chips)": {
-      "calories": 301,
-      "protein": 0.37,
-      "carbs": 7.32,
-      "fats": 30.0,
-      "reason": "fried-class fat capped at 30 g"
+      "calories": 469,
+      "protein": 0.5,
+      "carbs": 56.0,
+      "fats": 27.0,
+      "reason": "spot-check: banana is carb; CSV C was per-piece"
     },
     "Curried Cauliflower soup": {
       "calories": 41,

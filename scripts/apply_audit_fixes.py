@@ -53,6 +53,26 @@ MANUAL_UPDATES = {
         "calories": 55, "protein": 1.5, "carbs": 7.0, "fats": 1.8,
         "reason": "was plain-tea values; entry means milk tea",
     },
+    # Spot-checked against reference values (USDA/IFCT-class): the CSV's
+    # fried-class rows carry PER-PIECE macros mislabeled as per-100 g
+    # (Poori carbs 8.2 g/100 g is impossible for fried dough). These four
+    # are set to realistic per-100 g compositions; kcal recomputed.
+    "Poori": {
+        "calories": 392, "protein": 7.0, "carbs": 46.0, "fats": 20.0,
+        "reason": "spot-check: CSV macros were per-piece; per-100 g set (piece 35 g ~ 137 kcal)",
+    },
+    "Bhatura": {
+        "calories": 390, "protein": 6.0, "carbs": 42.0, "fats": 22.0,
+        "reason": "spot-check: per-piece macros; per-100 g set",
+    },
+    "Banana chips (Kele ke chips)": {
+        "calories": 469, "protein": 0.5, "carbs": 56.0, "fats": 27.0,
+        "reason": "spot-check: banana is carb; CSV C was per-piece",
+    },
+    "Chicken kebab": {
+        "calories": 206, "protein": 18.0, "carbs": 2.0, "fats": 14.0,
+        "reason": "spot-check: chicken protein per-piece in CSV; per-100 g set",
+    },
 }
 
 
