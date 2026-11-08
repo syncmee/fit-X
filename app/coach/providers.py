@@ -14,6 +14,10 @@ from app.coach import CoachAIError
 from app.coach import prompt as prompt_module
 
 
+# One HTTP session across calls: TLS/handshake reuse saves ~100-300 ms per
+# coach turn, and pooled connections survive across requests.
+_SESSION = requests.Session()
+
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GEMINI_TIMEOUT_SECONDS = 12
@@ -59,11 +63,11 @@ def gemini_generate(user, message: str, now, deadline: float | None = None):
                "contents": contents,
                "generationConfig": {"temperature": 0.4, "maxOutputTokens": 800, "responseMimeType": "application/json"}}
     try:
-        response = requests.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
+        response = _SESSION.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
         if response.status_code == 503 and remaining_provider_timeout(deadline, GEMINI_TIMEOUT_SECONDS) > 0:
             dashboard.sleep(2)
             timeout = remaining_provider_timeout(deadline, GEMINI_TIMEOUT_SECONDS)
-            response = requests.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
+            response = _SESSION.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
     except requests.RequestException as exc:
         raise CoachAIError(f"Gemini request failed: {exc}") from exc
     if response.status_code != 200:
@@ -91,7 +95,7 @@ def groq_generate(user, message: str, now, deadline: float | None = None):
                     for row in reversed(prompt_module.recent_history(user)))
     messages.append({"role": "user", "content": message})
     try:
-        response = requests.post(GROQ_API_URL, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 1000, "response_format": {"type": "json_object"}}, timeout=timeout)
+        response = _SESSION.post(GROQ_API_URL, headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}, json={"model": model, "messages": messages, "temperature": 0.4, "max_tokens": 1000, "response_format": {"type": "json_object"}}, timeout=timeout)
     except requests.RequestException as exc:
         raise CoachAIError(f"Groq request failed: {exc}") from exc
     if response.status_code != 200:
