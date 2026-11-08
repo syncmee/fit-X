@@ -30,7 +30,7 @@ class FoodSeedTestCase(AppContextTestCase):
         dosa = db.session.scalars(select(Food).where(Food.name == "Masala dosa")).one()
         self.assertEqual(dosa.calories, 165)
         self.assertEqual(dosa.serving, "100 g")
-        self.assertEqual(dosa.protein, 3)
+        self.assertAlmostEqual(dosa.protein, 3.29)  # macros land unrounded (was int 3)
 
     def test_matcher_uses_dataset_aliases(self):
         from app.admin import seed_indian_foods_from_csv
