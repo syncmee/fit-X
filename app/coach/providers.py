@@ -61,7 +61,7 @@ def gemini_generate(user, message: str, now, deadline: float | None = None):
     ] + [{"role": "user", "parts": [{"text": message}]}]
     payload = {"system_instruction": {"parts": [{"text": prompt_module.build_system_prompt(user, now, message)}]},
                "contents": contents,
-               "generationConfig": {"temperature": 0.4, "maxOutputTokens": 800, "responseMimeType": "application/json"}}
+               "generationConfig": {"temperature": 0.4, "maxOutputTokens": 500, "responseMimeType": "application/json"}}
     try:
         response = _SESSION.post(GEMINI_API_URL.format(model=model), headers={"x-goog-api-key": api_key, "Content-Type": "application/json"}, json=payload, timeout=timeout)
         if response.status_code == 503 and remaining_provider_timeout(deadline, GEMINI_TIMEOUT_SECONDS) > 0:
