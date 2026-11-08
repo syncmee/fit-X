@@ -531,17 +531,21 @@ def _logging_streak(logs: list[WeightLog], user: User) -> tuple[int, list[bool]]
 
 
 def _get_upcoming_workouts(user: User, now: datetime) -> list[ScheduledWorkout]:
-    # A session stays listed for a day past its slot. Without the grace window
-    # a not-yet-completed session vanishes the minute its start time passes —
-    # it leaves Upcoming (scheduled_for >= now) but Recent Sessions only shows
-    # completed rows — so there is no way left to mark it done.
+    # A session stays listed until its fiT-X day ends (4:30 AM next morning)
+    # — the same boundary every other "today" view uses. Without grace a
+    # not-yet-completed session vanishes the minute its start time passes —
+    # it leaves Upcoming but Recent Sessions only shows completed rows — so
+    # there is no way left to mark it done. The old 24h-from-slot window
+    # instead kept an evening session up until the next evening, which read
+    # as "still showing after a day".
+    day_start, _day_end = day_bounds(now)
     return list(
         db.session.execute(
             select(ScheduledWorkout)
             .where(
                 ScheduledWorkout.user_id == user.id,
                 ScheduledWorkout.status == "scheduled",
-                ScheduledWorkout.scheduled_for >= now - timedelta(hours=24),
+                ScheduledWorkout.scheduled_for >= day_start,
             )
             .order_by(ScheduledWorkout.scheduled_for.asc())
             .limit(5)

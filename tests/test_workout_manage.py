@@ -117,7 +117,45 @@ class WorkoutManageTestCase(AppContextTestCase):
         updated = db.session.get(ScheduledWorkout, workout.id)
         self.assertEqual(updated.title, "Push Day")
 
-    # --- card UI ----------------------------------------------------------
+    # --- queue window: sessions list until their fiT-X day ends ------------
+
+    def test_queue_grace_is_the_fitx_day_not_24h_from_slot(self):
+        from app.dashboard import _get_upcoming_workouts
+
+        user = self._user()
+        # Two days ago, yesterday late evening, tomorrow, and tonight.
+        two_days_ago = datetime.utcnow().replace(hour=18, minute=0) - timedelta(days=2)
+        yesterday_late = datetime.utcnow().replace(hour=22, minute=0) - timedelta(days=1)
+        tomorrow = datetime.utcnow() + timedelta(days=1)
+        tonight = datetime.utcnow().replace(hour=23, minute=0)
+        self._make_session(title="Two Days Ago", scheduled_for=two_days_ago)
+        self._make_session(title="Yesterday Late", scheduled_for=yesterday_late)
+        self._make_session(title="Tomorrow", scheduled_for=tomorrow)
+        self._make_session(title="Tonight", scheduled_for=tonight)
+
+        # 3 AM: the fiT-X day still covers yesterday evening — mark-done stays
+        # reachable through the night.
+        now_3am = datetime.utcnow().replace(hour=3, minute=0)
+        shown = [w.title for w in _get_upcoming_workouts(user, now_3am)]
+        self.assertIn("Yesterday Late", shown)
+        self.assertIn("Tomorrow", shown)
+        self.assertNotIn("Two Days Ago", shown)
+
+        # 5 AM: the fiT-X day rolled over — yesterday's session is gone even
+        # though it is barely 7 hours past its slot.
+        now_5am = datetime.utcnow().replace(hour=5, minute=0)
+        shown = [w.title for w in _get_upcoming_workouts(user, now_5am)]
+        self.assertNotIn("Yesterday Late", shown)
+        self.assertIn("Tomorrow", shown)
+
+        # Same-evening grace: tonight's slot already passed, still listable.
+        now_2330 = datetime.utcnow().replace(hour=23, minute=30)
+        shown = [w.title for w in _get_upcoming_workouts(user, now_2330)]
+        self.assertIn("Tonight", shown)
+
+
+if __name__ == "__main__":
+    unittest.main()
 
     def test_card_shows_edit_and_done_but_no_standalone_cancel(self):
         self._make_session()
