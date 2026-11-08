@@ -74,11 +74,11 @@
     "kidney bean curry"
   ],
   "Chole, cooked": [
-    "chole",
+    "chana",
     "chana masala",
     "chhole",
     "chickpea curry",
-    "chana"
+    "chole"
   ],
   "Chicken Breast": [
     "chicken",
@@ -431,5 +431,10 @@
     "poori",
     "poories",
     "fried puri"
+  ],
+  "Chole bhature": [
+    "chole bhature",
+    "chola bhatura",
+    "chhole bhature"
   ]
 }
