@@ -37,7 +37,8 @@ _STOPWORDS = {
     "cup", "cups", "glass", "glasses", "bowl", "bowls", "plate", "plates",
     "kcal", "calories", "grams", "gram", "two", "three", "four", "five",
     "one", "half", "small", "large", "medium", "big", "little", "piece",
-    "pieces", "scoop", "scoops", "tbsp", "tsp", "bottle", "can",
+    "pieces", "scoop", "scoops", "tbsp", "tsp", "bottle", "can", "pack",
+    "packs", "tin", "packet", "packets",
     # unit words/letters from quantities ("100 g paneer", "1 katori dal")
     "g", "kg", "kgs", "ml", "l", "katori", "katoris", "glass", "glasses",
     "litre", "litres", "liter", "liters", "tablespoon", "teaspoon",
