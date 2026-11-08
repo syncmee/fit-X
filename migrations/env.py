@@ -72,6 +72,34 @@ def run_migrations_offline():
         context.run_migrations()
 
 
+def _ensure_version_column_width(engine) -> None:
+    """Alembic's alembic_version.version_num defaults to varchar(32), which
+    Postgres enforces. This project's revision ids are longer (e.g.
+    '0008_performance_and_request_safety' is 35 chars), so stamping the new
+    version failed with StringDataRightTruncation on Postgres while SQLite
+    (which ignores varchar lengths) worked. Widen the column before the
+    chain runs; outside the per-migration transaction, so it sticks even
+    when an early migration aborts."""
+    from sqlalchemy import inspect as sa_inspect, text
+
+    if engine.dialect.name == "sqlite":
+        return  # SQLite does not enforce varchar lengths.
+    inspector = sa_inspect(engine)
+    if not inspector.has_table("alembic_version"):
+        return  # First run: alembic creates it fresh.
+    columns = {column["name"]: column for column in inspector.get_columns("alembic_version")}
+    column = columns.get("version_num")
+    if column is None:
+        return
+    length = getattr(column.get("type"), "length", None)
+    if length is None or length >= 128:
+        return
+    with engine.connect() as connection:
+        connection.execute(text("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE varchar(128)"))
+        connection.commit()
+    logger.info("Widened alembic_version.version_num to varchar(128).")
+
+
 def run_migrations_online():
     """Run migrations in 'online' mode.
 
@@ -95,6 +123,7 @@ def run_migrations_online():
         conf_args["process_revision_directives"] = process_revision_directives
 
     connectable = get_engine()
+    _ensure_version_column_width(connectable)
 
     with connectable.connect() as connection:
         context.configure(
