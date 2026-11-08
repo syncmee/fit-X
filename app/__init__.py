@@ -220,6 +220,7 @@ def register_cli_commands(app: Flask) -> None:
             apply_default_unit_grams,
             seed_exercises_from_json,
             seed_food_aliases_from_json,
+            seed_food_data_fixes,
             seed_indian_foods_from_csv,
             seed_staple_foods_from_csv,
             seed_starter_foods,
@@ -232,7 +233,8 @@ def register_cli_commands(app: Flask) -> None:
             indian = seed_indian_foods_from_csv()
             aliases = seed_food_aliases_from_json()
             units = apply_default_unit_grams()
-        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {staples} staples + {indian} indian. Alias rows updated: {aliases}. Unit-gram rows updated: {units}.")
+            fixed, dropped = seed_food_data_fixes()
+        print(f"Exercises added: {exercises}. Foods added: {foods} starter + {staples} staples + {indian} indian. Alias rows updated: {aliases}. Unit-gram rows updated: {units}. Data fixes: {fixed} updated, {dropped} dropped.")
 
     @app.cli.command("seed-challenges")
     def seed_challenges_command() -> None:

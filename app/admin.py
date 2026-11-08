@@ -610,6 +610,42 @@ def _food_from_form(food: Food, form) -> list[str]:
     return errors
 
 
+def seed_food_data_fixes() -> tuple[int, int]:
+    """Apply reviewed corrections (app/data/food_data_fixes.json) on top of
+    the seeded catalogue: update rows whose kcal/macros were wrong, delete
+    dropped rows. Idempotent — applying twice is a no-op. Returns
+    (rows updated, rows deleted)."""
+    path = Path(__file__).parent / "data" / "food_data_fixes.json"
+    if not path.exists():
+        return 0, 0
+    fixes = json.loads(path.read_text(encoding="utf-8"))
+    updated = 0
+    for name, fix in fixes.get("updates", {}).items():
+        food = db.session.scalars(
+            select(Food).where(func.lower(Food.name) == name.lower().strip())
+        ).one_or_none()
+        if food is None:
+            continue
+        food.calories = int(fix["calories"])
+        food.protein = float(fix["protein"])
+        food.carbs = float(fix["carbs"])
+        food.fats = float(fix["fats"])
+        updated += 1
+    deleted = 0
+    for name in fixes.get("drops", []):
+        food = db.session.scalars(
+            select(Food).where(func.lower(Food.name) == name.lower().strip())
+        ).one_or_none()
+        if food is not None:
+            db.session.delete(food)
+            deleted += 1
+    if updated or deleted:
+        from .foods import invalidate_food_index
+        invalidate_food_index()
+    db.session.commit()
+    return updated, deleted
+
+
 def seed_staple_foods_from_csv() -> int:
     """Seed the food database from app/data/staple_foods.csv (~127 common
     Indian + Western staples, per-100 g values). Each row carries unit_grams

@@ -1,0 +1,797 @@
+{
+  "updates": {
+    "Clear tomato soup (Tamatar ka soup)": {
+      "calories": 80,
+      "protein": 4.79,
+      "carbs": 3.45,
+      "fats": 5.23,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Lentil soup": {
+      "calories": 44,
+      "protein": 6.0,
+      "carbs": 3.94,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Chicken consomme (Clear chicken soup)": {
+      "calories": 48,
+      "protein": 6.0,
+      "carbs": 1.19,
+      "fats": 2.13,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of tomato soup": {
+      "calories": 98,
+      "protein": 4.61,
+      "carbs": 3.93,
+      "fats": 7.07,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of green peas soup": {
+      "calories": 128,
+      "protein": 7.13,
+      "carbs": 6.75,
+      "fats": 8.04,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of spinach soup": {
+      "calories": 100,
+      "protein": 5.21,
+      "carbs": 3.45,
+      "fats": 7.32,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of mixed vegetable soup": {
+      "calories": 60,
+      "protein": 6.84,
+      "carbs": 4.93,
+      "fats": 1.4,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of mushroom soup": {
+      "calories": 117,
+      "protein": 6.64,
+      "carbs": 3.74,
+      "fats": 8.42,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Chicken sweet corn soup": {
+      "calories": 35,
+      "protein": 6.0,
+      "carbs": 1.63,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Minestrone soup": {
+      "calories": 43,
+      "protein": 6.0,
+      "carbs": 3.71,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Egg drop soup": {
+      "calories": 33,
+      "protein": 6.0,
+      "carbs": 1.1,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "French onion soup": {
+      "calories": 56,
+      "protein": 6.0,
+      "carbs": 4.28,
+      "fats": 1.61,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Talaumein soup": {
+      "calories": 45,
+      "protein": 6.0,
+      "carbs": 4.17,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cold summer garden soup": {
+      "calories": 49,
+      "protein": 6.0,
+      "carbs": 2.65,
+      "fats": 1.62,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Poori": {
+      "calories": 236,
+      "protein": 1.35,
+      "carbs": 8.22,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Spinach poori (Palak poori)": {
+      "calories": 235,
+      "protein": 1.42,
+      "carbs": 7.76,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Methi poori": {
+      "calories": 236,
+      "protein": 1.45,
+      "carbs": 7.98,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Dal stuffed poori": {
+      "calories": 247,
+      "protein": 2.08,
+      "carbs": 10.14,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Potato stuffed poori (Aloo ki poori)": {
+      "calories": 242,
+      "protein": 1.52,
+      "carbs": 9.4,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Bhatura": {
+      "calories": 274,
+      "protein": 1.63,
+      "carbs": 10.73,
+      "fats": 25.0,
+      "reason": "fried-class fat capped at 25 g"
+    },
+    "Paneer kofta curry": {
+      "calories": 167,
+      "protein": 2.39,
+      "carbs": 3.27,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Lotus stem kofta curry (Kamal kakdi kofta curry)": {
+      "calories": 168,
+      "protein": 0.96,
+      "carbs": 5.01,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Raw banana kofta curry (Kela kofta curry)": {
+      "calories": 160,
+      "protein": 0.62,
+      "carbs": 3.4,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Cauliflower kofta curry (Phoolgobhi kofta curry)": {
+      "calories": 159,
+      "protein": 1.04,
+      "carbs": 2.62,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Cabbage kofta curry (Pattagobhi kofta curry)": {
+      "calories": 159,
+      "protein": 0.98,
+      "carbs": 2.87,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Ghiya/Lauki Kofta Curry": {
+      "calories": 158,
+      "protein": 0.89,
+      "carbs": 2.71,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Spinach paneer kofta curry (Palak paneer kofta curry)": {
+      "calories": 162,
+      "protein": 1.43,
+      "carbs": 2.94,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Vegetarian egg kofta curry": {
+      "calories": 166,
+      "protein": 1.33,
+      "carbs": 4.26,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Dum aloo": {
+      "calories": 160,
+      "protein": 0.7,
+      "carbs": 3.33,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Jackfruit sabzi (Kathal ki sabzi)": {
+      "calories": 160,
+      "protein": 0.69,
+      "carbs": 3.4,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "Chilli paneer": {
+      "calories": 778,
+      "protein": 2.1,
+      "carbs": 3.31,
+      "fats": 84.01,
+      "reason": "kcal recomputed from macros"
+    },
+    "Paneer makhana korma": {
+      "calories": 776,
+      "protein": 3.24,
+      "carbs": 4.63,
+      "fats": 82.76,
+      "reason": "kcal recomputed from macros"
+    },
+    "Mutton chops": {
+      "calories": 202,
+      "protein": 4.03,
+      "carbs": 1.48,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Shammi kebab": {
+      "calories": 212,
+      "protein": 4.52,
+      "carbs": 3.54,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Scotch egg": {
+      "calories": 204,
+      "protein": 4.05,
+      "carbs": 1.91,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Chicken kebab": {
+      "calories": 199,
+      "protein": 3.71,
+      "carbs": 1.11,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Fried fish (Indian style) (Tali hui machli)": {
+      "calories": 174,
+      "protein": 4.35,
+      "carbs": 5.4,
+      "fats": 15.0,
+      "reason": "fried-class fat capped at 15 g"
+    },
+    "Fried fish and Chips (English Style) (Tali hui machli aur chips)": {
+      "calories": 160,
+      "protein": 3.36,
+      "carbs": 2.77,
+      "fats": 15.0,
+      "reason": "fried-class fat capped at 15 g"
+    },
+    "Boondi raita": {
+      "calories": 114.6,
+      "protein": 2.19,
+      "carbs": 3.96,
+      "fats": 10.0,
+      "reason": "raita: fat capped at 10 g"
+    },
+    "Dahi vadas/Dahi bhalla": {
+      "calories": 667,
+      "protein": 2.96,
+      "carbs": 5.49,
+      "fats": 70.4,
+      "reason": "kcal recomputed from macros"
+    },
+    "Gunjia": {
+      "calories": 233,
+      "protein": 2.98,
+      "carbs": 5.68,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Ghujia/Lavang latika": {
+      "calories": 257,
+      "protein": 1.86,
+      "carbs": 13.0,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Potato pakora/pakoda (Aloo pakoda)": {
+      "calories": 230,
+      "protein": 1.9,
+      "carbs": 6.04,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Onion pakora/pakoda (Pyaaz ke pakode)": {
+      "calories": 227,
+      "protein": 1.9,
+      "carbs": 5.41,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Cauliflower pakora/pakoda (Phoolgobhi ke pakode)": {
+      "calories": 224,
+      "protein": 1.98,
+      "carbs": 4.52,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Mixed vegetable pakora/pakoda": {
+      "calories": 226,
+      "protein": 1.94,
+      "carbs": 5.12,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Spinach pakora/pakoda (Palak pakoda)": {
+      "calories": 225,
+      "protein": 1.96,
+      "carbs": 4.68,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Methi pakora/pakoda (Methi ke pakode)": {
+      "calories": 225,
+      "protein": 2.06,
+      "carbs": 4.68,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Egg pakora/pakoda (Ande ke pakode)": {
+      "calories": 227,
+      "protein": 2.83,
+      "carbs": 4.48,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Bread pakora/pakoda": {
+      "calories": 244,
+      "protein": 2.57,
+      "carbs": 8.87,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Paneer pakora/pakoda": {
+      "calories": 233,
+      "protein": 3.27,
+      "carbs": 5.52,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Potato bonda (Aloo bonda)": {
+      "calories": 184,
+      "protein": 1.09,
+      "carbs": 4.53,
+      "fats": 18.0,
+      "reason": "fried-class fat capped at 18 g"
+    },
+    "Minced meat samosa (Keema ka samosa)": {
+      "calories": 240,
+      "protein": 4.43,
+      "carbs": 6.14,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Paneer and pea samosa (Paneer matar ka samosa)": {
+      "calories": 248,
+      "protein": 4.02,
+      "carbs": 8.55,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Mathri": {
+      "calories": 254,
+      "protein": 1.75,
+      "carbs": 12.32,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Khasta kachori": {
+      "calories": 259,
+      "protein": 2.51,
+      "carbs": 12.81,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Vegetable cutlet": {
+      "calories": 222,
+      "protein": 1.25,
+      "carbs": 4.68,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Flattened rice cutlet (Chirwa cutlet/Chivda cutlet/Poha cutlet)": {
+      "calories": 235,
+      "protein": 1.76,
+      "carbs": 7.39,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Peanut cutlet (Mungfali ke cutlet)": {
+      "calories": 231,
+      "protein": 2.63,
+      "carbs": 5.68,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Fish cutlet (Machli ka cutlet)": {
+      "calories": 159,
+      "protein": 2.77,
+      "carbs": 3.13,
+      "fats": 15.0,
+      "reason": "fried-class fat capped at 15 g"
+    },
+    "Paneer potato cutlet (Paneer aloo cutlet)": {
+      "calories": 229,
+      "protein": 2.47,
+      "carbs": 5.23,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Spinach chickpeas cutlet (Palak channa dal cutlet)": {
+      "calories": 224,
+      "protein": 1.44,
+      "carbs": 4.93,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Cheese toast": {
+      "calories": 210,
+      "protein": 1.98,
+      "carbs": 5.49,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Vegetable seekh kebab": {
+      "calories": 208,
+      "protein": 1.57,
+      "carbs": 5.32,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Masala vada": {
+      "calories": 221,
+      "protein": 1.69,
+      "carbs": 4.06,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Peanut sago vada (Sabudana mungfali vada)": {
+      "calories": 231,
+      "protein": 1.01,
+      "carbs": 7.14,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Vegeterian scotch egg": {
+      "calories": 207,
+      "protein": 2.16,
+      "carbs": 4.64,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Spring roll": {
+      "calories": 240,
+      "protein": 1.81,
+      "carbs": 8.56,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Cheese balls": {
+      "calories": 208,
+      "protein": 2.21,
+      "carbs": 4.81,
+      "fats": 20.0,
+      "reason": "fried-class fat capped at 20 g"
+    },
+    "Soyabean muthias": {
+      "calories": 223,
+      "protein": 2.46,
+      "carbs": 3.7,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Soyabean tikki": {
+      "calories": 230,
+      "protein": 3.53,
+      "carbs": 4.39,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Soyabean namak paras": {
+      "calories": 227,
+      "protein": 2.65,
+      "carbs": 4.65,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Spinach peanut namak paras (Palak moongfali namak paras)": {
+      "calories": 231,
+      "protein": 1.65,
+      "carbs": 6.62,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Gram flour and semolina chilla/cheela/savory pancake (Besan suji chilla/cheela)": {
+      "calories": 237,
+      "protein": 2.08,
+      "carbs": 7.63,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Rice moong dal cheela (Chawal aur moong dal ka cheela)": {
+      "calories": 254,
+      "protein": 2.74,
+      "carbs": 11.13,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Sweet poori (Meethi poori)": {
+      "calories": 264,
+      "protein": 2.12,
+      "carbs": 14.26,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Semolina carrot vada (Suji gajar vada)": {
+      "calories": 230,
+      "protein": 1.56,
+      "carbs": 6.52,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Meat consomme (with mutton)": {
+      "calories": 30,
+      "protein": 6.0,
+      "carbs": 0.51,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Consomme au julienne": {
+      "calories": 34,
+      "protein": 6.0,
+      "carbs": 1.49,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Consomme au vermicelli": {
+      "calories": 34,
+      "protein": 6.0,
+      "carbs": 1.3,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Green pea soup (Matar ka soup)": {
+      "calories": 43,
+      "protein": 6.0,
+      "carbs": 3.63,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Spinach soup (Palak ka soup)": {
+      "calories": 41,
+      "protein": 6.0,
+      "carbs": 3.03,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Mixed vegetable soup": {
+      "calories": 40,
+      "protein": 6.0,
+      "carbs": 2.95,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cheese soup": {
+      "calories": 41,
+      "protein": 6.0,
+      "carbs": 1.87,
+      "fats": 1.07,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Mulligatawny soup": {
+      "calories": 62,
+      "protein": 6.0,
+      "carbs": 8.24,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of carrot soup": {
+      "calories": 60,
+      "protein": 8.0,
+      "carbs": 5.69,
+      "fats": 0.56,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of broccoli soup": {
+      "calories": 56,
+      "protein": 8.0,
+      "carbs": 3.72,
+      "fats": 1.03,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Cream of potato soup": {
+      "calories": 61,
+      "protein": 8.0,
+      "carbs": 6.14,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Almond soup (Badam ka soup)": {
+      "calories": 79,
+      "protein": 6.0,
+      "carbs": 3.68,
+      "fats": 4.44,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Gram flour poori (Besan poori)": {
+      "calories": 252,
+      "protein": 2.59,
+      "carbs": 10.93,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Minced meat pancake (with chicken)": {
+      "calories": 175,
+      "protein": 12.01,
+      "carbs": 8.18,
+      "fats": 10.48,
+      "reason": "kcal recomputed from macros"
+    },
+    "Spaghetti bolognese": {
+      "calories": 163,
+      "protein": 9.35,
+      "carbs": 10.04,
+      "fats": 9.51,
+      "reason": "kcal recomputed from macros"
+    },
+    "Crispy okra/Crispy lady's fingers (Karare bhindi)": {
+      "calories": 169,
+      "protein": 1.91,
+      "carbs": 4.35,
+      "fats": 16.0,
+      "reason": "fried-class fat capped at 16 g"
+    },
+    "French dressing": {
+      "calories": 88,
+      "protein": 0.32,
+      "carbs": 3.68,
+      "fats": 8.0,
+      "reason": "sauce: protein/fat capped, kcal trusted"
+    },
+    "Masala green chilli pakora/pakoda (Hari mirch kay pakode)": {
+      "calories": 229,
+      "protein": 2.22,
+      "carbs": 5.55,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Paneer cutlet": {
+      "calories": 247,
+      "protein": 4.59,
+      "carbs": 7.62,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Plain urad dal vada (Uzunne vada/Minapa garelu/Ulundu vadai/Medu vada)": {
+      "calories": 254,
+      "protein": 4.39,
+      "carbs": 9.7,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Masala urad dal vada": {
+      "calories": 255,
+      "protein": 4.32,
+      "carbs": 9.93,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Pearl millet mathri (Bajra mathri)": {
+      "calories": 235,
+      "protein": 1.82,
+      "carbs": 7.42,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Fermented bengal gram vada (Khameerikrit/Ufna hua channa dal ka vada)": {
+      "calories": 249,
+      "protein": 4.05,
+      "carbs": 8.68,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Poshtik namak paras": {
+      "calories": 302,
+      "protein": 6.49,
+      "carbs": 19.52,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Small onion pickle": {
+      "calories": 23,
+      "protein": 1.65,
+      "carbs": 2.76,
+      "fats": 0.64,
+      "reason": "kcal recomputed from macros"
+    },
+    "Banana chips (Kele ke chips)": {
+      "calories": 301,
+      "protein": 0.37,
+      "carbs": 7.32,
+      "fats": 30.0,
+      "reason": "fried-class fat capped at 30 g"
+    },
+    "Curried Cauliflower soup": {
+      "calories": 41,
+      "protein": 6.0,
+      "carbs": 3.12,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Millet soup": {
+      "calories": 61,
+      "protein": 6.0,
+      "carbs": 8.22,
+      "fats": 0.5,
+      "reason": "soup: fat recalculated from kcal, protein capped"
+    },
+    "Sev (Omapodi/Karapusa)": {
+      "calories": 270,
+      "protein": 5.12,
+      "carbs": 12.87,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Papdi": {
+      "calories": 257,
+      "protein": 1.83,
+      "carbs": 12.89,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Classic seasoned black beans": {
+      "calories": 137,
+      "protein": 8.01,
+      "carbs": 7.66,
+      "fats": 8.28,
+      "reason": "kcal recomputed from macros"
+    },
+    "Brown sauce": {
+      "calories": 109,
+      "protein": 6.0,
+      "carbs": 5.38,
+      "fats": 7.07,
+      "reason": "sauce: protein/fat capped, kcal trusted"
+    },
+    "Mayonnaise": {
+      "calories": 698,
+      "protein": 1.86,
+      "carbs": 1.65,
+      "fats": 76.0,
+      "reason": "fried-class fat capped at 76 g"
+    },
+    "Tartare sauce": {
+      "calories": 90,
+      "protein": 1.44,
+      "carbs": 2.96,
+      "fats": 8.0,
+      "reason": "sauce: protein/fat capped, kcal trusted"
+    },
+    "Cumin seeds baghar (Jeera baghar/tadka)": {
+      "calories": 232,
+      "protein": 3.34,
+      "carbs": 5.22,
+      "fats": 22.0,
+      "reason": "fried-class fat capped at 22 g"
+    },
+    "Hot tea (Garam Chai)": {
+      "calories": 55,
+      "protein": 1.5,
+      "carbs": 7.0,
+      "fats": 1.8,
+      "reason": "was plain-tea values; entry means milk tea"
+    }
+  },
+  "drops": [],
+  "kept": []
+}
