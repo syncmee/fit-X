@@ -249,9 +249,15 @@ class Food(db.Model):
     aliases = db.Column(db.Text, nullable=False, default="[]")
     serving = db.Column(db.String(60), nullable=False, default="100 g")
     calories = db.Column(db.Integer, nullable=False, default=0)
-    protein = db.Column(db.Integer, nullable=False, default=0)
-    carbs = db.Column(db.Integer, nullable=False, default=0)
-    fats = db.Column(db.Integer, nullable=False, default=0)
+    # Per-100 g (or per-serving) macros as floats — integer rounding erased
+    # real values like 0.4 g protein that portion scaling then multiplies.
+    protein = db.Column(db.Float, nullable=False, default=0)
+    carbs = db.Column(db.Float, nullable=False, default=0)
+    fats = db.Column(db.Float, nullable=False, default=0)
+    # JSON object mapping unit words to gram weights, e.g.
+    # {"roti": 40, "katori": 150, "egg": 50} — lets the matcher convert
+    # "2 rotis" without parsing the serving string.
+    unit_grams = db.Column(db.Text, nullable=False, default="{}")
 
     def __repr__(self) -> str:
         return f"<Food {self.name} {self.calories}kcal>"

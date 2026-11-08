@@ -427,7 +427,8 @@ INDIAN_FOOD_CSV = Path(__file__).parent / "data" / "indian_food_nutrition_proces
 def seed_indian_foods_from_csv() -> int:
     """Seed the food database from the Indian food nutrition dataset
     (app/data/indian_food_nutrition_processed.csv — ~1,014 dishes, per-100 g
-    values). Skips names already present; returns rows added."""
+    values). Skips names already present; returns rows added. Macros are
+    stored as floats (rounding to int erased values like 0.4 g protein)."""
     if not INDIAN_FOOD_CSV.exists():
         return 0
     existing = {n.lower() for n in db.session.scalars(select(Food.name)).all()}
@@ -439,9 +440,9 @@ def seed_indian_foods_from_csv() -> int:
                 continue
             try:
                 kcal = int(round(float(row.get("Calories (kcal)") or 0)))
-                protein = int(round(float(row.get("Protein (g)") or 0)))
-                carbs = int(round(float(row.get("Carbohydrates (g)") or 0)))
-                fats = int(round(float(row.get("Fats (g)") or 0)))
+                protein = round(float(row.get("Protein (g)") or 0), 2)
+                carbs = round(float(row.get("Carbohydrates (g)") or 0), 2)
+                fats = round(float(row.get("Fats (g)") or 0), 2)
             except (TypeError, ValueError):
                 continue
             db.session.add(Food(name=name, serving="100 g", calories=kcal,
@@ -468,6 +469,14 @@ def _content_page(stmt, model) -> tuple:
 def _clamp_nonnegative_int(raw: str) -> int | None:
     try:
         value = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return value if value >= 0 else None
+
+
+def _clamp_nonnegative_float(raw: str) -> float | None:
+    try:
+        value = float(raw)
     except (TypeError, ValueError):
         return None
     return value if value >= 0 else None
@@ -506,7 +515,8 @@ def _food_from_form(food: Food, form) -> list[str]:
     food.serving = (form.get("serving") or "").strip() or "100 g"
     for field, target in (("calories", "calories"), ("protein", "protein"),
                           ("carbs", "carbs"), ("fats", "fats")):
-        value = _clamp_nonnegative_int(form.get(field, ""))
+        clamp = _clamp_nonnegative_int if target == "calories" else _clamp_nonnegative_float
+        value = clamp(form.get(field, ""))
         if value is None:
             errors.append(f"{field.capitalize()} must be a non-negative number.")
             value = 0
