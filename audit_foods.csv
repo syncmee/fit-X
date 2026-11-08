@@ -1,0 +1,113 @@
+Dish Name,Calories (kcal),Protein (g),Carbohydrates (g),Fats (g),computed_4P4C9F,reasons
+Clear tomato soup (Tamatar ka soup),80.07,4.79,3.45,12.22,142.9,macro_drift=79% (4P+4C+9F=143 vs kcal=80)
+Lentil soup,31.17,9.65,3.94,11.68,159.5,macro_drift=412% (4P+4C+9F=159 vs kcal=31)
+Chicken consomme (Clear chicken soup),47.94,11.47,1.19,12.02,158.8,macro_drift=231% (4P+4C+9F=159 vs kcal=48)
+Cream of tomato soup,97.81,4.61,3.93,13.12,152.2,macro_drift=56% (4P+4C+9F=152 vs kcal=98)
+Cream of green peas soup,127.84,7.13,6.75,14.78,188.5,macro_drift=47% (4P+4C+9F=189 vs kcal=128)
+Cream of spinach soup,100.54,5.21,3.45,13.31,154.4,macro_drift=54% (4P+4C+9F=154 vs kcal=101)
+Cream of mixed vegetable soup,59.65,6.84,4.93,9.05,128.5,macro_drift=115% (4P+4C+9F=129 vs kcal=60)
+Cream of mushroom soup,117.28,6.64,3.74,15.5,181.0,macro_drift=54% (4P+4C+9F=181 vs kcal=117)
+Chicken sweet corn soup,28.32,14.48,1.63,12.59,177.8,macro_drift=528% (4P+4C+9F=178 vs kcal=28)
+Minestrone soup,42.66,9.3,3.71,11.09,151.9,macro_drift=256% (4P+4C+9F=152 vs kcal=43)
+Egg drop soup,26.64,12.93,1.1,13.52,177.8,macro_drift=567% (4P+4C+9F=178 vs kcal=27)
+French onion soup,55.61,11.41,4.28,14.39,192.3,macro_drift=246% (4P+4C+9F=192 vs kcal=56)
+Talaumein soup,35.63,10.12,4.17,12.78,172.2,macro_drift=383% (4P+4C+9F=172 vs kcal=36)
+Cold summer garden soup,49.19,8.57,2.65,14.08,171.6,macro_drift=249% (4P+4C+9F=172 vs kcal=49)
+Poori,737.63,1.35,8.22,77.61,736.8,kcal_density=738/100g > 600
+Spinach poori (Palak poori),684.25,1.42,7.76,71.86,683.5,kcal_density=684/100g > 600
+Methi poori,710.02,1.45,7.98,74.6,709.1,kcal_density=710/100g > 600
+Dal stuffed poori,785.16,2.08,10.14,81.69,784.1,kcal_density=785/100g > 600
+Potato stuffed poori (Aloo ki poori),776.74,1.52,9.4,81.35,775.8,kcal_density=777/100g > 600
+Bhatura,793.2,1.63,10.73,82.56,792.5,kcal_density=793/100g > 600
+Paneer kofta curry,670.91,2.39,3.27,72.06,671.2,kcal_density=671/100g > 600
+Lotus stem kofta curry (Kamal kakdi kofta curry),633.56,0.96,5.01,67.76,633.7,kcal_density=634/100g > 600
+Raw banana kofta curry (Kela kofta curry),627.27,0.62,3.4,67.98,627.9,kcal_density=627/100g > 600
+Cauliflower kofta curry (Phoolgobhi kofta curry),641.1,1.04,2.62,69.62,641.2,kcal_density=641/100g > 600
+Cabbage kofta curry (Pattagobhi kofta curry),639.81,0.98,2.87,69.4,640.0,kcal_density=640/100g > 600
+Ghiya/Lauki Kofta Curry,638.71,0.89,2.71,69.4,639.0,kcal_density=639/100g > 600
+Spinach paneer kofta curry (Palak paneer kofta curry),606.03,1.43,2.94,65.41,606.2,kcal_density=606/100g > 600
+Vegetarian egg kofta curry,627.41,1.33,4.26,67.24,627.5,kcal_density=627/100g > 600
+Dum aloo,682.33,0.7,3.33,74.01,682.2,kcal_density=682/100g > 600
+Jackfruit sabzi (Kathal ki sabzi),625.4,0.69,3.4,67.6,624.8,kcal_density=625/100g > 600
+Chilli paneer,777.51,2.1,3.31,84.01,777.7,kcal_density=778/100g > 600
+Paneer makhana korma,775.82,3.24,4.63,82.76,776.3,kcal_density=776/100g > 600
+Mutton chops,663.64,4.03,1.48,71.31,663.8,kcal_density=664/100g > 600
+Shammi kebab,685.69,4.52,3.54,72.61,685.7,kcal_density=686/100g > 600
+Scotch egg,676.89,4.05,1.91,72.62,677.4,kcal_density=677/100g > 600
+Chicken kebab,729.41,3.71,1.11,78.89,729.3,kcal_density=729/100g > 600
+Fried fish (Indian style) (Tali hui machli),658.54,4.35,5.4,68.88,658.9,kcal_density=659/100g > 600
+Fried fish and Chips (English Style) (Tali hui machli aur chips),651.75,3.36,2.77,69.69,651.7,kcal_density=652/100g > 600
+Boondi raita,687.72,2.19,3.96,73.83,689.1,kcal_density=688/100g > 600
+Dahi vadas/Dahi bhalla,667.73,2.96,5.49,70.4,667.4,kcal_density=668/100g > 600
+Gunjia,667.34,2.98,5.68,70.28,667.2,kcal_density=667/100g > 600
+Ghujia/Lavang latika,768.98,1.86,13.0,78.93,769.8,kcal_density=769/100g > 600
+Potato pakora/pakoda (Aloo pakoda),677.19,1.9,6.04,71.84,678.3,kcal_density=677/100g > 600
+Onion pakora/pakoda (Pyaaz ke pakode),674.61,1.9,5.41,71.84,675.8,kcal_density=675/100g > 600
+Cauliflower pakora/pakoda (Phoolgobhi ke pakode),671.63,1.98,4.52,71.86,672.7,kcal_density=672/100g > 600
+Mixed vegetable pakora/pakoda,673.81,1.94,5.12,71.86,675.0,kcal_density=674/100g > 600
+Spinach pakora/pakoda (Palak pakoda),712.62,1.96,4.68,76.38,714.0,kcal_density=713/100g > 600
+Methi pakora/pakoda (Methi ke pakode),713.25,2.06,4.68,76.39,714.5,kcal_density=713/100g > 600
+Egg pakora/pakoda (Ande ke pakode),710.51,2.83,4.48,75.86,712.0,kcal_density=711/100g > 600
+Bread pakora/pakoda,710.99,2.57,8.87,74.2,713.6,kcal_density=711/100g > 600
+Paneer pakora/pakoda,718.12,3.27,5.52,76.05,719.6,kcal_density=718/100g > 600
+Potato bonda (Aloo bonda),632.84,1.09,4.53,67.8,632.7,kcal_density=633/100g > 600
+Minced meat samosa (Keema ka samosa),620.99,4.43,6.14,64.26,620.6,kcal_density=621/100g > 600
+Paneer and pea samosa (Paneer matar ka samosa),623.81,4.02,8.55,63.65,623.1,kcal_density=624/100g > 600
+Mathri,805.12,1.75,12.32,83.1,804.2,kcal_density=805/100g > 600
+Khasta kachori,712.73,2.51,12.81,72.27,711.7,kcal_density=713/100g > 600
+Vegetable cutlet,665.45,1.25,4.68,71.33,665.7,kcal_density=665/100g > 600
+Flattened rice cutlet (Chirwa cutlet/Chivda cutlet/Poha cutlet),701.71,1.76,7.39,73.89,701.6,kcal_density=702/100g > 600
+Peanut cutlet (Mungfali ke cutlet),698.77,2.63,5.68,74.0,699.2,kcal_density=699/100g > 600
+Fish cutlet (Machli ka cutlet),654.64,2.77,3.13,70.11,654.6,kcal_density=655/100g > 600
+Paneer potato cutlet (Paneer aloo cutlet),672.94,2.47,5.23,71.4,673.4,kcal_density=673/100g > 600
+Spinach chickpeas cutlet (Palak channa dal cutlet),688.03,1.44,4.93,73.6,687.9,kcal_density=688/100g > 600
+Cheese toast,785.37,1.98,5.49,84.11,786.9,kcal_density=785/100g > 600
+Vegetable seekh kebab,690.73,1.57,5.32,73.72,691.0,kcal_density=691/100g > 600
+Masala vada,826.02,1.69,4.06,89.15,825.4,kcal_density=826/100g > 600
+Peanut sago vada (Sabudana mungfali vada),749.89,1.01,7.14,79.82,751.0,kcal_density=750/100g > 600
+Vegeterian scotch egg,681.67,2.16,4.64,72.77,682.1,kcal_density=682/100g > 600
+Spring roll,623.87,1.81,8.56,64.63,623.1,kcal_density=624/100g > 600
+Cheese balls,681.28,2.21,4.81,72.57,681.2,kcal_density=681/100g > 600
+Soyabean muthias,839.33,2.46,3.7,90.45,838.7,kcal_density=839/100g > 600
+Soyabean tikki,698.17,3.53,4.39,74.02,697.9,kcal_density=698/100g > 600
+Soyabean namak paras,838.46,2.65,4.65,89.83,837.7,kcal_density=838/100g > 600
+Spinach peanut namak paras (Palak moongfali namak paras),740.16,1.65,6.62,78.51,739.7,kcal_density=740/100g > 600
+Gram flour and semolina chilla/cheela/savory pancake (Besan suji chilla/cheela),758.89,2.08,7.63,80.04,759.2,kcal_density=759/100g > 600
+Rice moong dal cheela (Chawal aur moong dal ka cheela),798.26,2.74,11.13,82.44,797.4,kcal_density=798/100g > 600
+Sweet poori (Meethi poori),782.75,2.12,14.26,79.63,782.2,kcal_density=783/100g > 600
+Semolina carrot vada (Suji gajar vada),699.53,1.56,6.52,74.07,698.9,kcal_density=700/100g > 600
+Meat consomme (with mutton),29.76,14.86,0.51,13.68,184.6,macro_drift=520% (4P+4C+9F=185 vs kcal=30)
+Consomme au julienne,27.76,12.49,1.49,10.66,151.9,macro_drift=447% (4P+4C+9F=152 vs kcal=28)
+Consomme au vermicelli,29.94,15.23,1.3,12.98,182.9,macro_drift=511% (4P+4C+9F=183 vs kcal=30)
+Green pea soup (Matar ka soup),39.81,11.06,3.63,12.9,174.9,macro_drift=339% (4P+4C+9F=175 vs kcal=40)
+Spinach soup (Palak ka soup),32.59,10.54,3.03,14.26,182.6,macro_drift=460% (4P+4C+9F=183 vs kcal=33)
+Mixed vegetable soup,35.71,8.22,2.95,11.66,149.6,macro_drift=319% (4P+4C+9F=150 vs kcal=36)
+Cheese soup,41.13,12.39,1.87,17.07,210.7,macro_drift=412% (4P+4C+9F=211 vs kcal=41)
+Mulligatawny soup,54.42,11.26,8.24,13.28,197.5,macro_drift=263% (4P+4C+9F=198 vs kcal=54)
+Cream of carrot soup,59.77,8.27,5.69,12.35,167.0,macro_drift=179% (4P+4C+9F=167 vs kcal=60)
+Cream of broccoli soup,56.14,8.97,3.72,12.75,165.5,macro_drift=195% (4P+4C+9F=166 vs kcal=56)
+Cream of potato soup,60.2,8.1,6.14,12.05,165.4,macro_drift=175% (4P+4C+9F=165 vs kcal=60)
+Almond soup (Badam ka soup),78.65,10.13,3.68,13.8,179.4,macro_drift=128% (4P+4C+9F=179 vs kcal=79)
+Gram flour poori (Besan poori),697.66,2.59,10.93,71.51,697.7,kcal_density=698/100g > 600
+Minced meat pancake (with chicken),116.04,12.01,8.18,10.48,175.1,macro_drift=51% (4P+4C+9F=175 vs kcal=116)
+Spaghetti bolognese,97.43,9.35,10.04,9.51,163.2,macro_drift=67% (4P+4C+9F=163 vs kcal=97)
+Crispy okra/Crispy lady's fingers (Karare bhindi),657.76,1.91,4.35,70.4,658.6,kcal_density=658/100g > 600
+French dressing,733.77,0.32,3.68,79.65,732.9,kcal_density=734/100g > 600
+Masala green chilli pakora/pakoda (Hari mirch kay pakode),668.76,2.22,5.55,71.01,670.2,kcal_density=669/100g > 600
+Paneer cutlet,672.2,4.59,7.62,69.38,673.3,kcal_density=672/100g > 600
+Plain urad dal vada (Uzunne vada/Minapa garelu/Ulundu vadai/Medu vada),745.5,4.39,9.7,76.32,743.2,kcal_density=746/100g > 600
+Masala urad dal vada,703.78,4.32,9.93,71.62,701.6,kcal_density=704/100g > 600
+Pearl millet mathri (Bajra mathri),785.08,1.82,7.42,83.12,785.0,kcal_density=785/100g > 600
+Fermented bengal gram vada (Khameerikrit/Ufna hua channa dal ka vada),657.57,4.05,8.68,67.19,655.6,kcal_density=658/100g > 600
+Poshtik namak paras,613.39,6.49,19.52,56.58,613.3,kcal_density=613/100g > 600
+Small onion pickle,16.86,1.65,2.76,0.64,23.4,macro_drift=39% (4P+4C+9F=23 vs kcal=17)
+Banana chips (Kele ke chips),665.67,0.37,7.32,70.46,664.9,kcal_density=666/100g > 600
+Curried Cauliflower soup,37.32,6.72,3.12,9.77,127.3,macro_drift=241% (4P+4C+9F=127 vs kcal=37)
+Millet soup,55.99,11.26,8.22,12.57,191.1,macro_drift=241% (4P+4C+9F=191 vs kcal=56)
+Sev (Omapodi/Karapusa),609.14,5.12,12.87,60.08,612.7,kcal_density=609/100g > 600
+Papdi,708.96,1.83,12.89,72.11,707.9,kcal_density=709/100g > 600
+Classic seasoned black beans,28.78,8.01,7.66,8.28,137.2,macro_drift=377% (4P+4C+9F=137 vs kcal=29)
+Brown sauce,109.18,11.92,5.38,23.67,282.2,macro_drift=158% (4P+4C+9F=282 vs kcal=109)
+Mayonnaise,774.86,1.86,1.65,84.52,774.7,kcal_density=775/100g > 600
+Tartare sauce,610.93,1.44,2.96,66.12,612.7,kcal_density=611/100g > 600
+Cumin seeds baghar (Jeera baghar/tadka),736.81,3.34,5.22,78.77,743.2,kcal_density=737/100g > 600
