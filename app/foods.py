@@ -38,6 +38,9 @@ _STOPWORDS = {
     "kcal", "calories", "grams", "gram", "two", "three", "four", "five",
     "one", "half", "small", "large", "medium", "big", "little", "piece",
     "pieces", "scoop", "scoops", "tbsp", "tsp", "bottle", "can",
+    # unit words/letters from quantities ("100 g paneer", "1 katori dal")
+    "g", "kg", "kgs", "ml", "l", "katori", "katoris", "glass", "glasses",
+    "litre", "litres", "liter", "liters", "tablespoon", "teaspoon",
 }
 
 
@@ -67,7 +70,7 @@ def _content_tokens(text: str) -> list[str]:
     return [
         _singular(t)
         for t in _raw_tokens(text)
-        if t not in _STOPWORDS and not t.isdigit()
+        if t not in _STOPWORDS and t not in _EXTRA_FILLER and not t.isdigit()
     ]
 
 
@@ -242,13 +245,38 @@ def _corrections_for(tokens: list[str], index: dict, seen: dict) -> dict[str, st
         seen[token] = None
         if len(token) < _FUZZY_MIN_TOKEN_LEN:
             continue
-        match = process.extractOne(token, catalogue, scorer=fuzz.ratio,
-                                   score_cutoff=80)
-        if match:
-            corrected = match[0]
+        matches = process.extract(token, catalogue, scorer=fuzz.ratio,
+                                  score_cutoff=80, limit=5)
+        if matches:
+            # Longest candidate wins: canonical words ("omelette") beat
+            # slash-abbreviation fragments ("omlet").
+            corrected = max(matches, key=lambda m: len(m[0]))[0]
             out[token] = corrected
             seen[token] = corrected
     return out
+
+
+def _coverage_weight(base: float, span_len: int, total_tokens: int) -> float:
+    """Demote matches that only cover part of the message's content tokens.
+
+    A bare "chicken" (comma-head of Chicken Breast) must not outrank
+    "chicken soup" dishes when the user said "chicken soup": a partial
+    exact hit loses its 1000+ bonus and scales down with coverage squared.
+    """
+    if span_len >= total_tokens:
+        return base
+    coverage = span_len / total_tokens
+    if base >= 1000.0:
+        # Partial exact: keep the rarity signal, drop the certainty bonus.
+        return (base - 1000.0) * 3.0 * coverage
+    return base * coverage
+
+
+def _exact_score(span_len: int, total_tokens: int, idf_sum: float) -> float:
+    """Full-coverage exact phrase: certain hit. Partial: rarity x coverage^2."""
+    if span_len >= total_tokens:
+        return 1000.0 + idf_sum
+    return idf_sum * 3.0 * (span_len / total_tokens)
 
 
 def _window_scores(message: str, index: dict) -> list[tuple[float, int, str]]:
@@ -291,7 +319,7 @@ def _window_scores(message: str, index: dict) -> list[tuple[float, int, str]]:
             if hit is not None and hit not in seen_exact:
                 seen_exact.add(hit)
                 exact_spans.append((start, end))
-                results.append((1000.0 + sum(idf.get(t, 1.0) for t in phrases[hit][1]), hit, span))
+                results.append((_exact_score(len(window), n, sum(idf.get(t, 1.0) for t in phrases[hit][1])), hit, span))
             # Union, not intersection: a typo'd token has no postings, so the
             # fuzzy match must be allowed through by the remaining tokens.
             # Longer windows only serve the exact-phrase lookup above —
@@ -313,6 +341,7 @@ def _window_scores(message: str, index: dict) -> list[tuple[float, int, str]]:
                     continue
                 _phrase_text, etokens = phrases[phrase_idx]
                 score = _score_window(window, etokens, idf, avg_len, allow_fuzzy, corrections)
+                score = _coverage_weight(score, len(window), n)
                 if score >= _MATCH_THRESHOLD:
                     results.append((score, phrase_idx, span))
     results.sort(key=lambda item: -item[0])

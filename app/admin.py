@@ -619,6 +619,12 @@ def _content_routes(resource: str, model):
             stmt = stmt.where(model.id != exclude_id)
         return bool(db.session.scalar(stmt))
 
+    def _invalidate_if_food() -> None:
+        # Food edits change the catalogue; the matcher index must rebuild.
+        if model is Food:
+            from .foods import invalidate_food_index
+            invalidate_food_index()
+
     @admin_bp.route(f"/{resource}", endpoint=resource)
     @admin_required
     def _list():
@@ -644,6 +650,7 @@ def _content_routes(resource: str, model):
                 db.session.flush()  # id for the audit target
                 log_admin_action(current_user, f"{resource}.create", f"{resource}:{item.id} {item.name}")
                 db.session.commit()
+                _invalidate_if_food()
                 flash(f"{label} created: {item.name}.", "success")
                 return redirect(url_for(list_endpoint))
         return render_template(f"admin/{resource}_form.html", item=item)
@@ -666,6 +673,7 @@ def _content_routes(resource: str, model):
             else:
                 log_admin_action(current_user, f"{resource}.edit", f"{resource}:{item.id} {item.name}")
                 db.session.commit()
+                _invalidate_if_food()
                 flash(f"{label} saved: {item.name}.", "success")
                 return redirect(url_for(list_endpoint))
         return render_template(f"admin/{resource}_form.html", item=item)
@@ -680,6 +688,7 @@ def _content_routes(resource: str, model):
         log_admin_action(current_user, f"{resource}.delete", f"{resource}:{item.id} {item.name}")
         db.session.delete(item)
         db.session.commit()
+        _invalidate_if_food()
         flash(f"{label} deleted: {item.name}.", "success")
         return redirect(url_for(list_endpoint))
 
