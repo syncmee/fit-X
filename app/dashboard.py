@@ -29,7 +29,7 @@ from secrets import compare_digest
 from statistics import NormalDist
 from time import monotonic, sleep
 
-from flask import Blueprint, current_app, flash, has_request_context, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, has_request_context, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
@@ -953,16 +953,27 @@ def _claim_idempotency_key(user: User, form_key: str | None) -> str:
         return "duplicate"
 
 
-def _idempotency_redirect(status: str, anchor: str, duplicate_message: str):
-    """Turn an idempotency status into a redirect response, or None to proceed."""
+def _wants_json() -> bool:
+    """True when the caller expects a JSON answer (the coach chat's fetch
+    flow) instead of the classic flash + redirect round trip."""
+    return request.headers.get("X-Requested-With") == "fetch"
+
+
+def _idempotency_redirect(status: str, anchor: str, duplicate_message: str, wants_json: bool = False):
+    """Turn an idempotency status into a redirect response (JSON 409 for the
+    fetch flow), or None to proceed."""
     if status == "claimed":
         return None
     if status == "missing":
         # An old open tab submitted a form rendered before the hidden key
         # existed. That is not a duplicate log — say so instead of "already
         # processed", and make the user reload so the new form ships the key.
+        if wants_json:
+            return jsonify(ok=False, error="This page was open in an old tab. Please refresh the page and try again."), 409
         flash("This page was open in an old tab. Please refresh the page and try again.", "warning")
     else:
+        if wants_json:
+            return jsonify(ok=False, error=duplicate_message), 409
         flash(duplicate_message, "warning")
     return redirect(url_for("dashboard.dashboard", _anchor=anchor))
 
@@ -971,22 +982,30 @@ def _idempotency_redirect(status: str, anchor: str, duplicate_message: str):
 @login_required
 @limiter.limit("10 per minute; 100 per day", key_func=lambda: str(current_user.id)) if limiter is not None else (lambda view: view)
 def coach_message():
+    wants_json = _wants_json()
     raw_message = request.form.get("message", "")
     resp = _idempotency_redirect(
         _claim_idempotency_key(current_user, request.form.get("idempotency_key")),
-        "coach", "That request was already processed; nothing was added twice.")
+        "coach", "That request was already processed; nothing was added twice.",
+        wants_json=wants_json)
     if resp:
         return resp
     try:
-        process_coach_message(current_user, raw_message)
+        outcome = process_coach_message(current_user, raw_message)
         db.session.commit()
     except ValueError as exc:
         db.session.rollback()
+        if wants_json:
+            return jsonify(ok=False, error=str(exc)), 400
         flash(str(exc), "error")
     except Exception:
         db.session.rollback()
+        if wants_json:
+            return jsonify(ok=False, error="The coach could not process that request. Please try again."), 500
         flash("The coach could not process that request. Please try again.", "error")
 
+    if wants_json:
+        return jsonify(ok=True, reply=outcome.reply, action=outcome.action)
     return redirect(url_for("dashboard.dashboard", _anchor="coach"))
 
 

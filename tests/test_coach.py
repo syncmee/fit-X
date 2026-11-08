@@ -4,7 +4,7 @@ import re
 import unittest
 from datetime import datetime
 
-from tests.base import AppContextTestCase, make_user
+from tests.base import AppContextTestCase, login, make_user
 
 from app.extensions import db
 from app.models import CoachMessage, MealEntry, ScheduledWorkout, User, UserChallenge, WaterLog, WeightLog
@@ -124,6 +124,62 @@ class CoachTestCase(AppContextTestCase):
         self.assertEqual(db.session.scalar(select(MealEntry.calories)), 430)
         self.assertEqual(db.session.scalar(select(WaterLog.amount_ml)), 500)
         self.assertEqual(db.session.scalar(select(ScheduledWorkout.status)), "completed")
+
+
+class CoachRouteJsonTestCase(AppContextTestCase):
+    """POST /coach/message speaks JSON to the chat's fetch flow and keeps the
+    classic flash + redirect for plain form posts."""
+
+    def setUp(self):
+        super().setUp()
+        make_user(self.app, name="joe", email="joe@test.dev")
+        self.client = self.app.test_client()
+        login(self.client, self.app, "joe@test.dev")
+        # Deterministic dispatch: no AI keys, catalogue seeded so the
+        # "log N eggs" fast path answers.
+        self.app.config["GEMINI_API_KEY"] = None
+        self.app.config["GROQ_API_KEY"] = None
+        from app.admin import seed_starter_foods
+        seed_starter_foods()
+
+    def _csrf(self):
+        html = self.client.get("/dashboard").get_data(as_text=True)
+        return re.search(r'name="csrf_token"[^>]*value="([^"]+)"', html).group(1)
+
+    def _post(self, message, key=None, json_header=True):
+        data = {"message": message, "csrf_token": self._csrf()}
+        if key:
+            data["idempotency_key"] = key
+        headers = {"X-Requested-With": "fetch"} if json_header else {}
+        return self.client.post("/coach/message", data=data, headers=headers)
+
+    def test_fetch_valid_message_returns_json_outcome(self):
+        resp = self._post("log 3 eggs", key="json-valid")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.get_json()
+        self.assertTrue(body["ok"])
+        self.assertTrue(body["reply"])
+        self.assertEqual(body["action"], "meal_logged")
+
+    def test_without_header_still_redirects(self):
+        resp = self._post("log 3 eggs", key="form-post", json_header=False)
+        self.assertEqual(resp.status_code, 302)
+
+    def test_fetch_empty_message_returns_400_json(self):
+        resp = self._post("", key="json-empty")
+        self.assertEqual(resp.status_code, 400)
+        body = resp.get_json()
+        self.assertFalse(body["ok"])
+        self.assertTrue(body["error"])
+
+    def test_fetch_duplicate_idempotency_returns_409_json(self):
+        first = self._post("log 1 egg", key="dup-key")
+        self.assertEqual(first.status_code, 200)
+        dup = self._post("log 1 egg", key="dup-key")
+        self.assertEqual(dup.status_code, 409)
+        body = dup.get_json()
+        self.assertFalse(body["ok"])
+        self.assertIn("already processed", body["error"])
 
 
 if __name__ == "__main__":
