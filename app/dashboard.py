@@ -142,6 +142,36 @@ def _record_provider_success(name: str) -> None:
     _AI_CIRCUIT_FAILURES.pop(name, None)
 
 
+def _log_fast_meal(user: User, fast_meal: dict, message_text: str, now: datetime) -> CoachOutcome:
+    """Persist a fast-path meal the matcher computed in code. Mirrors the
+    rules path: user + assistant chat rows, challenge sync, same reply shape."""
+    local_now = to_user_clock(user, now)
+    meal_type = _default_meal_type(local_now)
+    db.session.add(CoachMessage(role="user", content=message_text, user=user, created_at=local_now))
+    db.session.add(
+        MealEntry(
+            name=fast_meal["name"],
+            meal_type=meal_type,
+            calories=fast_meal["calories"],
+            protein=fast_meal["protein"],
+            carbs=fast_meal["carbs"],
+            fats=fast_meal["fats"],
+            logged_at=local_now,
+            user=user,
+        )
+    )
+    challenge_notes = update_challenges(user, {"kind": "meal", "at": local_now})
+    reply = (
+        f"Logged {fast_meal['quantity']:g} x {fast_meal['name']} ({fast_meal['unit']}) — "
+        f"{fast_meal['calories']} kcal · {fast_meal['protein']}P/{fast_meal['carbs']}C/{fast_meal['fats']}F."
+    )
+    if challenge_notes:
+        reply += " " + " · ".join(challenge_notes) + "."
+    db.session.add(CoachMessage(role="assistant", content=reply, user=user, created_at=local_now, provider="fastpath"))
+    db.session.commit()
+    return CoachOutcome(reply=reply, action="meal_logged")
+
+
 def process_coach_message(user: User, message_text: str, now: datetime | None = None) -> CoachOutcome:
     """Dispatch to the AI coach (Gemini first, then Groq as fallback), else to
     the rule-based parser. The rule parser is always the safety net."""
@@ -157,6 +187,11 @@ def process_coach_message(user: User, message_text: str, now: datetime | None = 
     # model would answer it conversationally and the setting would never save.
     if _looks_like_environment_answer(cleaned_message.lower()):
         return process_coach_message_rules(user, cleaned_message, now)
+    # Fast path: a simple "quantity + food" message with a confident
+    # catalogue match is logged in code — no LLM latency, no estimate drift.
+    fast_meal = foods_module.try_fast_meal(cleaned_message)
+    if fast_meal is not None:
+        return _log_fast_meal(user, fast_meal, cleaned_message, now)
     # One wall-clock budget for the whole Gemini -> Groq chain (providers.py
     # caps each per-request timeout by what is left of it).
     ai_deadline = monotonic() + providers_module.TOTAL_AI_DEADLINE_SECONDS

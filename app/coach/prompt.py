@@ -131,7 +131,7 @@ def build_ai_context(user: User, now: datetime, message_text: str = "") -> str:
             ),
             "active_challenges": challenges_context(user),
         }
-    food_matches = food_db_matches(message_text)
+    food_matches = food_db_matches(message_text, limit=5)
     if food_matches:
         context["food_database_matches"] = food_matches
     activity_estimate = estimate_for_message(message_text, user.weight)

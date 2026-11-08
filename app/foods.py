@@ -474,6 +474,124 @@ def compute_meal_from_catalogue(food: dict | None, quantity: float, unit: str) -
     }
 
 
+# ============================================================
+# Fast path: quantity + food -> meal entry without the LLM
+# ============================================================
+
+# Unit words stripped after the quantity number ("1 katori dal", "200 g rice").
+# Anything unrecognized stays in the text and becomes part of the food name
+# ("2 rotis" -> food "roti", unit None -> count).
+_UNIT_WORDS = {
+    "katori", "glass", "glasses", "cup", "cups", "bowl", "bowls", "plate",
+    "plates", "piece", "pieces", "scoop", "scoops", "tbsp", "tablespoon",
+    "tablespoons", "tsp", "teaspoon", "teaspoons", "g", "gram", "grams", "kg",
+    "kgs", "ml", "l", "litre", "litres", "liter", "liters", "serving",
+    "servings", "slice", "slices", "medium", "small", "large", "handful",
+    "can", "bottle", "bar", "packet", "peg", "shot", "tin", "mug", "wedge",
+}
+
+_QUANTITY_RE = re.compile(r"\b(\d+(?:\.\d+)?)\s*([a-z]{1,12})?\b")
+
+# Words that may surround the food mention in a simple log ("had 2 rotis",
+# "2 katori dahi for breakfast") without making the message complex.
+_EXTRA_FILLER = {
+    "breakfast", "lunch", "dinner", "snack", "meal", "food", "morning",
+    "evening", "night", "took", "drank", "drunk", "eating", "quick", "today",
+    "homemade", "steamed", "boiled", "fried", "raw", "roasted", "grilled",
+}
+
+
+def try_fast_meal(message_text: str) -> dict | None:
+    """Build a meal entry in code when the message is a simple 'quantity +
+    food' and the catalogue match is confident — skipping the LLM entirely.
+
+    Returns {name, quantity, unit, calories, protein, carbs, fats} or None
+    when the message holds more than one food, the match is ambiguous, or
+    the computed portion is out of sanity range.
+    """
+    text = message_text or ""
+    if not text.strip():
+        return None
+    lowered = text.lower()
+
+    quantity_match = _QUANTITY_RE.search(lowered)
+    if not quantity_match:
+        return None
+    quantity = float(quantity_match.group(1).replace(",", "."))
+    unit_word = quantity_match.group(2)
+    if unit_word is not None and unit_word not in _UNIT_WORDS:
+        unit_word = None  # part of the food name ("2 rotis")
+    # Counts cap at 50 ("50 rotis" is a lot already); mass units run to 2 kg.
+    limit = 2000 if unit_word in _MASS_UNIT_WORDS else 50
+    if not 0.05 <= quantity <= limit:
+        return None
+    # Strip only the number (plus the unit word when it was one) — the word
+    # after an unrecognized unit is food ("2 rotis" keeps "rotis").
+    strip_end = quantity_match.end(2) if unit_word is not None else quantity_match.end(1)
+    remainder = lowered[:quantity_match.start()] + " " + lowered[strip_end:]
+    index = _index()
+    pairs = _window_scores(remainder, index)
+    if not pairs:
+        return None
+    top_score, top_phrase_idx, top_span = pairs[0]
+    top_entry_idx = index["phrase_entry"][top_phrase_idx]
+
+    # Confidence: an exact catalogue phrase, or a 3x margin over the best
+    # match of a DIFFERENT entry.
+    if top_score < 1000:
+        runner_up = 0.0
+        for score, phrase_idx, _span in pairs[1:]:
+            if index["phrase_entry"][phrase_idx] != top_entry_idx:
+                runner_up = score
+                break
+        if runner_up <= 0 or top_score < runner_up * 3:
+            return None
+
+    food = index["entries"][top_entry_idx]
+    span_tokens = top_span.split()
+
+    # Simple message: the leftover content must be covered by the food span
+    # ("plain dosa with sambar" is NOT simple — sambar stays over).
+    leftover = [
+        t for t in _content_tokens(remainder)
+        if t not in span_tokens and t not in _EXTRA_FILLER
+    ]
+    if leftover:
+        return None
+
+    # Portion: unit word, else the span words against unit_grams, else a
+    # plain count on per-serving foods. Per-100 g foods without unit_grams
+    # and without a unit word are ambiguous ("2 rice") — leave to the LLM.
+    computed = None
+    if unit_word and unit_word in _MASS_UNIT_WORDS:
+        computed = compute_meal_from_catalogue(food, quantity, unit_word)
+    else:
+        candidates = ([unit_word] if unit_word else []) + list(reversed(span_tokens))
+        for candidate in candidates:
+            computed = compute_meal_from_catalogue(food, quantity, candidate)
+            if computed:
+                break
+        if computed is None:
+            per_100g = _serving_grams(food["serving"]) == 100.0
+            if per_100g and not food["unit_grams"]:
+                return None
+            computed = compute_meal_from_catalogue(food, quantity, "serving")
+    if not computed or computed["calories"] > MEAL_ENTRY_CALORIE_CAP:
+        return None
+
+    return {
+        "name": food["name"],
+        "quantity": quantity,
+        "unit": unit_word or "serving",
+        "calories": computed["calories"],
+        "protein": computed["protein"],
+        "carbs": computed["carbs"],
+        "fats": computed["fats"],
+        "span": top_span,
+    }
+
+
+
 def _serving_grams(serving: str | None) -> float | None:
     """Grams (or ml, treated as grams) in a serving string like '1 medium (40 g)'."""
     if not serving:
