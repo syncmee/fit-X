@@ -945,6 +945,10 @@
                           <span>{{ workout.duration_minutes }} min</span>
                           <span class="text-gray-600">•</span>
                           <span>{{ workout.scheduled_for.strftime('%b %d') }}</span>
+                          {% if workout.calories_burned %}
+                          <span class="text-gray-600">•</span>
+                          <span>≈{{ workout.calories_burned }} kcal</span>
+                          {% endif %}
                         </div>
                       </div>
                       
@@ -1005,7 +1009,6 @@
                           <div class="text-[9px] font-mono uppercase text-green mb-2">{{ block.block }}</div>
                           {% for exercise in block.exercises %}
                           <div class="flex gap-2 items-center mb-2">
-                            {% if exercise.image %}<img src="{{ exercise.image }}" alt="" class="w-8 h-8 rounded object-cover bg-black/40">{% else %}<div class="w-8 h-8 rounded bg-white/5"></div>{% endif %}
                             <div class="text-[11px] text-gray-300 leading-tight">
                               <span class="font-semibold text-white">{{ exercise.name }}</span>
                               <span class="block text-gray-500 text-[9px]">{{ exercise.dose }}</span>

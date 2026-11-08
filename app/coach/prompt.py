@@ -18,6 +18,7 @@ from app.models import Challenge, CoachMessage, User, UserChallenge
 from app.challenges import challenge_visible_to
 from app.health import DEFAULT_CALORIE_TARGET, estimate_calorie_target
 from app.foods import food_db_matches
+from app.activities import estimate_for_message
 from app.timeutil import day_bounds, to_user_clock, user_now, DAY_START_SHIFT
 
 from . import CoachAIError
@@ -133,6 +134,9 @@ def build_ai_context(user: User, now: datetime, message_text: str = "") -> str:
     food_matches = food_db_matches(message_text)
     if food_matches:
         context["food_database_matches"] = food_matches
+    activity_estimate = estimate_for_message(message_text, user.weight)
+    if activity_estimate:
+        context["activity_database_matches"] = [activity_estimate]
     return json.dumps(context, ensure_ascii=False)
 
 
@@ -163,6 +167,7 @@ RULES:
 - The user may give partial numbers ("300 kcal rotis", "20g protein shake") — use what they gave and estimate only the missing pieces.
 - For progress questions ("how am i doing", "what did I eat today"), answer from the context data above with empty actions.
 - food_database_matches lists entries from the app's curated food database whose names appear in the user's message. When logging one of those foods, base calories/macros on the listed per-serving values scaled to the portion the user describes ("2 rotis" with a 1-roti serving → double it). These values override your own estimates.
+- activity_database_matches lists the app's catalogue sport/activity entry (with its MET value) matched in the user's message, with a calories estimate computed as MET x weight_kg x hours for the duration mentioned (30 min default). When a schedule_workout or complete_workout action names that activity, send calories_burned = the listed calories (rounded to the nearest 10). This MET-based value overrides your own intensity guess.
 - active_challenges lists the app's open challenges with the user's participation state. If the user asks which challenge to do or for a recommendation, suggest one from that list that fits their goal and this week's activity, and mention their progress if already joined. Use the join_challenge action only when they clearly want to join.
 - Reply in the language the user writes in.
 - Never wrap the JSON in markdown fences."""

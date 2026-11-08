@@ -26,6 +26,7 @@ from app.models import (
 )
 from app.timeutil import day_bounds, effective_date, to_user_clock
 from app.challenges import update_challenges
+from app import activities
 
 from . import CoachOutcome, ENVIRONMENT_ASK
 from .actions import default_meal_type as _default_meal_type
@@ -181,9 +182,18 @@ def _looks_like_water_log(message: str) -> bool:
     return bool(re.search(r"\d", message))
 
 
+# Sport/activity words that count as a "workout" mention for the rules
+# predicates — the schedule/log keyword lists predate the sports catalogue.
+_ACTIVITY_KEYWORDS = (
+    "swim", "boxing", "box", "cycle", "cycling", "walk", "hik", "hiit",
+    "pilates", "football", "soccer", "basketball", "tennis", "badminton",
+    "volleyball", "mma", "karate", "taekwondo",
+)
+
+
 def _looks_like_workout_schedule(message: str) -> bool:
     schedule_keywords = ("schedule", "plan", "book", "set up", "create", "add")
-    workout_keywords = ("workout", "session", "train", "gym", "run", "cardio", "yoga", "legs", "chest")
+    workout_keywords = ("workout", "session", "train", "gym", "run", "cardio", "yoga", "legs", "chest") + _ACTIVITY_KEYWORDS
     return any(keyword in message for keyword in schedule_keywords) and any(
         keyword in message for keyword in workout_keywords
     )
@@ -250,7 +260,7 @@ def _looks_like_meal_log(message: str) -> bool:
 
 
 def _looks_like_workout_log(message: str) -> bool:
-    workout_keywords = ("workout", "session", "training", "trained", "completed", "finished", "lifted")
+    workout_keywords = ("workout", "session", "training", "trained", "completed", "finished", "lifted") + _ACTIVITY_KEYWORDS
     log_keywords = ("log", "track", "completed", "finished", "done", "did")
     return any(keyword in message for keyword in workout_keywords) and any(
         keyword in message for keyword in log_keywords
@@ -435,6 +445,10 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
 
     title = _extract_workout_title(message)
     duration_minutes = _extract_duration_minutes(message)
+    # MET-based burn from the activity catalogue when the title matches one
+    # (e.g. "did a 45 min run") — None if the user has no weight on file.
+    estimate = activities.estimate_for_message(message, user.weight, default_minutes=duration_minutes)
+    calories_burned = estimate["calories"] if estimate else None
 
     db.session.add(
         ScheduledWorkout(
@@ -442,6 +456,7 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
             scheduled_for=completed_at,
             duration_minutes=duration_minutes,
             notes=_extract_workout_notes(message, title),
+            calories_burned=calories_burned,
             status="completed",
             user=user,
             created_at=local_now,
@@ -450,7 +465,7 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
     db.session.flush()
 
     challenge_notes = update_challenges(user, {
-        "kind": "workout", "at": completed_at, "title": title, "calories_burned": None,
+        "kind": "workout", "at": completed_at, "title": title, "calories_burned": calories_burned,
     })
 
     week_stats = _week_activity(user, local_now)
@@ -458,6 +473,11 @@ def _log_workout_completion(user: User, message: str, now: datetime) -> CoachOut
         f"Logged {title} ({duration_minutes} min) as completed. "
         f"This week: {week_stats['done_count']} session(s) done, {week_stats['total_minutes']} min total."
     )
+    if calories_burned:
+        reply = (
+            f"Logged {title} ({duration_minutes} min, ≈{calories_burned} kcal). "
+            f"This week: {week_stats['done_count']} session(s) done, {week_stats['total_minutes']} min total."
+        )
     if challenge_notes:
         reply += " " + " · ".join(challenge_notes) + "."
     return CoachOutcome(reply=reply, action="workout_logged")
@@ -474,6 +494,9 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
     # Per-session override from the words ("home push day"), else the profile
     # default. Plans render from this, so it wants to be right at insert time.
     environment = _extract_environment(message) or user.training_environment
+    # MET-based burn estimate when the title matches a catalogue activity;
+    # the session card shows it and workout_done forwards it to challenges.
+    estimate = activities.estimate_for_message(message, user.weight, default_minutes=duration_minutes)
 
     db.session.add(
         ScheduledWorkout(
@@ -481,6 +504,7 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
             scheduled_for=scheduled_for,
             duration_minutes=duration_minutes,
             notes=notes,
+            calories_burned=(estimate["calories"] if estimate else None),
             environment=environment,
             status="scheduled",
             user=user,
@@ -496,6 +520,8 @@ def _schedule_workout(user: User, message: str, now: datetime) -> CoachOutcome:
         f"Scheduled {title} for {_format_datetime_label(scheduled_for, local_now)} "
         f"for {duration_minutes} min.{shift_note}"
     )
+    if estimate and estimate["calories"]:
+        reply += f" Estimated burn ≈{estimate['calories']} kcal."
     if environment is None:
         reply += f" {ENVIRONMENT_ASK}"
     return CoachOutcome(reply=reply, action="workout_scheduled")

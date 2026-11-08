@@ -51,7 +51,6 @@ from .models import (
     WaterLog,
     WeightLog,
 )
-from .plans import _IMAGE_BASE as EXERCISE_IMAGE_BASE
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -382,8 +381,9 @@ STARTER_FOODS = (    ("Roti", "1 medium (40 g)", 100, 3, 20, 1),
 
 
 def seed_exercises_from_json() -> int:
-    """One-time seed of the exercise library from the bundled free-exercise-db
-    (app/data/exercises.json). Skips names already present; returns rows added."""
+    """One-time seed of the exercise library from the bundled Fit-X exercise
+    catalog (app/data/exercises.json). Skips names already present; returns
+    rows added. The catalog carries no images, so image_url stays unset."""
     path = Path(__file__).parent / "data" / "exercises.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     existing = set(db.session.scalars(select(Exercise.name)).all())
@@ -401,7 +401,6 @@ def seed_exercises_from_json() -> int:
             primary_muscles=", ".join(e.get("primaryMuscles") or []),
             secondary_muscles=", ".join(e.get("secondaryMuscles") or []),
             instructions="\n".join(e.get("instructions") or []),
-            image_url=(EXERCISE_IMAGE_BASE + e["images"][0]) if e.get("images") else None,
         ))
         added += 1
     db.session.commit()
