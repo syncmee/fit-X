@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<style>html,body{background:#0A0A0A}</style>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>fiT-X — Dashboard</title>
@@ -30,7 +31,8 @@
 <meta name="apple-mobile-web-app-title" content="fiT-X">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="/static/css/app.css?v={{ STATIC_V }}">
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@8.7.0" defer></script>
 
@@ -414,6 +416,28 @@
 </style>
 </head>
 <body class="bg-bg text-white antialiased h-[100dvh] flex flex-col">
+<div id="appLoader" style="position:fixed;inset:0;z-index:99999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-bottom:10vh">
+  <style>
+    @keyframes appLoaderSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+    @media (prefers-reduced-motion: reduce) { #appLoaderBar { width: 40% !important; animation: none !important; transform: none !important; } }
+  </style>
+  <img src="/static/branding/logo_transparent.png" alt="fiT-X" width="160" height="160" style="width:160px;height:160px">
+  <div style="width:120px;height:3px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden"><div id="appLoaderBar" style="width:100%;height:100%;border-radius:inherit;background:linear-gradient(135deg,#fef08a,#4ade80);animation:appLoaderSlide 1.1s ease-in-out infinite"></div></div>
+</div>
+<script>
+  (function () {
+    var removeLoader = function () {
+      var loader = document.getElementById('appLoader');
+      if (!loader || loader.dataset.closing) return;
+      loader.dataset.closing = 'true';
+      loader.style.transition = 'opacity 250ms ease';
+      loader.style.opacity = '0';
+      setTimeout(function () { loader.remove(); }, 250);
+    };
+    window.addEventListener('load', removeLoader, { once: true });
+    setTimeout(removeLoader, 4000);
+  })();
+</script>
 
 <!-- Flash toasts -->
 {% with messages = get_flashed_messages(with_categories=true) %}
