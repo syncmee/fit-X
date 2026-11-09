@@ -8,7 +8,7 @@ from tests.base import AppContextTestCase, login, make_user
 
 from app.extensions import db
 from app.models import CoachMessage, MealEntry, ScheduledWorkout, User, UserChallenge, WaterLog, WeightLog
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 
 def _csrf(client, path):
@@ -91,6 +91,29 @@ class CoachTestCase(AppContextTestCase):
         from app.coach import CoachAIError
 
         raise CoachAIError("simulated outage")
+
+    def test_rejected_entry_reply_is_the_question_alone(self):
+        """The model claims success ("Logged ...") for an entry the guard
+        rejected — the confirmation question alone must be the reply, with
+        no "Logged" text and no entry persisted."""
+        from app.coach import providers as providers_mod
+        from app.dashboard import process_coach_message_ai
+
+        def fake_provider(user, message, now, deadline=None):
+            return {"reply": "Logged 20 eggs, nice protein!", "actions": [
+                {"type": "log_meal", "name": "eggs", "quantity": 20, "unit": "pieces",
+                 "calories": 1560},
+            ], "usage": {}}
+
+        original = providers_mod.gemini_generate
+        self.addCleanup(setattr, providers_mod, "gemini_generate", original)
+        providers_mod.gemini_generate = fake_provider
+        self.app.config["GEMINI_API_KEY"] = "fake"
+        outcome = process_coach_message_ai(self._user(), "had 20 eggs", datetime.utcnow())
+        db.session.flush()
+        self.assertIn("did not log 20 × eggs", outcome.reply)
+        self.assertNotIn("Logged", outcome.reply)
+        self.assertEqual(db.session.scalar(select(func.count(MealEntry.id))), 0)
 
     def test_apply_ai_actions_join(self):
         from app.coach.actions import apply_actions as _apply_ai_actions

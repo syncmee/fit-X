@@ -501,10 +501,55 @@ _KG_WORDS = {"kg", "kgs", "kilogram", "kilograms"}
 _L_WORDS = {"l", "litre", "liter", "litres", "liters"}
 
 
+# Drinks and scoopable/spreadable items are not counted one-by-one: per-item
+# ceilings make no sense for them ("350 ml juice" is a volume, not 350 pieces).
+_NOT_COUNTED_ITEMS_RE = re.compile(
+    r"\bjuice\b|\bshake\b|\bmilkshake\b|\bsmoothie\b|\bjam\b|\bsauce\b|\bpowder\b"
+    r"|\bchips\b|\bcake\b|\bpie\b|\bsyrup\b|\bsquash\b|\bsoda\b|\bcola\b"
+    r"|\bice cream\b|\blassi\b"
+)
+
+# Container units express a volume the food fills — never an item count.
+_CONTAINER_UNIT_WORDS = {
+    "glass", "glasses", "cup", "cups", "bowl", "bowls", "plate", "plates",
+    "katori", "katoris", "scoop", "scoops", "slice", "slices",
+    "tbsp", "tablespoon", "tablespoons", "tsp", "teaspoon", "teaspoons",
+}
+
+# Units that mean "N of the item itself" — the only place per-item ceilings
+# apply.
+_COUNT_UNIT_WORDS = {
+    "", "serving", "servings", "piece", "pieces", "pc", "pcs",
+    "unit", "units", "count", "whole",
+}
+
+
+def is_count_unit(unit: str, food_name: str | None) -> bool:
+    """True when the unit counts items of the food itself ("2 rotis",
+    "20 servings") rather than a volume/mass or a container ("350 ml juice",
+    "1 glass of milk"). Per-item ceilings only apply to the former. A unit
+    that names the food counts too ("orange"/"oranges", "roti"/"rotis")."""
+    lowered = " ".join((unit or "").lower().split())
+    if lowered in _MASS_UNIT_WORDS or lowered in _CONTAINER_UNIT_WORDS:
+        return False
+    if lowered in _COUNT_UNIT_WORDS:
+        return True
+    if food_name:
+        for word in re.findall(r"[a-z]+", food_name.lower()):
+            if len(word) >= 3 and (lowered == word or lowered == word + "s"):
+                return True
+    return False
+
+
 def unit_ceiling_for(name: str | None) -> int | None:
-    """Ceiling for a food name, or None when the food has no ceiling."""
+    """Ceiling for a food name, or None when the food has no ceiling.
+
+    Drinks and scoopable items (juice, shakes, jam, ...) return None — they
+    are consumed by volume, never counted one-by-one."""
     lowered = " ".join((name or "").lower().split())
     if not lowered:
+        return None
+    if _NOT_COUNTED_ITEMS_RE.search(lowered):
         return None
     for keyword, ceiling in PER_UNIT_CEILINGS.items():
         if re.search(rf"\b{re.escape(keyword)}s?\b", lowered):

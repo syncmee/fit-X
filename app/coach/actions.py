@@ -73,9 +73,19 @@ def _parse_quantity(value, default: float = 1.0) -> float:
 CONFIRM_PREFIX = "needs confirmation: "
 
 
-def _meal_confirm_question(name: str, quantity: float, unit: str, kcal: int | None) -> str:
+def _meal_confirm_question(name: str, quantity: float, unit: str, kcal: int | None,
+                           ceiling: int | None = None) -> str:
     shown_qty = f"{quantity:g}" if quantity == int(quantity) else f"{quantity:.1f}"
-    kcal_part = f" — that is about {kcal} kcal" if kcal else ""
+    if ceiling:
+        # The quantity tripped the per-item ceiling: the ask is about the
+        # count, not the size of the entry.
+        return (
+            f"{CONFIRM_PREFIX}I did not log {shown_qty} × {name} — that's more than "
+            f"{ceiling} {name} in one go. Say 'yes, log it' to confirm, or tell me the correct amount."
+        )
+    # The calorie cap fired: only call the entry "unusually large" when it
+    # really is a big number; small-but-over-cap entries skip the kcal clause.
+    kcal_part = f" — that is about {kcal} kcal" if kcal and kcal >= 300 else ""
     return (
         f"{CONFIRM_PREFIX}I did not log {shown_qty} × {name}{kcal_part}, which is unusually "
         "large for one meal. Say 'yes, log it' to confirm, or tell me the correct amount."
@@ -123,10 +133,18 @@ def apply_actions(user: User, actions: list, now: datetime) -> tuple[list[str], 
                 or (catalog_food and foods_module.unit_ceiling_for(catalog_food["name"]))
             )
             # Per-unit ceiling: reject and ask instead of logging, and never
-            # accept a "confirmed" quantity beyond triple the ceiling.
-            if ceiling and quantity > ceiling:
+            # accept a "confirmed" quantity beyond triple the ceiling. It only
+            # guards counted items — "350 ml juice" or "1 glass of milk" is a
+            # volume, not N pieces, so mass/container units skip it. The
+            # per-entry calorie cap below still applies to every entry.
+            count_unit = (
+                foods_module.is_count_unit(unit, name)
+                or (catalog_food and foods_module.is_count_unit(unit, catalog_food["name"]))
+            )
+            if ceiling and count_unit and quantity > ceiling:
                 if not confirmed or quantity > ceiling * 3:
-                    applied.append(_meal_confirm_question(name, quantity, unit, computed and computed["calories"]))
+                    applied.append(_meal_confirm_question(
+                        name, quantity, unit, computed and computed["calories"], ceiling=ceiling))
                     continue
             if computed:
                 # Catalogue values override the model's own estimate (same

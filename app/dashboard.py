@@ -266,7 +266,9 @@ def process_coach_message_ai(
     applied = [a for a in applied if not a.startswith(_CONFIRM_PREFIX)]
     reply = result["reply"]
     if confirmations:
-        reply += " " + " ".join(confirmations)
+        # The model's text often claims success ("Logged ...") for an entry
+        # the guard rejected — the confirmation question alone is the reply.
+        reply = " ".join(confirmations)
     if challenge_notes:
         reply += " " + " · ".join(challenge_notes) + "."
     if user.training_environment is None and any(a.startswith("scheduled") for a in applied):

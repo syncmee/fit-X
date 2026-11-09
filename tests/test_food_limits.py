@@ -51,6 +51,79 @@ class FoodLimitsTestCase(AppContextTestCase):
         self.assertIn("20", applied[0])
         self.assertIn("eggs", applied[0])
 
+    # --- per-unit ceilings only guard counted items -----------------------
+
+    def _seed_foods(self, *rows):
+        for kwargs in rows:
+            db.session.add(Food(**kwargs))
+        db.session.commit()
+
+    def test_volume_quantity_of_drink_is_logged_without_confirm(self):
+        """350 ml orange juice is a volume, not 350 pieces — no ceiling, and
+        the catalogue computes ~158 kcal (45 kcal/100 g x 3.5)."""
+        self._seed_foods({"name": "Orange juice", "serving": "100 g",
+                          "calories": 45, "protein": 1, "carbs": 10, "fats": 0,
+                          "unit_grams": '{"glass": 240}'})
+        applied, _ = self._apply([
+            {"type": "log_meal", "name": "Orange juice", "quantity": 350, "unit": "ml",
+             "calories": 400},
+        ])
+        db.session.flush()
+        self.assertEqual(applied, ["Orange juice (158 kcal)"])
+        entry = db.session.scalars(select(MealEntry)).one()
+        self.assertGreaterEqual(entry.calories, 119)
+        self.assertLessEqual(entry.calories, 160)
+
+    def test_mass_quantity_of_fruit_is_logged_without_confirm(self):
+        """150 g apple / 200 g banana are weights, not counts of 8-10 pieces."""
+        self._seed_foods(
+            {"name": "Apple", "serving": "1 medium", "calories": 95},
+            {"name": "Banana", "serving": "1 medium", "calories": 105},
+        )
+        applied_apple, _ = self._apply([
+            {"type": "log_meal", "name": "apple", "quantity": 150, "unit": "g",
+             "calories": 78},
+        ])
+        applied_banana, _ = self._apply([
+            {"type": "log_meal", "name": "banana", "quantity": 200, "unit": "g",
+             "calories": 105},
+        ])
+        db.session.flush()
+        self.assertEqual(applied_apple, ["apple (78 kcal)"])
+        self.assertEqual(applied_banana, ["banana (105 kcal)"])
+
+    def test_count_quantity_over_ceiling_still_needs_confirmation(self):
+        self._seed_foods({"name": "Orange", "serving": "100 g", "calories": 47,
+                          "unit_grams": '{"orange": 131}'})
+        applied, _ = self._apply([
+            {"type": "log_meal", "name": "Orange", "quantity": 20, "unit": "serving"},
+        ])
+        db.session.flush()
+        self.assertEqual(db.session.scalar(select(func.count(MealEntry.id))), 0)
+        self.assertTrue(applied[0].startswith("needs confirmation: "), applied)
+        self.assertNotIn("Logged", applied[0])
+
+    def test_food_named_unit_over_ceiling_still_needs_confirmation(self):
+        """unit "roti" names the food itself — that is a count ("30 rotis")."""
+        applied, _ = self._apply([
+            {"type": "log_meal", "name": "roti", "quantity": 30, "unit": "roti"},
+        ])
+        db.session.flush()
+        self.assertEqual(db.session.scalar(select(func.count(MealEntry.id))), 0)
+        self.assertTrue(applied[0].startswith("needs confirmation: "), applied)
+        self.assertNotIn("Logged", applied[0])
+
+    def test_container_units_skip_the_ceiling(self):
+        """5 glasses of juice is a volume — logged unless the kcal cap trips."""
+        self._seed_foods({"name": "Orange juice", "serving": "100 g",
+                          "calories": 45, "protein": 1, "carbs": 10, "fats": 0,
+                          "unit_grams": '{"glass": 240}'})
+        applied, _ = self._apply([
+            {"type": "log_meal", "name": "Orange juice", "quantity": 5, "unit": "glass"},
+        ])
+        db.session.flush()
+        self.assertEqual(applied, ["Orange juice (540 kcal)"])
+
     def test_confirmation_via_reply_flow(self):
         """process_coach_message_ai moves the guard question into the reply."""
         from app.coach import providers as providers_mod
