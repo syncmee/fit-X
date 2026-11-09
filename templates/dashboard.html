@@ -202,6 +202,15 @@
   .coach-typing-dots span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes coachBlink { 0%, 80%, 100% { opacity: 0.25; } 40% { opacity: 1; } }
 
+  /* Blinking caret while the coach reply is being typed */
+  .coach-caret::after {
+    content: ""; display: inline-block; width: 6px; height: 12px;
+    margin-left: 2px; vertical-align: -1px; background: #4ade80;
+    animation: coachCaret 1s steps(1) infinite;
+  }
+  @keyframes coachCaret { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .coach-caret::after { animation: none; } }
+
   /* Modal & Chatbot Animations */
   .modal-overlay {
     background: rgba(0,0,0,0.7);
@@ -2126,30 +2135,55 @@
     }
 
     // Type the coach reply into the bubble: textContent only (never
-    // innerHTML), ~1 char per 15 ms capped at 1.5 s total (long replies type
-    // several characters per tick), auto-scroll, and instant for
+    // innerHTML). Time-based on requestAnimationFrame so it stays smooth and
+    // never stutters: ~26 ms per character with natural pauses after
+    // punctuation, scaled down so even a long reply finishes within 4 s, a
+    // blinking caret while typing, auto-scroll, and instant text for
     // prefers-reduced-motion users.
+    const TYPE_MS_PER_CHAR = 26;
+    const TYPE_PAUSE_SENTENCE_MS = 140;   // after . ! ?
+    const TYPE_PAUSE_CLAUSE_MS = 70;      // after , ; : and the em dash
+    const TYPE_MAX_TOTAL_MS = 4000;
     function typeInto(element, text) {
       const chatBody = document.getElementById('chatBody');
-      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        element.textContent = text;
-        if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
+      const scrollDown = () => { if (chatBody) chatBody.scrollTop = chatBody.scrollHeight; };
+      if (!text || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        element.textContent = text || '';
+        scrollDown();
         return Promise.resolve();
       }
+      // appearAt[i] = the moment (ms from start) character i becomes visible.
+      const appearAt = new Array(text.length);
+      let clock = 0;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        clock += TYPE_MS_PER_CHAR;
+        if (ch === '.' || ch === '!' || ch === '?') clock += TYPE_PAUSE_SENTENCE_MS;
+        else if (ch === ',' || ch === ';' || ch === ':' || ch === '\u2014') clock += TYPE_PAUSE_CLAUSE_MS;
+        appearAt[i] = clock;
+      }
+      const speedUp = clock > TYPE_MAX_TOTAL_MS ? clock / TYPE_MAX_TOTAL_MS : 1;
       element.textContent = '';
-      const ticks = Math.max(1, Math.ceil(1500 / 15));
-      const charsPerTick = Math.max(1, Math.ceil((text.length || 1) / ticks));
-      let shown = 0;
+      element.classList.add('coach-caret');
       return new Promise((resolve) => {
-        const timer = setInterval(() => {
-          shown = Math.min(text.length, shown + charsPerTick);
-          element.textContent = text.slice(0, shown);
-          if (chatBody) chatBody.scrollTop = chatBody.scrollHeight;
-          if (shown >= text.length) {
-            clearInterval(timer);
+        const startedAt = performance.now();
+        let shown = 0;
+        function frame(now) {
+          const elapsed = (now - startedAt) * speedUp;
+          const before = shown;
+          while (shown < text.length && appearAt[shown] <= elapsed) shown += 1;
+          if (shown !== before) {
+            element.textContent = text.slice(0, shown);
+            scrollDown();
+          }
+          if (shown < text.length) {
+            requestAnimationFrame(frame);
+          } else {
+            element.classList.remove('coach-caret');
             resolve();
           }
-        }, 15);
+        }
+        requestAnimationFrame(frame);
       });
     }
 
