@@ -5,7 +5,7 @@
 // when the network is gone. Only the app shell (/static/*) and known
 // font/chart CDNs use cache-with-refresh, so updates land on the next
 // load. Bump VERSION whenever shipped static assets change.
-const VERSION = "fitx-v4";  // bumped: in-app navigations never answered from a stale cached page
+const VERSION = "fitx-v5";  // bumped: in-app navigations never answered from a stale cached page
 
 const PRECACHE = [
   "/static/offline.html",
@@ -18,6 +18,7 @@ const PRECACHE = [
   "/static/android-chrome-192x192.png",
   "/static/android-chrome-512x512.png",
   "/static/branding/runner.png",
+  "/static/branding/logo_transparent.png",
 ];
 
 // Successful navigations live in their own runtime cache so a slow or

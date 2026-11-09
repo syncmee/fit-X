@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <style>html,body{background:#0A0A0A}</style>
+<script>try { if (sessionStorage.getItem('fitxSeen')) document.write('<style>#appLoader{display:none}</style>'); } catch(e){}</script>
+<link rel="preload" as="image" href="/static/branding/logo_transparent.png">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>fiT-X — Dashboard</title>
@@ -432,9 +434,14 @@
       loader.dataset.closing = 'true';
       loader.style.transition = 'opacity 250ms ease';
       loader.style.opacity = '0';
-      setTimeout(function () { loader.remove(); }, 250);
+      setTimeout(function () {
+        try { sessionStorage.setItem('fitxSeen', '1'); } catch (e) {}
+        loader.remove();
+      }, 250);
     };
-    window.addEventListener('load', removeLoader, { once: true });
+    window.addEventListener('DOMContentLoaded', function () {
+      requestAnimationFrame(removeLoader);
+    }, { once: true });
     setTimeout(removeLoader, 4000);
   })();
 </script>
