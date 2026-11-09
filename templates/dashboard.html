@@ -540,7 +540,7 @@
       <div id="view-dashboard" class="view-container space-y-5">
 
         <!-- Key Stats -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 items-start">
+        <div id="stat-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5 items-start">
           <div class="glass rounded-xl p-4 flex items-center gap-4">
             <div class="relative w-14 h-14 flex-shrink-0">
               <svg viewBox="0 0 36 36" class="w-full h-full -rotate-90">
@@ -636,7 +636,7 @@
             <div id="chart-weight"></div>
           </div>
 
-          <div class="lg:col-span-1 glass rounded-2xl p-5 flex flex-col">
+          <div id="today-plan-card" class="lg:col-span-1 glass rounded-2xl p-5 flex flex-col">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-sm font-semibold text-gray-300">Today's Plan</h3>
               <span class="text-[10px] font-mono text-gray-500">{{ next_workout.title if next_workout else 'No session' }}</span>
@@ -714,7 +714,7 @@
 
         <!-- Meal cards: real entries -->
         {% set meal_meta = [('breakfast', 'Breakfast'), ('lunch', 'Lunch'), ('dinner', 'Dinner'), ('snack', 'Snacks')] %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div id="meals-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {% for meal_type, meal_title in meal_meta %}
           <div class="glass rounded-2xl p-5 flex flex-col">
             <div class="flex justify-between items-center mb-4">
@@ -781,7 +781,7 @@
           </div>
 
           <!-- Water: persisted -->
-          <div class="glass rounded-2xl p-5">
+          <div id="water-card" class="glass rounded-2xl p-5">
             <div class="flex justify-between items-center mb-6">
               <h3 class="text-sm font-semibold text-gray-300">Hydration</h3>
               <span class="text-2xl font-bold tracking-tighter-2 font-mono">{{ water_today_l }}<span class="text-sm text-gray-500">L / {{ water_goal_l }}L</span></span>
@@ -876,11 +876,11 @@
         {% endif %}
 
         <!-- Weekly Timeline Strip -->
-        <div class="flex items-center justify-between mb-2">
+        <div id="week-strip-header" class="flex items-center justify-between mb-2">
           <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">This Week</h3>
           <span class="text-[10px] font-mono text-gray-500">Week {{ week_activity.done_count }}/{{ weekly_workout_count }} done</span>
         </div>
-        <div class="grid grid-cols-4 md:grid-cols-7 gap-3">
+        <div id="week-strip" class="grid grid-cols-4 md:grid-cols-7 gap-3">
           {% for day in week_strip %}
           <div class="day-card {% if day.state == 'today' %}grad-border bg-green/5{% else %}glass{% endif %} rounded-xl p-3 text-center {% if loop.index > 4 %}hidden md:block{% endif %}">
             <div class="text-[10px] font-mono {% if day.state == 'today' %}text-green{% else %}text-gray-500{% endif %} mb-1">{{ day.day_label }}</div>
@@ -910,7 +910,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           <!-- Session Queue (Timeline) -->
-          <div class="lg:col-span-2 space-y-6">
+          <div id="session-queue" class="lg:col-span-2 space-y-6">
             <div class="flex justify-between items-center">
               <h3 class="text-sm font-semibold text-gray-300">Session Queue</h3>
               <button onclick="toggleChat()" class="whitespace-nowrap text-xs font-semibold text-black grad-bg px-3 py-1.5 rounded-md hover:opacity-90 transition">Schedule via Coach</button>
@@ -1060,7 +1060,7 @@
           </div>
 
           <!-- Sidebar Stats -->
-          <div class="space-y-6">
+          <div id="workout-week-stats" class="space-y-6">
             <!-- Weekly Goal Ring -->
             <div class="glass rounded-2xl p-6 text-center flex flex-col items-center justify-center">
               <div class="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-4">Weekly Goal</div>
@@ -2078,9 +2078,52 @@
     const coachForm = document.getElementById('coachForm');
     if (!coachForm) return;
 
-    // Prompt 3 will fill this in — for now the dashboard's server-rendered
-    // fragments stay as they are after a JSON coach reply.
-    function refreshDashboardData() { /* placeholder: refresh meals/water/queue in place */ }
+    // Pull a fresh /dashboard and swap the data-driven sections in place, so
+    // a coach reply ("log 2 rotis", "schedule boxing") updates the numbers
+    // without a flash or reload. #chatBody and the coach form are NOT in the
+    // list — the typed reply and the open console survive.
+    const REFRESH_SECTION_IDS = [
+      'stat-grid',          // calorie/macro ring + weight/BMI/streak cards
+      'today-plan-card',    // next workout + this-week counters
+      'meals-grid',         // today's meal lists (breakfast/lunch/dinner/snack)
+      'water-card',         // hydration total + quick-add buttons
+      'week-strip-header',  // "This Week x/y done" count
+      'week-strip',         // weekly timeline day cards
+      'session-queue',      // upcoming workouts + edit panels
+      'workout-week-stats', // weekly goal ring + total min / kcal burned
+    ];
+    // Sections above have NO load-time JavaScript attached: their forms are
+    // native POSTs, their toggles are inline onclick, and every ApexCharts
+    // target (chart-weight, chart-nutrition-macros, ...) lives outside them,
+    // so nothing needs re-initialising after a swap. If a section ever gains
+    // charts or bound listeners, re-run that init here inside the loop.
+    function refreshDashboardData() {
+      fetch('/dashboard', { credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } })
+        .then(response => {
+          if (!response.ok) throw new Error('HTTP ' + response.status);
+          return response.text();
+        })
+        .then(html => {
+          const doc = new DOMParser().parseFromString(html, 'text/html');
+          let missing = 0;
+          for (const id of REFRESH_SECTION_IDS) {
+            const fresh = doc.getElementById(id);
+            const live = document.getElementById(id);
+            if (fresh && live) {
+              live.replaceWith(fresh);
+            } else {
+              missing += 1;
+            }
+          }
+          if (missing) throw new Error('refresh: ' + missing + ' section(s) missing');
+        })
+        .catch(() => {
+          // Fetch failed or the template changed under us: reload after a
+          // beat so the console can reopen on the fresh page.
+          try { sessionStorage.setItem('fitxChatOpen', '1'); } catch (e) { /* private mode */ }
+          setTimeout(() => window.location.reload(), 1000);
+        });
+    }
 
     // Type the coach reply into the bubble: textContent only (never
     // innerHTML), ~1 char per 15 ms capped at 1.5 s total (long replies type
