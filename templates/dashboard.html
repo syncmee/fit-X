@@ -894,9 +894,8 @@
                   {{ next_workout.duration_minutes }} min
                 </div>
                 {% if next_workout.calories_burned %}
-                <div class="flex items-center gap-2 text-yellow" title="Estimated calories burned">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c.5 3.5-2 5-2 8.5A4 4 0 0 0 14 14c0-2.4-1.3-3.8-2-5.5 3.2 1.2 5 4.1 5 7A7 7 0 1 1 8 9c0-2.4 1.1-5.1 4-7Z"/></svg>
-                  Burns ≈{{ next_workout.calories_burned }} kcal
+                <div class="flex items-center gap-2 text-yellow" title="Estimated calories burned during this session. Calculated from activity intensity, duration, and your profile; actual burn can vary.">
+                  🔥{{ next_workout.calories_burned }} kcal
                 </div>
                 {% endif %}
               </div>
@@ -988,9 +987,8 @@
                           <span class="whitespace-nowrap">{{ workout.duration_minutes }} min</span>
                           <span class="whitespace-nowrap">{{ workout.scheduled_for.strftime('%b %d') }}</span>
                           {% if workout.calories_burned %}
-                          <span class="inline-flex items-center gap-1 whitespace-nowrap text-yellow" title="Estimated calories burned">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c.5 3.5-2 5-2 8.5A4 4 0 0 0 14 14c0-2.4-1.3-3.8-2-5.5 3.2 1.2 5 4.1 5 7A7 7 0 1 1 8 9c0-2.4 1.1-5.1 4-7Z"/></svg>
-                            Burns ≈{{ workout.calories_burned }} kcal
+                          <span class="inline-flex items-center gap-1 whitespace-nowrap text-yellow" title="Estimated calories burned during this session. Calculated from activity intensity, duration, and your profile; actual burn can vary.">
+                            🔥{{ workout.calories_burned }} kcal
                           </span>
                           {% endif %}
                         </div>
@@ -1089,15 +1087,14 @@
               </h4>
               <div class="glass rounded-xl p-1">
                 {% for workout in recent_completed %}
-                <div class="flex items-center justify-between text-xs p-3 {% if not loop.last %}border-b border-white/5{% endif %} hover:bg-white/5 transition rounded-lg">
-                  <span class="font-medium truncate">{{ workout.title }}</span>
-                  <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-gray-500 font-mono text-[10px]">
+                <div class="flex flex-col gap-2 text-xs p-3 {% if not loop.last %}border-b border-white/5{% endif %} hover:bg-white/5 transition rounded-lg sm:flex-row sm:items-center sm:justify-between">
+                  <span class="min-w-0 font-medium truncate">{{ workout.title }}</span>
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-500 font-mono text-[10px] sm:justify-end">
                     <span class="whitespace-nowrap">{{ workout.scheduled_for.strftime('%b %d') }}</span>
                     <span class="whitespace-nowrap">{{ workout.duration_minutes }}m</span>
                     {% if workout.calories_burned %}
-                    <span class="inline-flex items-center gap-1 whitespace-nowrap text-yellow" title="Estimated calories burned">
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2c.5 3.5-2 5-2 8.5A4 4 0 0 0 14 14c0-2.4-1.3-3.8-2-5.5 3.2 1.2 5 4.1 5 7A7 7 0 1 1 8 9c0-2.4 1.1-5.1 4-7Z"/></svg>
-                      Burned ≈{{ workout.calories_burned }} kcal
+                    <span class="inline-flex items-center gap-1 whitespace-nowrap text-yellow" title="Estimated calories burned during this session. Calculated from activity intensity, duration, and your profile; actual burn can vary.">
+                      🔥{{ workout.calories_burned }} kcal
                     </span>
                     {% endif %}
                     <span class="text-green">✓</span>
@@ -1145,7 +1142,7 @@
               </div>
               <div class="glass rounded-xl p-4">
                 <div class="text-[10px] font-mono text-gray-500 mb-1">CALORIES BURNED</div>
-                <div class="text-xl font-bold text-green">Burned ≈{{ week_activity.total_burned or 0 }} kcal</div>
+                <div class="text-xl font-bold text-green" title="Estimated calories burned across completed sessions this week. Calculated from activity intensity, duration, and your profile; actual burn can vary.">🔥{{ week_activity.total_burned or 0 }} kcal</div>
               </div>
               <div class="glass rounded-xl p-4 col-span-2">
                 <div class="text-[10px] font-mono text-gray-500 mb-1">AVG SESSION</div>
