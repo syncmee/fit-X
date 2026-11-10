@@ -418,6 +418,7 @@
 </style>
 </head>
 <body class="bg-bg text-white antialiased h-[100dvh] flex flex-col">
+<script type="application/json" id="chart-data">{{ {"today_totals": today_totals, "week_net_labels": week_net_labels, "week_net_values": week_net_values, "week_minutes": week_activity.minutes, "week_minute_labels": week_activity.labels, "weight_values": weight_values, "weight_labels": weight_labels} | tojson }}</script>
 <div id="appLoader" style="position:fixed;inset:0;z-index:99999;background:#0A0A0A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-bottom:10vh">
   <style>
     @keyframes appLoaderSlide { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
@@ -796,7 +797,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <!-- Computed from profile: g/kg targets vs today's totals -->
-          <div class="glass rounded-2xl p-5">
+          <div id="macro-targets-card" class="glass rounded-2xl p-5">
             <div class="flex justify-between items-center mb-6">
               <h3 class="text-sm font-semibold text-gray-300">Macro Targets</h3>
               <span class="text-[10px] font-mono text-gray-500">vs today</span>
@@ -2126,6 +2127,7 @@
       'stat-grid',          // calorie/macro ring + weight/BMI/streak cards
       'today-plan-card',    // next workout + this-week counters
       'meals-grid',         // today's meal lists (breakfast/lunch/dinner/snack)
+      'macro-targets-card', // computed macro targets vs today's totals
       'water-card',         // hydration total + quick-add buttons
       'week-strip-header',  // "This Week x/y done" count
       'week-strip',         // weekly timeline day cards
@@ -2156,6 +2158,45 @@
             }
           }
           if (missing) throw new Error('refresh: ' + missing + ' section(s) missing');
+
+          const chartData = JSON.parse(doc.getElementById('chart-data').textContent);
+          TODAY_TOTALS = chartData.today_totals;
+
+          try {
+            const chart = window.fitxCharts.macros;
+            if (chart) {
+              chart.updateSeries([TODAY_TOTALS.protein, TODAY_TOTALS.carbs, TODAY_TOTALS.fats]);
+              chart.updateOptions({ plotOptions: { pie: { donut: { labels: { total: {
+                formatter: () => TODAY_TOTALS.calories.toLocaleString()
+              } } } } } });
+            }
+          } catch (e) { /* A broken chart must not prevent other chart refreshes. */ }
+
+          try {
+            const chart = window.fitxCharts.calorieNet;
+            if (chart) chart.updateOptions({
+              series: [{ name: 'Net Calories', data: chartData.week_net_values }],
+              xaxis: { categories: chartData.week_net_labels }
+            });
+          } catch (e) { /* A broken chart must not prevent other chart refreshes. */ }
+
+          try {
+            const chart = window.fitxCharts.volume;
+            if (chart) chart.updateOptions({
+              series: [{ name: 'Minutes', data: chartData.week_minutes }],
+              xaxis: { categories: chartData.week_minute_labels }
+            });
+          } catch (e) { /* A broken chart must not prevent other chart refreshes. */ }
+
+          try {
+            WEIGHT_VALUES = chartData.weight_values;
+            WEIGHT_LABELS = chartData.weight_labels;
+            const chart = window.fitxCharts.weight;
+            if (chart) chart.updateOptions({
+              series: [{ name: 'Weight', data: WEIGHT_VALUES }],
+              xaxis: { categories: chartLabels(WEIGHT_LABELS) }
+            });
+          } catch (e) { /* A broken chart must not prevent other chart refreshes. */ }
         })
         .catch(() => {
           // Fetch failed or the template changed under us: reload after a
@@ -2411,10 +2452,11 @@
   });
 
   // ============= ApexCharts Logic =============
-  const WEIGHT_VALUES = {{ weight_values | tojson }};
-  const WEIGHT_LABELS = {{ weight_labels | tojson }};
+  let WEIGHT_VALUES = {{ weight_values | tojson }};
+  let WEIGHT_LABELS = {{ weight_labels | tojson }};
   const GOAL_WEIGHT = {{ goal_weight | tojson }};
-  const RANGE_SIZES = { '7d': 7, '14d': 14, '1m': 30, 'all': WEIGHT_VALUES.length };
+  const RANGE_SIZES = { '7d': 7, '14d': 14, '1m': 30 };
+  window.fitxCharts = {};
   // Full "13 Sep" labels collide on phone-width charts, so narrow screens get just the day number.
   const isNarrow = window.innerWidth < 640;
   const chartLabels = (labels) => isNarrow ? labels.map(l => String(l).split(' ')[0]) : labels;
@@ -2439,7 +2481,7 @@
 
   var weightChart = null;
   function initCharts() {
-    weightChart = new ApexCharts(document.querySelector('#chart-weight'), buildWeightOptions(WEIGHT_VALUES, WEIGHT_LABELS));
+    weightChart = window.fitxCharts.weight = new ApexCharts(document.querySelector('#chart-weight'), buildWeightOptions(WEIGHT_VALUES, WEIGHT_LABELS));
     weightChart.render();
 
   function setWeightRange(range, btn) {
@@ -2466,10 +2508,11 @@
     yaxis: { show: false },
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, x: { show: false }, marker: { show: false } }
   };
-  new ApexCharts(document.querySelector('#chart-volume'), volOpts).render();
+  window.fitxCharts.volume = new ApexCharts(document.querySelector('#chart-volume'), volOpts);
+  window.fitxCharts.volume.render();
 
   // 3. Nutrition Macro Donut — today's real totals
-  const TODAY_TOTALS = {{ today_totals | tojson }};
+  let TODAY_TOTALS = {{ today_totals | tojson }};
   const macroOpts = {
     chart: { type: 'donut', height: 256, fontFamily: 'Inter, sans-serif', background: 'transparent' },
     series: [TODAY_TOTALS.protein, TODAY_TOTALS.carbs, TODAY_TOTALS.fats],
@@ -2492,7 +2535,8 @@
     dataLabels: { enabled: false },
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, y: { formatter: (val) => val + 'g' } }
   };
-  new ApexCharts(document.querySelector('#chart-nutrition-macros'), macroOpts).render();
+  window.fitxCharts.macros = new ApexCharts(document.querySelector('#chart-nutrition-macros'), macroOpts);
+  window.fitxCharts.macros.render();
 
   // 4. Weekly Calorie Net — real intake minus target
   const weekNetLabels = {{ week_net_labels | tojson }};
@@ -2508,7 +2552,8 @@
     yaxis: { labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val + ' kcal' } },
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' }, x: { show: false } }
   };
-  new ApexCharts(document.querySelector('#chart-calorie-net'), calorieNetOpts).render();
+  window.fitxCharts.calorieNet = new ApexCharts(document.querySelector('#chart-calorie-net'), calorieNetOpts);
+  window.fitxCharts.calorieNet.render();
 
   // 5. Progress Weight Chart — all real check-ins
   const goalSeries = GOAL_WEIGHT != null ? WEIGHT_VALUES.map(() => GOAL_WEIGHT) : [];
@@ -2528,7 +2573,8 @@
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' } },
     legend: { show: false }
   };
-  new ApexCharts(document.querySelector('#chart-extended-weight'), extWeightOpts).render();
+  window.fitxCharts.extendedWeight = new ApexCharts(document.querySelector('#chart-extended-weight'), extWeightOpts);
+  window.fitxCharts.extendedWeight.render();
 
   // 6. Weekly Active Minutes — completed sessions, last 8 weeks
   const weeksHistoryLabels = {{ weeks_history_labels | tojson }};
@@ -2544,7 +2590,8 @@
     yaxis: { labels: { style: { colors: '#6B7280', fontFamily: 'JetBrains Mono', fontSize: '10px' }, formatter: (val) => val + 'm' } },
     tooltip: { theme: 'dark', style: { fontFamily: 'JetBrains Mono' } }
   };
-  new ApexCharts(document.querySelector('#chart-weekly-minutes'), weeklyMinutesOpts).render();
+  window.fitxCharts.weeklyMinutes = new ApexCharts(document.querySelector('#chart-weekly-minutes'), weeklyMinutesOpts);
+  window.fitxCharts.weeklyMinutes.render();
   }
   // ApexCharts loads with defer; draw after first paint so the HTML is
   // on screen before the chart library blocks the main thread.
