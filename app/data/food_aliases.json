@@ -85,7 +85,17 @@
     "murgh",
     "grilled chicken",
     "chicken pieces",
-    "murgi"
+    "murgi",
+    "boneless chicken",
+    "chicken boneless",
+    "boiled chicken",
+    "chicken boiled",
+    "chicken grilled",
+    "plain chicken",
+    "chicken meat",
+    "chicken fillet",
+    "chicken breast piece",
+    "chicken cooked"
   ],
   "Salmon": [
     "salmon fillet",
@@ -259,7 +269,10 @@
     "mutton",
     "goat curry",
     "lamb",
-    "bakre ka gosht"
+    "bakre ka gosht",
+    "mutton boiled",
+    "boiled mutton",
+    "goat meat cooked"
   ],
   "Prawns": [
     "shrimp",
@@ -436,5 +449,84 @@
     "chole bhature",
     "chola bhatura",
     "chhole bhature"
+  ],
+  "Chicken, thigh": [
+    "chicken drumstick",
+    "chicken drumsticks",
+    "drumstick chicken",
+    "chicken leg piece",
+    "chicken legs"
+  ],
+  "Chicken curry": [
+    "murgh curry",
+    "chicken gravy",
+    "chicken masala",
+    "chicken sabzi",
+    "home style chicken curry",
+    "chicken curry home"
+  ],
+  "Butter chicken": [
+    "murgh makhani",
+    "chicken makhani"
+  ],
+  "Tandoori chicken": [
+    "tandoori murgh",
+    "chicken tandoori"
+  ],
+  "Roast chicken": [
+    "chicken roast",
+    "roasted chicken"
+  ],
+  "Egg curry (Anda curry)": [
+    "egg masala",
+    "anda masala",
+    "egg gravy",
+    "anda curry"
+  ],
+  "Fish curry (Machli curry)": [
+    "fish masala",
+    "fish gravy",
+    "machhi curry",
+    "machli curry"
+  ],
+  "Mutton seekh kebab": [
+    "mutton kebab",
+    "mutton kabab",
+    "mutton seekh kabab"
+  ],
+  "Plain parantha/paratha": [
+    "Plain paratha",
+    "Plain parantha",
+    "Plain ka paratha"
+  ],
+  "Dal parantha/paratha": [
+    "Dal paratha",
+    "Dal parantha",
+    "Dal ka paratha"
+  ],
+  "Sprouted moong parantha/paratha": [
+    "Sprouted moong paratha",
+    "Sprouted moong parantha",
+    "Sprouted moong ka paratha"
+  ],
+  "Keema parantha/paratha": [
+    "Keema paratha",
+    "Keema parantha",
+    "Keema ka paratha"
+  ],
+  "Paneer parantha/paratha": [
+    "Paneer paratha",
+    "Paneer parantha",
+    "Paneer ka paratha"
+  ],
+  "Tandoori parantha/paratha": [
+    "Tandoori paratha",
+    "Tandoori parantha",
+    "Tandoori ka paratha"
+  ],
+  "Methi parantha/paratha": [
+    "Methi paratha",
+    "Methi parantha",
+    "Methi ka paratha"
   ]
 }

@@ -8,6 +8,7 @@ the same SQLAlchemy session as the caller's request.
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime, time, timedelta
 
 from sqlalchemy import func, select
@@ -57,6 +58,33 @@ def _clamp_int(value, minimum: int, maximum: int, default: int = 0) -> int:
     except (TypeError, ValueError):
         return default
     return max(minimum, min(parsed, maximum))
+
+
+# Model estimates for plain meat, fish, egg and paneer foods sometimes copy a
+# snack row's numbers ("chicken keema" logged with Keema pancake protein).
+# When no catalogue row matched and the portion is in grams, protein below
+# this floor per 100 g is raised to it. Mixed dishes dilute protein, so names
+# with those words are left alone.
+_GRAM_UNITS = {"g", "gm", "gms", "gram", "grams"}
+_PROTEIN_RICH_NAME = re.compile(
+    r"\b(chicken|mutton|lamb|keema|kheema|qeema|fish|prawn|egg|paneer|tofu)\b", re.I)
+_MIXED_DISH_NAME = re.compile(
+    r"biryani|biriyani|pulao|rice|soup|sandwich|roll|wrap|burger|pizza|paratha|parantha|"
+    r"samosa|pakora|momo|noodle|salad|curry|gravy|masala|sauce|pasta|puff|cutlet", re.I)
+PROTEIN_FLOOR_PER_100G = 12.0
+
+
+def protein_floor_adjust(name: str, quantity: float, unit: str,
+                         calories: int, protein: int, carbs: int, fats: int) -> tuple[int, int]:
+    """Return (calories, protein) with the protein floor applied."""
+    if unit not in _GRAM_UNITS or not 0 < quantity <= 2000:
+        return calories, protein
+    if not _PROTEIN_RICH_NAME.search(name) or _MIXED_DISH_NAME.search(name):
+        return calories, protein
+    floor = int(round(quantity * PROTEIN_FLOOR_PER_100G / 100))
+    if protein >= floor:
+        return calories, protein
+    return max(calories, floor * 4 + carbs * 4 + fats * 9), floor
 
 
 def _parse_quantity(value, default: float = 1.0) -> float:
@@ -162,6 +190,8 @@ def apply_actions(user: User, actions: list, now: datetime) -> tuple[list[str], 
                     calories = protein * 4 + carbs * 4 + fats * 9
                 if calories <= 0:
                     continue
+                calories, protein = protein_floor_adjust(
+                    name, quantity, unit, calories, protein, carbs, fats)
             # Per-entry calorie cap: reject or confirm, never clamp.
             if calories > foods_module.MEAL_ENTRY_CALORIE_CAP:
                 if not confirmed or calories > foods_module.MEAL_ENTRY_HARD_CAP:

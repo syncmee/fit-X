@@ -155,6 +155,21 @@ class FoodEvalTestCase(AppContextTestCase):
         for phrase, want, got in p_failures:
             print(f"    portion miss: {phrase!r} want {want} got {got}")
 
+        # Guard cases: a wrong partial match must never reach the LLM or the
+        # fast path ("chicken keema" is not "Keema pancake"); when nothing
+        # correct matches, the coach LLM estimates the food itself.
+        guards = eval_data.get("guard_cases", [])
+        g_failures = []
+        for case in guards:
+            names = [m["name"] for m in food_db_matches(case["phrase"], limit=8)]
+            bad = [n for n in case.get("forbid", []) if n in names]
+            missing = [n for n in case.get("require", []) if n not in names]
+            if bad or missing:
+                g_failures.append((case["phrase"], bad, missing, names[:4]))
+        print(f"guard cases: {len(guards) - len(g_failures)}/{len(guards)} ok")
+        for phrase, bad, missing, names in g_failures:
+            print(f"    guard miss: {phrase!r} forbidden={bad} missing={missing} got={names}")
+
         print(f"  latency: {avg_ms:.3f} ms/message (budget < {LATENCY_BUDGET_MS} ms)")
         legacy_top1 = sum(
             1 for c in cases
@@ -175,6 +190,7 @@ class FoodEvalTestCase(AppContextTestCase):
         self.assertGreaterEqual(hp5, TOP5_TARGET, f"held-out top-5 {hp5:.0%} below target")
         self.assertEqual(p_failures, [], f"portion cases out of range: {p_failures}")
         self.assertLess(avg_ms, LATENCY_BUDGET_MS, "matcher over latency budget")
+        self.assertEqual(g_failures, [], f"guard cases failed: {g_failures}")
 
 
 if __name__ == "__main__":

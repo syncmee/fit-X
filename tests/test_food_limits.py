@@ -200,6 +200,25 @@ class FoodLimitsTestCase(AppContextTestCase):
 
     # --- per-entry calorie cap -------------------------------------------
 
+    def test_unmatched_meat_gets_protein_floor(self):
+        """A model estimate that copied a snack's numbers for plain chicken
+        keema (80 g, 7 g protein) is raised to the 12 g / 100 g floor."""
+        self._apply([
+            {"type": "log_meal", "name": "Zzz chicken mince", "quantity": 80, "unit": "grams",
+             "calories": 141, "protein": 7, "carbs": 8, "fats": 9},
+        ])
+        db.session.flush()
+        entry = db.session.scalars(select(MealEntry)).one()
+        self.assertEqual(entry.protein, 10)
+        self.assertGreaterEqual(entry.calories, 10 * 4 + 8 * 4 + 9 * 9)
+
+    def test_protein_floor_skips_mixed_dishes_and_non_gram_units(self):
+        from app.coach.actions import protein_floor_adjust
+
+        self.assertEqual(protein_floor_adjust("chicken biryani", 300, "grams", 500, 10, 60, 15), (500, 10))
+        self.assertEqual(protein_floor_adjust("chicken tikka", 3, "pieces", 200, 5, 2, 8), (200, 5))
+        self.assertEqual(protein_floor_adjust("paratha", 80, "grams", 250, 5, 30, 10), (250, 5))
+
     def test_calorie_cap_asks_for_confirmation(self):
         applied, _ = self._apply([
             {"type": "log_meal", "name": "birthday cake slice", "quantity": 5,

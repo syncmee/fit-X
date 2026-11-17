@@ -790,6 +790,76 @@
       "carbs": 7.0,
       "fats": 1.8,
       "reason": "was plain-tea values; entry means milk tea"
+    },
+    "Chicken pakora/pakoda": {
+      "calories": 270,
+      "protein": 17,
+      "carbs": 12,
+      "fats": 17,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Fish pakora/pakoda": {
+      "calories": 250,
+      "protein": 15,
+      "carbs": 14,
+      "fats": 15,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Fish finger": {
+      "calories": 230,
+      "protein": 13,
+      "carbs": 20,
+      "fats": 11,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Fish orly": {
+      "calories": 265,
+      "protein": 15,
+      "carbs": 15,
+      "fats": 16,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Egg cutlet (Anda cutlet)": {
+      "calories": 230,
+      "protein": 9,
+      "carbs": 20,
+      "fats": 13,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Minced meat cutlet": {
+      "calories": 245,
+      "protein": 13,
+      "carbs": 17,
+      "fats": 14,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Shahi keema kofta curry": {
+      "calories": 185,
+      "protein": 9,
+      "carbs": 4,
+      "fats": 15,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Chicken sweet and sour": {
+      "calories": 170,
+      "protein": 11,
+      "carbs": 18,
+      "fats": 6,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Tomato fish": {
+      "calories": 110,
+      "protein": 12,
+      "carbs": 4,
+      "fats": 5,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
+    },
+    "Chinese cabbage and meat ball soup": {
+      "calories": 60,
+      "protein": 4,
+      "carbs": 4,
+      "fats": 3,
+      "reason": "deep-fried/gravy row had implausible kcal and protein; replaced with typical cooked values (verify against IFCT/label)"
     }
   },
   "drops": [],

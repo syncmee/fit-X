@@ -45,8 +45,20 @@ _STOPWORDS = {
 }
 
 
+# "chicken 65" / "paneer 65" are dish names; without this the 65 reads as a
+# quantity and gets stripped, leaving a bare "chicken".
+_DISH_65_RE = re.compile(r"\b(chicken|paneer|gobi|gobhi|mushroom|fish|prawn|baby corn)\s*65\b")
+
+
+# "fried" is filler for matching ("fried egg" is just egg), but "fried chicken"
+# is a different food from plain chicken, so it is rewritten to "chicken fry".
+_FRIED_MEAT_RE = re.compile(r"\bfried\s+(chicken|fish|mutton|prawn)\b")
+
+
 def _raw_tokens(text: str) -> list[str]:
-    return _TOKEN_RE.findall(text.lower())
+    lowered = _DISH_65_RE.sub(lambda m: m.group(1) + " sixtyfive", text.lower())
+    lowered = _FRIED_MEAT_RE.sub(lambda m: m.group(1) + " fry", lowered)
+    return _TOKEN_RE.findall(lowered)
 
 
 def _singular(token: str) -> str:
@@ -73,6 +85,112 @@ def _content_tokens(text: str) -> list[str]:
         for t in _raw_tokens(text)
         if t not in _STOPWORDS and t not in _EXTRA_FILLER and not t.isdigit()
     ]
+
+
+# Words that split a message into separate food mentions. Digits split too
+# ("100 g rice 100 g chicken keema" is two foods).
+_SEGMENT_WORDS = {"and", "with", "aur", "plus", "then", "n"}
+_SEGMENT_SPLIT_RE = re.compile(r"[,;+&/\n|]")
+
+# Main ingredient words. A main ingredient right before a matched food word
+# ("chicken keema") must be part of the matched entry, otherwise the match is
+# a different dish ("Keema pancake") and must not be used.
+_MAIN_INGREDIENTS = {
+    "chicken", "mutton", "lamb", "beef", "pork", "fish", "egg", "paneer",
+    "prawn", "shrimp", "tofu", "turkey", "crab",
+}
+# Words that turn a food into a different product ("chicken nuggets" is not
+# "Chicken Breast"). Checked on both sides of the matched span.
+_DISH_FORMS = {
+    "nugget", "sausage", "roll", "wrap", "lollipop", "shawarma", "kebab",
+    "kabab", "tikka", "burger", "sandwich", "pizza", "momo", "soup",
+    "biryani", "biriyani", "pulao", "cutlet", "patty", "pakora", "pakoda",
+    "wing", "strip", "steak", "popcorn", "sixtyfive", "keema", "kheema",
+    "manchurian", "chowmein", "noodle", "lasagne", "pie", "samosa", "kofta",
+    "korma",
+}
+# Entry side: a catalogue key carrying one of these words must not answer a
+# query that never said it ("fish" is not "Fish fry", "chicken" is not
+# "Chicken curry"). Wider than _DISH_FORMS because it only ever removes
+# candidates for bare-ingredient queries.
+_FRYABLE_MEATS = {"chicken", "fish", "mutton", "prawn"}
+_ENTRY_FORMS = _DISH_FORMS | {"fry", "curry", "salad"}
+
+
+def _segmented_content_tokens(text: str) -> tuple[list[str], list[int]]:
+    """Same tokens as _content_tokens plus a segment id per token.
+
+    Segments separate different food mentions: commas, "and", "with", and
+    quantities. The match guard only looks at neighbours inside one segment,
+    so "2 eggs and chicken curry" never lets "chicken" disqualify "egg".
+    """
+    tokens: list[str] = []
+    segs: list[int] = []
+    seg = 0
+    parts = _SEGMENT_SPLIT_RE.split(text.lower())
+    for part_idx, part in enumerate(parts):
+        if part_idx:
+            seg += 1
+        for raw in _raw_tokens(part):
+            if raw in _SEGMENT_WORDS or raw[0].isdigit():
+                seg += 1
+            if raw in _STOPWORDS or raw in _EXTRA_FILLER or raw.isdigit():
+                continue
+            tokens.append(_singular(raw))
+            segs.append(seg)
+    return tokens, segs
+
+
+def _span_conflicts(tokens: list[str], segs: list[int], start: int, end: int,
+                    entry_tokens: set[str], key_tokens: list[str],
+                    corrections: dict[str, str]) -> bool:
+    """True when the words next to a matched span contradict the matched entry.
+
+    "chicken keema" matched to Keema pancake: the preceding "chicken" is a
+    main ingredient the entry lacks. "chicken nuggets" matched to Chicken
+    Breast: the following "nuggets" is a dish form the entry lacks.
+    """
+    seg = segs[start]
+    span_tokens = set(tokens[start:end])
+    seg_tokens = {t for t, g in zip(tokens, segs) if g == seg}
+    corrected_seg = seg_tokens | {corrections.get(t, t) for t in seg_tokens}
+    # Entry side: the matched key names a product form the user never said.
+    for key_token in key_tokens:
+        if key_token in _ENTRY_FORMS and key_token not in corrected_seg:
+            return True
+
+    def present(token: str) -> bool:
+        return token in entry_tokens or corrections.get(token) in entry_tokens
+
+    def is_form(corrected: str) -> bool:
+        # "chicken fry" / "fish fry" are products of their own; "bhindi fry"
+        # is just a cooking style for a vegetable.
+        return corrected in _DISH_FORMS or (
+            corrected == "fry" and bool(seg_tokens & _FRYABLE_MEATS))
+
+    # A window that names a main ingredient or dish form the entry lacks is a
+    # partial match of a different food ("chicken keema" vs "Keema pancake").
+    for token in span_tokens:
+        corrected = corrections.get(token, token)
+        if (corrected in _MAIN_INGREDIENTS or is_form(corrected)) and not present(token):
+            return True
+
+    # Only the word directly before the span: with no separator in "paneer
+    # paratha chicken keema" a wider look-back would let the previous food's
+    # ingredient disqualify the next food.
+    for pos in range(max(start - 1, 0), start):
+        token = tokens[pos]
+        if segs[pos] != seg or token in span_tokens:
+            continue
+        corrected = corrections.get(token, token)
+        if (corrected in _MAIN_INGREDIENTS or is_form(corrected)) and not present(token):
+            return True
+    if end < len(tokens) and segs[end] == seg:
+        token = tokens[end]
+        corrected = corrections.get(token, token)
+        if token not in span_tokens and not present(token) and is_form(corrected):
+            return True
+    return False
 
 
 # ============================================================
@@ -141,9 +259,11 @@ def _build_index() -> dict:
     phrase_entry: list[int] = []
     exact: dict[str, int] = {}  # normalized phrase -> phrase idx (first wins)
     postings: dict[str, set[int]] = {}  # token -> phrase idxs
+    entry_tokens: list[set[str]] = []  # every token of every key of an entry
 
     for idx, food in enumerate(rows):
         entries.append(_entry_from_food(food))
+        entry_tokens.append(set())
         try:
             aliases = json.loads(food.aliases or "[]")
         except json.JSONDecodeError:
@@ -156,6 +276,7 @@ def _build_index() -> dict:
             phrase_idx = len(phrases)
             phrases.append((phrase, tokens))
             phrase_entry.append(idx)
+            entry_tokens[idx].update(tokens)
             exact.setdefault(phrase, phrase_idx)
             for token in tokens:
                 postings.setdefault(token, set()).add(phrase_idx)
@@ -170,6 +291,7 @@ def _build_index() -> dict:
 
     return {
         "entries": entries,
+        "entry_tokens": entry_tokens,
         "phrases": phrases,
         "phrase_entry": phrase_entry,
         "exact": exact,
@@ -287,9 +409,11 @@ def _window_scores(message: str, index: dict) -> list[tuple[float, int, str]]:
     postings = index["postings"]
     exact = index["exact"]
     phrases = index["phrases"]
-    tokens = _content_tokens(message)
+    tokens, segs = _segmented_content_tokens(message)
     if not tokens:
         return []
+    entry_tokens = index["entry_tokens"]
+    phrase_entry = index["phrase_entry"]
 
     # Candidate phrase indices: anything sharing a token with the message,
     # plus rapidfuzz corrections for tokens that hit nothing.
@@ -317,7 +441,8 @@ def _window_scores(message: str, index: dict) -> list[tuple[float, int, str]]:
             span = " ".join(window)
             # Exact catalogue phrase mentioned verbatim — near-certain hit.
             hit = exact.get(span)
-            if hit is not None and hit not in seen_exact:
+            if hit is not None and hit not in seen_exact and not _span_conflicts(
+                    tokens, segs, start, end, entry_tokens[phrase_entry[hit]], phrases[hit][1], corrections):
                 seen_exact.add(hit)
                 exact_spans.append((start, end))
                 results.append((_exact_score(len(window), n, sum(idf.get(t, 1.0) for t in phrases[hit][1])), hit, span))
@@ -343,7 +468,8 @@ def _window_scores(message: str, index: dict) -> list[tuple[float, int, str]]:
                 _phrase_text, etokens = phrases[phrase_idx]
                 score = _score_window(window, etokens, idf, avg_len, allow_fuzzy, corrections)
                 score = _coverage_weight(score, len(window), n)
-                if score >= _MATCH_THRESHOLD:
+                if score >= _MATCH_THRESHOLD and not _span_conflicts(
+                        tokens, segs, start, end, entry_tokens[phrase_entry[phrase_idx]], etokens, corrections):
                     results.append((score, phrase_idx, span))
     results.sort(key=lambda item: -item[0])
     return results

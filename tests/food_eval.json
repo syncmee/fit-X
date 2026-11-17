@@ -333,11 +333,9 @@
     },
     {
       "phrase": "chiken momo",
-      "top1": "Chicken Breast",
+      "top1": "Chicken momos (steamed)",
       "top5": [
-        "Chicken Breast",
-        "Chicken, thigh",
-        "Chicken, whole (with skin)"
+        "Chicken momos (steamed)"
       ]
     },
     {
@@ -518,6 +516,90 @@
       "top5": [
         "Paneer bhurji",
         "Paneer"
+      ]
+    },
+    {
+      "phrase": "chicken keema 80g",
+      "top1": "Chicken keema (cooked)",
+      "top5": [
+        "Chicken keema (cooked)"
+      ]
+    },
+    {
+      "phrase": "mutton kheema",
+      "top1": "Mutton keema (cooked)",
+      "top5": [
+        "Mutton keema (cooked)"
+      ]
+    },
+    {
+      "phrase": "keema 100g",
+      "top1": "Mutton keema (cooked)",
+      "top5": [
+        "Mutton keema (cooked)"
+      ]
+    },
+    {
+      "phrase": "1 patisa",
+      "top1": "Patisa (soan papdi)",
+      "top5": [
+        "Patisa (soan papdi)"
+      ]
+    },
+    {
+      "phrase": "soan papdi",
+      "top1": "Patisa (soan papdi)",
+      "top5": [
+        "Patisa (soan papdi)"
+      ]
+    },
+    {
+      "phrase": "chicken tikka",
+      "top1": "Chicken tikka",
+      "top5": [
+        "Chicken tikka"
+      ]
+    },
+    {
+      "phrase": "fried chicken",
+      "top1": "Fried chicken",
+      "top5": [
+        "Fried chicken"
+      ]
+    },
+    {
+      "phrase": "chicken nuggets",
+      "top1": "Chicken nuggets",
+      "top5": [
+        "Chicken nuggets"
+      ]
+    },
+    {
+      "phrase": "chicken biryani",
+      "top1": "Chicken biryani",
+      "top5": [
+        "Chicken biryani"
+      ]
+    },
+    {
+      "phrase": "chicken 65",
+      "top1": "Chicken 65",
+      "top5": [
+        "Chicken 65"
+      ]
+    },
+    {
+      "phrase": "fish fry",
+      "top1": "Fish fry",
+      "top5": [
+        "Fish fry"
+      ]
+    },
+    {
+      "phrase": "mutton curry",
+      "top1": "Mutton curry",
+      "top5": [
+        "Mutton curry"
       ]
     }
   ],
@@ -818,6 +900,62 @@
         550,
         700
       ]
+    },
+    {
+      "phrase": "chicken keema 80g",
+      "range": [
+        160,
+        190
+      ],
+      "food": "Chicken keema (cooked)"
+    },
+    {
+      "phrase": "1 patisa",
+      "range": [
+        150,
+        210
+      ],
+      "food": "Patisa (soan papdi)"
+    },
+    {
+      "phrase": "6 chicken nuggets",
+      "range": [
+        250,
+        340
+      ],
+      "food": "Chicken nuggets"
+    },
+    {
+      "phrase": "5 chicken momos",
+      "range": [
+        180,
+        280
+      ],
+      "food": "Chicken momos (steamed)"
+    },
+    {
+      "phrase": "2 pieces fried chicken",
+      "range": [
+        420,
+        580
+      ],
+      "food": "Fried chicken"
+    },
+    {
+      "phrase": "chicken tikka 6 pieces",
+      "range": [
+        220,
+        320
+      ],
+      "food": "Chicken tikka"
+    },
+    {
+      "phrase": "mutton keema 100g",
+      "range": [
+        240,
+        280
+      ],
+      "food": "Mutton keema (cooked)"
     }
   ],
   "heldout": [
@@ -975,6 +1113,77 @@
         "Shammi kebab",
         "Mutton chops",
         "Chicken kebab"
+      ]
+    }
+  ],
+  "guard_cases": [
+    {
+      "phrase": "chicken keema 80g",
+      "forbid": [
+        "Keema pancake",
+        "Keema parantha/paratha",
+        "Pea keema curry (Matar keema ki sabzi)"
+      ]
+    },
+    {
+      "phrase": "100g rice 100g chicken keema",
+      "forbid": [
+        "Keema pancake",
+        "Chicken Breast"
+      ]
+    },
+    {
+      "phrase": "chicken tikka 6 pieces",
+      "forbid": [
+        "Paneer shaslik/tikka",
+        "Fish tikka",
+        "Chicken Breast"
+      ]
+    },
+    {
+      "phrase": "chicken nuggets 6 pieces",
+      "forbid": [
+        "Chicken Breast",
+        "Chicken, thigh"
+      ]
+    },
+    {
+      "phrase": "fried chicken 2 pieces",
+      "forbid": [
+        "Chicken Breast"
+      ]
+    },
+    {
+      "phrase": "chicken biryani 1 plate",
+      "forbid": [
+        "Mutton biryani/biriyani",
+        "Vegetable biryani/biriyani"
+      ]
+    },
+    {
+      "phrase": "mutton keema 100g",
+      "forbid": [
+        "Keema pancake",
+        "Mutton, cooked"
+      ]
+    },
+    {
+      "phrase": "butter chicken 1 bowl",
+      "forbid": [
+        "Peanut Butter"
+      ]
+    },
+    {
+      "phrase": "2 eggs and chicken curry",
+      "require": [
+        "Egg",
+        "Chicken curry"
+      ]
+    },
+    {
+      "phrase": "chicken sandwich",
+      "require": [
+        "Chicken sandwich"
       ]
     }
   ]

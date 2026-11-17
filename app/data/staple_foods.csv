@@ -133,3 +133,20 @@ Whisky,250,0.0,0.1,0.0,"{""peg"":60,""shot"":44}",whiskey;scotch;vodka;rum;gin
 "Instant noodles, cooked (Maggi)",124,3.2,16.0,5.0,"{""pack"": 250, ""bowl"": 250, ""maggi"": 250}",maggi;maggi noodles;instant noodles;2 minute noodles;masala maggi
 Paneer bhurji,250,12.0,6.0,19.5,"{""katori"": 150, ""bowl"": 150}",paneer bhurji;paneer scramble;paneer scrambled;panir bhurji
 Chole bhature,180,5.0,20.0,8.5,"{""plate"": 350, ""serving"": 350}",chole bhature;chola bhatura;chhole bhature
+Chicken keema (cooked),210,22,3,12,"{""katori"":150,""bowl"":200,""tbsp"":15}",chicken keema;chicken kheema;chicken qeema;keema chicken;kheema chicken;chicken mince;minced chicken;chicken mince cooked
+Mutton keema (cooked),260,20,3,19,"{""katori"":150,""bowl"":200,""tbsp"":15}",mutton keema;mutton kheema;mutton qeema;keema;kheema;qeema;lamb keema;lamb mince;minced mutton;goat keema
+Mutton curry,200,17,4,13,"{""katori"":150,""bowl"":200}",mutton gravy;mutton masala;goat curry;lamb curry;mutton rogan josh;mutton sabzi
+Chicken tikka,150,24,3,5,"{""piece"":30,""plate"":200}",murgh tikka;tikka chicken;chicken tikka pieces;chicken tikka kebab
+Fried chicken,280,24,10,16,"{""piece"":90,""leg"":120}",chicken fry;crispy chicken;kfc chicken;fried chicken piece;chicken fry piece;southern fried chicken
+Chicken nuggets,275,15,16,17,"{""piece"":18,""nugget"":18}",chicken nugget;nuggets;nugget
+Chicken sausage,175,14,3,12,"{""piece"":40,""sausage"":40}",chicken sausages;chicken hot dog
+Chicken 65,245,20,9,14,"{""piece"":25,""plate"":150}",chicken 65;chicken65;chicken 65 fry
+Chicken lollipop,245,18,12,14,"{""piece"":60,""lollipop"":60}",chicken lollipops;lollipop chicken;chicken drumstick fry
+Chicken seekh kebab,185,19,5,10,"{""piece"":40,""kebab"":40,""plate"":160}",chicken kebab;chicken kabab;chicken seekh kabab;murgh seekh kebab
+Chicken roll (kathi/shawarma),200,12,20,8,"{""roll"":200,""piece"":200,""wrap"":200}",chicken roll;chicken kathi roll;chicken shawarma;shawarma;chicken shawarma roll;chicken wrap;kathi roll
+Egg roll (kathi),215,9,24,9,"{""roll"":160,""piece"":160}",egg roll;anda roll;egg kathi roll;egg wrap
+Chicken biryani,180,9,20,7,"{""plate"":280,""bowl"":250,""katori"":150}",chicken biriyani;chicken dum biryani;murgh biryani;hyderabadi chicken biryani
+Fish fry,230,20,8,13,"{""piece"":80,""plate"":200}",machli fry;fish fry piece;tawa fish fry
+Patisa (soan papdi),505,7,57,28,"{""piece"":35,""cube"":35,""box"":250}",patisa;patisa sweet;soan papdi;sohan papdi;sonpapdi;son papdi;soan papri;patissa
+Chicken momos (steamed),185,10,22,6,"{""piece"":25,""momo"":25,""plate"":150}",chicken momo;chicken momos;steamed chicken momo;momos chicken;chicken dumplings
+Veg momos (steamed),150,4,25,3.5,"{""piece"":25,""momo"":25,""plate"":150}",veg momo;veg momos;vegetable momo;steamed veg momo;momos veg
