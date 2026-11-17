@@ -200,6 +200,17 @@ class FoodLimitsTestCase(AppContextTestCase):
 
     # --- per-entry calorie cap -------------------------------------------
 
+    def test_resolve_food_rejects_match_on_one_word_of_a_long_name(self):
+        """"whole wheat steam momos" was logged as 5 x Milk, whole (775 kcal)
+        because the single word "whole" matched. A match that explains less
+        than half of a 3+ word name is rejected so the model's numbers win."""
+        from app import foods as foods_module
+
+        self._seed_foods(dict(name="Milk, whole", serving="1 glass (240 ml)",
+                              calories=155, protein=8, carbs=12, fats=8))
+        self.assertIsNone(foods_module.resolve_food("whole wheat steam momos"))
+        self.assertEqual(foods_module.resolve_food("whole milk")["name"], "Milk, whole")
+
     def test_unmatched_meat_gets_protein_floor(self):
         """A model estimate that copied a snack's numbers for plain chicken
         keema (80 g, 7 g protein) is raised to the 12 g / 100 g floor."""

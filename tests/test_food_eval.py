@@ -164,6 +164,8 @@ class FoodEvalTestCase(AppContextTestCase):
             names = [m["name"] for m in food_db_matches(case["phrase"], limit=8)]
             bad = [n for n in case.get("forbid", []) if n in names]
             missing = [n for n in case.get("require", []) if n not in names]
+            if case.get("first") and (not names or names[0] != case["first"]):
+                missing.append(f"first={case['first']}")
             if bad or missing:
                 g_failures.append((case["phrase"], bad, missing, names[:4]))
         print(f"guard cases: {len(guards) - len(g_failures)}/{len(guards)} ok")

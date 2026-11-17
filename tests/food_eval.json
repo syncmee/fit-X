@@ -956,6 +956,14 @@
         280
       ],
       "food": "Mutton keema (cooked)"
+    },
+    {
+      "phrase": "5 veg momos",
+      "range": [
+        150,
+        230
+      ],
+      "food": "Veg momos (steamed)"
     }
   ],
   "heldout": [
@@ -1185,6 +1193,10 @@
       "require": [
         "Chicken sandwich"
       ]
+    },
+    {
+      "phrase": "5 whole wheat steam momos",
+      "first": "Veg momos (steamed)"
     }
   ]
 }

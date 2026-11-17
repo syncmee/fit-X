@@ -522,6 +522,13 @@ def resolve_food(name: str | None) -> dict | None:
     pairs = _window_scores(phrase, index)
     if not pairs:
         return None
+    # The numbers of the matched entry get logged, so a match that explains
+    # only a small part of a long name is not good enough: "whole wheat steam
+    # momos" must not resolve to "Milk, whole" because of the word "whole".
+    tokens = _content_tokens(phrase)
+    span_len = len(pairs[0][2].split())
+    if len(tokens) >= 3 and span_len * 2 < len(tokens):
+        return None
     return index["entries"][index["phrase_entry"][pairs[0][1]]]
 
 
